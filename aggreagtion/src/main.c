@@ -104,5 +104,4 @@ int main(int argc, char **argv)
  * ./app_exe -mesh <path/to/mesh/file>
  *     -label_bound 1
  *     -label_omega 2
- *     -index <num>
  */
