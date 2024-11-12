@@ -85,8 +85,7 @@ int main(int argc, char **argv)
 #endif
 
     MeshGraph *graph = CreateMeshGraph(data_list_node.size);
-    CreateVertexMeshGraph(graph, &data_list_node);
-    CreateEdgeMeshGraph(graph, &data_list_ele_omega);
+    AssembleMeshGraph(graph, &data_list_node, &data_list_ele_omega);
     PrintMeshGraph(graph);
 
     // free memory

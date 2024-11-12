@@ -57,19 +57,25 @@ typedef struct
     int *ele_node_lst; // element node list, size map(ele_type)
 } MeshElement;
 
-typedef struct mesh_graph_adj_list
+typedef struct mesh_graph_adj_node
 {
     /* data */
     MeshNode *node;
-    struct mesh_graph_adj_list *next;
+    struct mesh_graph_adj_node *next;
+} MeshGraphAdjNode;
+
+typedef struct mesh_graph_adj_list
+{
+    /* data */
+    MeshGraphAdjNode *head;
+    int size;
 } MeshGraphAdjList;
 
 typedef struct mesh_graph
 {
     /* data */
     int size; // number of vertices
-    MeshNode *node;
-    MeshGraphAdjList **adjlist;
+    MeshGraphAdjList *array;
 } MeshGraph;
 
 #if 0
@@ -134,30 +140,39 @@ MeshNodeRBTree *CreateMeshNodeRBTree(void);
 #endif // rb tree function
 
 /*
+ * clear adjacency list
+ */
+void ClearMeshAdjList(MeshGraphAdjList *);
+
+/*
+ * assembling graph with element data
+ */
+void AssembleMeshGraph(MeshGraph *, GenericList *, GenericList *);
+
+/*
+ * print adjacency list
+ */
+void PrintMeshGraphAdjList(MeshGraphAdjList *);
+
+/*
+ * add node to adjacency list
+ */
+void AddNodeMeshGraphAdjList(MeshGraphAdjList *, MeshNode *);
+
+/*
+ * initialize adjacency list
+ */
+void InitializeMeshGraphAdjList(MeshGraphAdjList *);
+
+/*
  * print graph
  */
 void PrintMeshGraph(MeshGraph *);
 
 /*
- * mesh element data add to graph
- */
-void CreateEdgeMeshGraph(MeshGraph *, GenericList *);
-
-/*
- * check edge whether exists
- */
-int EdgeExistsMeshGraph(MeshGraph *, int, int);
-
-/*
  * add edge to a graph
  */
-void AddEdgeMeshGraph(MeshGraph *, int, int);
-
-/*
- * create vertex of a graph
- * add MeshNode data to the vertex of a graph
- */
-void CreateVertexMeshGraph(MeshGraph *, GenericList *);
+void AddEdgeMeshGraph(MeshGraph *, GenericList * /*node data*/, int, int);
 
 /*
  * clean graph

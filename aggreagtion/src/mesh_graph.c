@@ -1,143 +1,138 @@
 #include "../include/main.h"
 
-void PrintMeshGraph(MeshGraph *graph)
+void ClearMeshAdjList(MeshGraphAdjList *list)
 {
-    printf("size of graph :%d\n", graph->size);
-
-    if (!graph)
-    {
-        printf("Graph is NULL\n");
-        return;
-    }
-
-    // 遍历图中每个节点
-    for (int i = 0; i < graph->size; ++i)
-    {
-        MeshNode *current_node = &graph->node[i];
-
-        // 打印当前节点的信息
-        printf("Node %d:\n",
-               current_node->node_idx);
-
-        // 打印该节点的所有邻接节点
-        MeshGraphAdjList *adj_list = graph->adjlist[i];
-        while (adj_list)
-        {
-            MeshNode *neighbor_node = adj_list->node;
-            printf("\t->%d",
-                   neighbor_node->node_idx);
-            adj_list = adj_list->next;
-        }
-        putchar('\n');
-    }
-}
-
-void CreateEdgeMeshGraph(MeshGraph *graph, GenericList *data_list)
-{
-    ListNode *curr = data_list->head;
+    MeshGraphAdjNode *curr = list->head;
     while (curr)
     {
-        MeshElement *tmp = (MeshElement *)curr->data;
-        int num_nodes = NodeListSizeMapping(tmp->ele_type);
-        for (int index = 0; index < num_nodes; ++index)
-        {
-            int u = tmp->ele_node_lst[index];
-            int v = tmp->ele_node_lst[(index + 1) % num_nodes];
-            AddEdgeMeshGraph(graph, u, v);
-        }
+        MeshGraphAdjNode *tmp = curr;
+        free(tmp);
         curr = curr->next;
-    }
-}
-
-int EdgeExistsMeshGraph(MeshGraph *graph, int u, int v)
-{
-    // vertex 1-base
-    --u;
-    --v;
-
-    MeshGraphAdjList *curr = graph->adjlist[u];
-    while (curr)
-    {
-        if (curr->node->node_idx == v + 1)
-        {
-            return 1; // 边已经存在
-        }
-        curr = curr->next;
-    }
-    return 0; // 边不存在
-}
-
-void AddEdgeMeshGraph(MeshGraph *graph, int u, int v)
-{
-    if (u > graph->size || v > graph->size || u < 0 || v < 0)
-    {
-        printf("Error: Invalid vertex index\n");
-        return;
-    }
-
-    if (EdgeExistsMeshGraph(graph, u, v) || EdgeExistsMeshGraph(graph, v, u))
-    {
-        return; // 如果边已存在，跳过添加
-    }
-
-    MeshGraphAdjList *newEdgeU = (MeshGraphAdjList *)malloc(sizeof(MeshGraphAdjList));
-    MeshGraphAdjList *newEdgeV = (MeshGraphAdjList *)malloc(sizeof(MeshGraphAdjList));
-    assert(newEdgeU && newEdgeV);
-
-    // vertex 1-base
-    --u;
-    --v;
-
-    // 设置 u -> v 边
-    newEdgeU->node = &graph->node[v];   // u 指向 v
-    newEdgeU->next = graph->adjlist[u]; // 将当前邻接表挂到新节点的 next 上
-    graph->adjlist[u] = newEdgeU;       // 更新 u 的邻接表
-
-    // 设置 v -> u 边
-    newEdgeV->node = &graph->node[u];   // v 指向 u
-    newEdgeV->next = graph->adjlist[v]; // 将当前邻接表挂到新节点的 next 上
-    graph->adjlist[v] = newEdgeV;       // 更新 v 的邻接表
-}
-
-void CreateVertexMeshGraph(MeshGraph *graph, GenericList *data_list)
-{
-    int cnt = 0;
-    ListNode *curr = data_list->head;
-    while (curr && cnt < graph->size)
-    {
-        MeshNode *tmp = (MeshNode *)curr->data;
-        graph->node[cnt].node_idx = tmp->node_idx;
-        graph->node[cnt].node_x = tmp->node_x;
-        graph->node[cnt].node_y = tmp->node_y;
-        graph->node[cnt].node_z = tmp->node_z;
-        curr = curr->next;
-        ++cnt;
     }
 }
 
 void ClearMeshGraph(MeshGraph *graph)
 {
-    if (!graph)
-        return;
-
-    // 释放邻接表中的每个链表
-    for (int i = 0; i < graph->size; ++i)
+    for (int index = 0; index < graph->size; ++index)
     {
-        MeshGraphAdjList *curr = graph->adjlist[i];
-        while (curr)
-        {
-            MeshGraphAdjList *temp = curr;
-            curr = curr->next;
-            free(temp); // 释放链表节点
-        }
+        ClearMeshAdjList(graph->array + index);
     }
 
-    // 释放节点数组
-    free(graph->node);
-    // 释放邻接表数组
-    free(graph->adjlist);
-    // 最后释放图结构体本身
+    free(graph->array);
     free(graph);
+}
+
+void AssembleMeshGraph(MeshGraph *graph, GenericList *data_node, GenericList *data_ele)
+{
+    ListNode *curr_ele = data_ele->head;
+    while (curr_ele)
+    {
+        MeshElement *curr_ele_data = (MeshElement *)curr_ele->data;
+        int ele_num = NodeListSizeMapping(curr_ele_data->ele_type);
+        for (int index = 0; index < ele_num; ++index)
+        {
+            AddEdgeMeshGraph(graph, data_node,
+                             curr_ele_data->ele_node_lst[index],
+                             curr_ele_data->ele_node_lst[(index + 1) % ele_num]);
+        }
+
+        curr_ele = curr_ele->next;
+    }
+}
+
+void PrintMeshGraph(MeshGraph *graph)
+{
+    printf("number of vertex(s): %d\n", graph->size);
+    for (int index = 0; index < graph->size; ++index)
+    {
+        PrintMeshGraphAdjList(graph->array + index);
+    }
+}
+
+void AddEdgeMeshGraph(MeshGraph *graph, GenericList *data_list, int u, int v)
+{
+    // 1-base to 0-base
+    --u;
+    --v;
+
+    ListNode *curr_node = data_list->head;
+
+    for (int index = 0; index < u; ++index)
+    {
+        curr_node = curr_node->next;
+    }
+    MeshNode *node_u = (MeshNode *)curr_node->data;
+
+    curr_node = data_list->head;
+    for (int index = 0; index < v; ++index)
+    {
+        curr_node = curr_node->next;
+    }
+    MeshNode *node_v = (MeshNode *)curr_node->data;
+
+    // add node to adjacency list, node u adjacency list
+    AddNodeMeshGraphAdjList(graph->array + u, node_u);
+    AddNodeMeshGraphAdjList(graph->array + u, node_v);
+
+    // add node to adjacency list, node v adjacency list
+    AddNodeMeshGraphAdjList(graph->array + v, node_v);
+    AddNodeMeshGraphAdjList(graph->array + v, node_u);
+}
+
+void PrintMeshGraphAdjList(MeshGraphAdjList *list)
+{
+    printf("length of list: %d\n", list->size);
+    MeshGraphAdjNode *curr = list->head;
+    while (curr)
+    {
+        printf("%d->", curr->node->node_idx);
+        curr = curr->next;
+    }
+    puts("NULL");
+}
+
+void AddNodeMeshGraphAdjList(MeshGraphAdjList *list, MeshNode *node)
+{
+#if 1
+    // Check if the node is already in the adjacency list
+    MeshGraphAdjNode *current = list->head;
+    while (current != NULL)
+    {
+        if (current->node == node) // Node is already in the list
+        {
+            return; // Avoid adding the same node again
+        }
+        current = current->next;
+    }
+#endif
+
+    MeshGraphAdjNode *new_node = (MeshGraphAdjNode *)malloc(sizeof(MeshGraphAdjNode));
+    assert(new_node);
+
+    // new_node data
+    new_node->node = node;
+    new_node->next = NULL;
+
+    if (list->head == NULL)
+    {
+        list->head = new_node;
+        ++(list->size);
+        return;
+    }
+
+    MeshGraphAdjNode *last_node = list->head;
+    while (last_node->next != NULL)
+    {
+        last_node = last_node->next;
+    }
+    last_node->next = new_node;
+    ++(list->size);
+}
+
+void InitializeMeshGraphAdjList(MeshGraphAdjList *list)
+{
+    list->head = NULL;
+    list->size = 0;
 }
 
 MeshGraph *CreateMeshGraph(int size)
@@ -146,16 +141,14 @@ MeshGraph *CreateMeshGraph(int size)
     assert(graph);
 
     graph->size = size;
-    graph->node = (MeshNode *)malloc(size * sizeof(MeshNode));
-    graph->adjlist = (MeshGraphAdjList **)malloc(size * sizeof(MeshGraphAdjList *));
-    assert(graph->node && graph->adjlist);
+    graph->array = (MeshGraphAdjList *)malloc(size * sizeof(MeshGraphAdjList));
+    assert(graph->array);
 
+    // initialize graph
     for (int index = 0; index < size; ++index)
     {
-        graph->adjlist[index] = NULL;
+        InitializeMeshGraphAdjList(graph->array + index);
     }
-
-    // puts("\n==== mesh graph data structure has been constructed...\n");
 
     return graph;
 }
