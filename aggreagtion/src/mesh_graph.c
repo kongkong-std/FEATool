@@ -9,6 +9,8 @@ void ClearMeshAdjList(MeshGraphAdjList *list)
         free(tmp);
         curr = curr->next;
     }
+    list->size = 0;
+    list->head = NULL;
 }
 
 void ClearMeshGraph(MeshGraph *graph)
@@ -109,6 +111,7 @@ void AddNodeMeshGraphAdjList(MeshGraphAdjList *list, MeshNode *node)
     MeshGraphAdjNode *new_node = (MeshGraphAdjNode *)malloc(sizeof(MeshGraphAdjNode));
     assert(new_node);
 
+#if 1
     // new_node data
     new_node->node = node;
     new_node->next = NULL;
@@ -127,6 +130,15 @@ void AddNodeMeshGraphAdjList(MeshGraphAdjList *list, MeshNode *node)
     }
     last_node->next = new_node;
     ++(list->size);
+#endif // insert in tail of adjacency list
+
+#if 0
+    new_node->node = node;
+    new_node->next = list->head;
+
+    list->head = new_node;
+    ++(list->size);
+#endif // insert in head of adjacency list
 }
 
 void InitializeMeshGraphAdjList(MeshGraphAdjList *list)
