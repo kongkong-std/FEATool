@@ -1,7 +1,7 @@
 # makefile for FEATool
 # module load generators/make/4.3/gcc-10.3.0
 CC = gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -O3
 SRC = ../src
 OBJECT = $(patsubst %.c,%.o,$(wildcard $(SRC)/*.c))
 # LIB = -lm

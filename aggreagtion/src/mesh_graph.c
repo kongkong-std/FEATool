@@ -1,5 +1,192 @@
 #include "../include/main.h"
 
+void AddEdgeMeshGraphWitNode(MeshGraph *graph, MeshNode *node, int u, int v)
+{
+    // 1-base to 0-base
+    --u;
+    --v;
+
+    // add node to adjacency list, node u adjacency list
+    AddNodeMeshGraphAdjList(graph->array + u, node + u);
+    AddNodeMeshGraphAdjList(graph->array + u, node + v);
+
+    // add node to adjacency list, node v adjacency list
+    AddNodeMeshGraphAdjList(graph->array + v, node + v);
+    AddNodeMeshGraphAdjList(graph->array + v, node + u);
+}
+
+int IsConnectAggregationMeshGraph(MeshGraph *graph_aggregation, MeshGraph *graph, int u, int v)
+{
+    MeshGraphAdjList *graph_aggregation_list_u = graph_aggregation->array + u;
+    MeshGraphAdjList *graph_aggregation_list_v = graph_aggregation->array + v;
+
+    MeshGraphAdjNode *curr_graph_aggregation_list_u = graph_aggregation_list_u->head;
+    while (curr_graph_aggregation_list_u)
+    {
+        int tmp_u = curr_graph_aggregation_list_u->node->node_idx; // 1-base
+        MeshGraphAdjList *graph_list_tmp_u = graph->array + tmp_u - 1;
+
+        MeshGraphAdjNode *curr_graph_aggregation_list_v = graph_aggregation_list_v->head;
+        while (curr_graph_aggregation_list_v)
+        {
+            int tmp_v = curr_graph_aggregation_list_v->node->node_idx; // 1-base
+            MeshGraphAdjNode *curr_graph_tmp_u = graph_list_tmp_u->head;
+            while (curr_graph_tmp_u)
+            {
+                if (tmp_v == curr_graph_tmp_u->node->node_idx)
+                {
+                    return 1;
+                }
+
+                curr_graph_tmp_u = curr_graph_tmp_u->next;
+            }
+
+            curr_graph_aggregation_list_v = curr_graph_aggregation_list_v->next;
+        }
+
+        curr_graph_aggregation_list_u = curr_graph_aggregation_list_u->next;
+    }
+
+    return 0;
+}
+
+void AssembleCoarseMeshGraph(MeshGraph *coarse_graph, MeshGraph *graph_aggregation,
+                             MeshGraph *fine_graph, MeshNode *coarse_node)
+{
+    for (int u = 0; u < graph_aggregation->size - 1; ++u)
+    {
+        for (int v = u + 1; v < graph_aggregation->size; ++v)
+        {
+            // check the connection of adjacency_list(u) and adjacency_list(v)
+            /*
+             * flag = 0 represents unconnected
+             * flag = 1 represents connected
+             */
+            int flag = IsConnectAggregationMeshGraph(graph_aggregation, fine_graph, u, v);
+            if (flag == 1)
+            {
+                // u, v from 0-base to 1-base
+                AddEdgeMeshGraphWitNode(coarse_graph, coarse_node, u + 1, v + 1);
+            }
+        }
+    }
+}
+
+void AssembleCoarseMeshNode(MeshGraph *graph, MeshNode *node)
+{
+    for (int index = 0; index < graph->size; ++index)
+    {
+        double tmp_x = 0., tmp_y = 0., tmp_z = 0.;
+        MeshGraphAdjNode *curr = graph->array[index].head;
+        while (curr)
+        {
+            tmp_x += curr->node->node_x;
+            tmp_y += curr->node->node_y;
+            tmp_z += curr->node->node_z;
+
+            curr = curr->next;
+        }
+        node[index].node_idx = index + 1;
+        node[index].add_flag = 0;
+        node[index].node_x = tmp_x / graph->array[index].size;
+        node[index].node_y = tmp_y / graph->array[index].size;
+        node[index].node_z = tmp_z / graph->array[index].size;
+    }
+}
+
+void DeleteNodeMeshGraphAdjList(MeshGraphAdjList *list, MeshGraphAdjNode *node)
+{
+    MeshGraphAdjNode *to_delete = node;
+    if (node == list->head)
+    {
+        list->head = node->next;
+    }
+    else
+    {
+        MeshGraphAdjNode *prev = list->head;
+        while (prev->next != node)
+        {
+            prev = prev->next;
+        }
+
+        prev->next = node->next;
+    }
+
+    free(to_delete);
+    --(list->size);
+}
+
+MeshGraph *AggregationMeshGraph(MeshGraph *graph)
+{
+    int cnt_aggregation = 0;
+    for (int index = 0; index < graph->size; ++index)
+    {
+        MeshGraphAdjNode *curr_head_node = graph->array[index].head;
+
+        // 如果当前顶点没有被访问过（add_flag == 0）
+        if (curr_head_node->node->add_flag == 0)
+        {
+            ++cnt_aggregation; // 增加聚类计数
+            // 遍历该节点的所有邻接节点
+            while (curr_head_node)
+            {
+                if (curr_head_node->node->add_flag == 1)
+                {
+                    DeleteNodeMeshGraphAdjList(graph->array + index, curr_head_node);
+
+                    // 更新当前节点为下一个节点
+                    curr_head_node = curr_head_node->next; // 正常跳到下一个节点
+                    continue;                              // 继续处理下一个节点
+                }
+                else
+                {
+                    // 标记为已访问
+                    curr_head_node->node->add_flag = 1;
+                }
+                // 更新当前节点
+                curr_head_node = curr_head_node->next;
+            }
+        }
+        else
+        {
+            // 如果当前顶点已经访问过，则清空邻接表
+            ClearMeshAdjList(&graph->array[index]);
+        }
+    }
+
+    MeshGraph *graph_aggregation = CreateMeshGraph(cnt_aggregation);
+    int cnt = 0;
+    for (int index = 0; index < graph->size; ++index)
+    {
+        if (graph->array[index].head != NULL)
+        {
+            MeshGraphAdjNode *graph_node = graph->array[index].head;
+            while (graph_node)
+            {
+                AddNodeMeshGraphAdjList(graph_aggregation->array + cnt, graph_node->node);
+                graph_node = graph_node->next;
+            }
+            ++cnt;
+        }
+    }
+
+    return graph_aggregation;
+}
+
+void CopyMeshGraph(MeshGraph *graph_dst, MeshGraph *graph_src)
+{
+    for (int index = 0; index < graph_src->size; ++index)
+    {
+        MeshGraphAdjNode *src_adj_node = graph_src->array[index].head;
+        while (src_adj_node)
+        {
+            AddNodeMeshGraphAdjList(graph_dst->array + index, src_adj_node->node);
+
+            src_adj_node = src_adj_node->next;
+        }
+    }
+}
+
 void ClearMeshAdjList(MeshGraphAdjList *list)
 {
     MeshGraphAdjNode *curr = list->head;

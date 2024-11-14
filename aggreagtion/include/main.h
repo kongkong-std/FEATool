@@ -44,6 +44,7 @@ typedef struct
 {
     /* data */
     int node_idx;                  // node index
+    int add_flag;                  // 0 represents unvisited, 1 represents visited
     double node_x, node_y, node_z; // node coordinate
 } MeshNode;
 
@@ -78,66 +79,66 @@ typedef struct mesh_graph
     MeshGraphAdjList *array;
 } MeshGraph;
 
-#if 0
-/*
- * mesh node RB node
- */
-typedef struct mesh_node_rb_node
-{
-    /* data */
-    MeshNode data;
-    int color;
-    struct mesh_node_rb_node *left, *right, *parent;
-} MeshNodeRBNode;
-
-/*
- * mesh node RB tree
- */
-typedef struct mesh_node_rb_tree
-{
-    /* data */
-    MeshNodeRBNode *root;  // root node
-    MeshNodeRBNode *TNULL; // nil node
-} MeshNodeRBTree;
-#endif // rb tree
-
 // function prototype
-#if 0
 /*
- * search data in RB tree
+ * mapping of aggregation block to prolognation operator dof ordered by node indices,
+ * to prolongation block row and clolumn
  */
-MeshNodeRBNode *SearchRBTree(MeshNodeRBTree *, int);
+void MapAggregationProlongationOperator(MeshGraph * /*graph aggreagtion*/,
+                                        int * /*map_row*/,
+                                        int * /*map_column*/,
+                                        int /*size*/); // block row and column
 
 /*
- * insert data to RB tree
+ * print prolongation operator
  */
-void InsertRBTree(MeshNodeRBTree *, MeshNode);
+void PrintProlongationOperator(double *** /*prolongation operator*/,
+                               MeshGraph * /*graph aggregation*/, int);
 
 /*
- * fix RB tree holds the property
+ * prolongation operator construction
  */
-void FixInsert(MeshNodeRBTree *, MeshNodeRBNode *);
+void ConstructProlongationOperator(double *** /*prolongation operator*/,
+                                   MeshGraph * /*graph aggreation*/,
+                                   MeshGraph * /*coarse graph*/,
+                                   int /*rbm order*/);
 
 /*
- * RB tree left rotate
+ * add node data node_u, node_v to graph
  */
-void LeftRotate(MeshNodeRBTree *, MeshNodeRBNode *);
+void AddEdgeMeshGraphWitNode(MeshGraph *graph, MeshNode *node, int u, int v);
 
 /*
- * RB tree right rotate
+ * check aggragation is connected or not
  */
-void RightRotate(MeshNodeRBTree *, MeshNodeRBNode *);
+int IsConnectAggregationMeshGraph(MeshGraph * /*graph aggregation*/, MeshGraph * /*fine graph*/,
+                                  int /*adjacency list u*/, int /*adjacency list v*/);
 
 /*
- * create RB node
+ * coarse graph adjacency list represents and node is coarse node
  */
-MeshNodeRBNode *CreateMeshNodeRBNode(MeshNode);
+void AssembleCoarseMeshGraph(MeshGraph * /*coarse graph*/, MeshGraph * /*graph aggregation*/,
+                             MeshGraph * /*fine graph*/, MeshNode * /*coarse node data*/);
 
 /*
- * create RB tree
+ * center of aggregation is choosen as coarse node
  */
-MeshNodeRBTree *CreateMeshNodeRBTree(void);
-#endif // rb tree function
+void AssembleCoarseMeshNode(MeshGraph * /*coarse graph*/, MeshNode * /*coarse node*/);
+
+/*
+ * delete specific node in adjacency list
+ */
+void DeleteNodeMeshAdjList(MeshGraphAdjList *, MeshGraphAdjNode *);
+
+/*
+ * fine graph aggregation, deleting adjacency list
+ */
+MeshGraph *AggregationMeshGraph(MeshGraph * /*fine graph*/);
+
+/*
+ * copying a graph to another graph
+ */
+void CopyMeshGraph(MeshGraph * /*destination graph*/, MeshGraph * /*source graph*/);
 
 /*
  * clear adjacency list

@@ -112,6 +112,7 @@ void MeshFileProcess(const char *path,
             {
                 MeshNode *data_node = (MeshNode *)malloc(sizeof(MeshNode));
                 assert(data_node);
+                data_node->add_flag = 0;
                 sscanf(buffer, "%d%lf%lf%lf", &data_node->node_idx,
                        &data_node->node_x, &data_node->node_y, &data_node->node_z);
                 AddNodeToList(data_list_node, data_node, TYPE_NODE);
