@@ -128,7 +128,7 @@ void AssembleCoarseMeshNode(MeshGraph * /*coarse graph*/, MeshNode * /*coarse no
 /*
  * delete specific node in adjacency list
  */
-void DeleteNodeMeshAdjList(MeshGraphAdjList *, MeshGraphAdjNode *);
+void DeleteNodeMeshGraphAdjList(MeshGraphAdjList *, MeshGraphAdjNode *);
 
 /*
  * fine graph aggregation, deleting adjacency list

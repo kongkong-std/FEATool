@@ -311,8 +311,7 @@ void PrintProlongationOperator(double ***P_operator, MeshGraph *graph_aggregatio
                        P_operator[index][index_i][20],
                        P_operator[index][index_i][21],
                        P_operator[index][index_i][22],
-                       P_operator[index][index_i][23],
-                       P_operator[index][index_i][24]);
+                       P_operator[index][index_i][23]);
             }
             putchar('\n');
         }
