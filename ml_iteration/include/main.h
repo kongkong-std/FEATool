@@ -99,13 +99,39 @@ typedef struct mla_graph
 
 // function prototype
 /*
+ * mla solve phase
+ */
+void MLASolvePhase(MySolver *mysolver, MLAGraph *mla, int gcr_restart);
+
+/*
+ * mla post-smooth phase, gauss-seidel smoother
+ */
+void MLAPostSmoothPhase(MySolver *mysolver, int v_post_smooth);
+
+/*
+ * mla pre-smooth phase, gauss-seidel smoother
+ */
+void MLAPreSmoothPhase(MySolver *mysolver, int v_pre_smooth);
+
+/*
+ * mla setup phase constructs prolongation operator
+ */
+void MLASetupPhase(MLAGraph *, int /*rbm order*/);
+
+/*
+ * computing relative residual of mla
+ */
+void MLARelativeResidual(MySolver *, double *);
+
+/*
  * multilevel iteration solver
  *     GS smoother
  *     mla_phase: 0 setup, 1 solve, 2 setup + solve
  */
 void MLAIterationSolver(MySolver *, MLAGraph *, int /*mla phase*/, int /*gcr restart*/,
                         double /*tolerance*/, int /*max iteration*/,
-                        int /*pre-smoothing time*/, int /*post-smoothing time*/);
+                        int /*pre-smoothing time*/, int /*post-smoothing time*/,
+                        int /*rbm order*/);
 
 /*
  * add node data node_u, node_v to graph
@@ -122,6 +148,12 @@ int IsConnectAggregationMeshGraph(MeshGraph * /*graph aggregation*/, MeshGraph *
  * center of aggregation is choosen as coarse node
  */
 void AssembleCoarseMeshNode(MeshGraph * /*coarse graph*/, MeshNode * /*coarse node*/);
+
+/*
+ * coarse graph adjacency list represents and node is coarse node
+ */
+void AssembleCoarseMeshGraph(MeshGraph * /*coarse graph*/, MeshGraph * /*graph aggregation*/,
+                             MeshGraph * /*fine graph*/, MeshNode * /*coarse node data*/);
 
 /*
  * delete specific node in adjacency list

@@ -78,16 +78,22 @@ int main(int argc, char **argv)
         PetscCall(PetscPrintf(PETSC_COMM_WORLD, "mla_rtol = %le\n", mla_rtol));
     }
 
-    PetscCall(PetscOptionsGetInt(NULL, NULL, "-mla_pre_smooth", &mla_v_pre_smooth, &path_flag));
+    PetscCall(PetscOptionsGetInt(NULL, NULL, "-mla_max_it", &mla_max_it, &path_flag));
     if (path_flag)
     {
-        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "mla_pre_smooth time = %d\n", mla_v_pre_smooth));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "mla_max_it = %d\n", mla_max_it));
     }
 
-    PetscCall(PetscOptionsGetInt(NULL, NULL, "-mla_post_smooth", &mla_v_post_smooth, &path_flag));
+    PetscCall(PetscOptionsGetInt(NULL, NULL, "-mla_v_pre_smooth", &mla_v_pre_smooth, &path_flag));
     if (path_flag)
     {
-        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "mla_post_smooth time = %d\n", mla_v_post_smooth));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "mla_v_pre_smooth time = %d\n", mla_v_pre_smooth));
+    }
+
+    PetscCall(PetscOptionsGetInt(NULL, NULL, "-mla_v_post_smooth", &mla_v_post_smooth, &path_flag));
+    if (path_flag)
+    {
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "mla_v_post_smooth time = %d\n", mla_v_post_smooth));
     }
 
     MySolver mysolver;
@@ -154,7 +160,9 @@ int main(int argc, char **argv)
     mla.coarse = coarse_graph;
     mla.prolongation_set = 0;
     MLAIterationSolver(&mysolver, &mla, mla_phase, gcr_restart,
-                       mla_rtol, mla_max_it, mla_v_pre_smooth, mla_v_post_smooth);
+                       mla_rtol, mla_max_it, 
+                       mla_v_pre_smooth, mla_v_post_smooth,
+                       order_rbm);
 
     // computing residual
     SolverPetscResidualCheck(&mysolver);
@@ -181,4 +189,10 @@ int main(int argc, char **argv)
  *     -label_bound 1
  *     -label_omega 2
  *     -order_rbm <1 or 2>
+ *     -mla_phase <0 or 1 or 2>
+ *     -gcr_restart <int num>
+ *     -mla_rtol <double num>
+ *     -mla_max_it <int num>
+ *     -mla_v_pre_smooth <int num>
+ *     -mla_v_post_smooth <int num>
  */
