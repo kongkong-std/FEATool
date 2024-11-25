@@ -17,6 +17,7 @@ void MLAPreSmoothPhase(MySolver *mysolver, int v_pre_smooth)
     PetscCall(PCSetType(mysolver->pc, PCSOR));
     PetscCall(PCSORSetOmega(mysolver->pc, 1.)); // gauss-seidel
     PetscCall(PCSORSetIterations(mysolver->pc, v_pre_smooth, v_pre_smooth));
+    PetscCall(PCSORSetSymmetric(mysolver->pc, SOR_SYMMETRIC_SWEEP));
     PetscCall(KSPSetNormType(mysolver->ksp, KSP_NORM_UNPRECONDITIONED));
     PetscCall(KSPSetFromOptions(mysolver->ksp));
 
@@ -42,6 +43,7 @@ void MLAPostSmoothPhase(MySolver *mysolver, int v_post_smooth)
     PetscCall(PCSetType(mysolver->pc, PCSOR));
     PetscCall(PCSORSetOmega(mysolver->pc, 1.)); // gauss-seidel
     PetscCall(PCSORSetIterations(mysolver->pc, v_post_smooth, v_post_smooth));
+    PetscCall(PCSORSetSymmetric(mysolver->pc, SOR_SYMMETRIC_SWEEP));
     PetscCall(KSPSetNormType(mysolver->ksp, KSP_NORM_UNPRECONDITIONED));
     PetscCall(KSPSetFromOptions(mysolver->ksp));
 
@@ -55,14 +57,14 @@ void MLASolvePhase(MySolver *mysolver, MLAGraph *mla, int gcr_restart)
 {
     // computing residual
     PetscCall(MatMult(mysolver->solver_a, mysolver->solver_x, mysolver->solver_r));
-    PetscCall(VecAXPY(mysolver->solver_r, -1., mysolver->solver_b));
+    PetscCall(VecAYPX(mysolver->solver_r, -1., mysolver->solver_b)); // b - Ax, ATTENTION!!!
 
     int m_solver_a = 0, n_solver_a = 0;
     int m_prolongation, n_prolongation = 0;
     PetscCall(MatGetSize(mysolver->solver_a, &m_solver_a, &n_solver_a));
     PetscCall(MatGetSize(mla->prolongation, &m_prolongation, &n_prolongation));
 
-#if 1
+#if 0
     printf("\n>>>>>>>> m_solver_a = %d, n_solver_a = %d\n", m_solver_a, n_solver_a);
     printf(">>>>>>>> m_prolongation = %d, n_prolongation = %d\n", m_prolongation, n_prolongation);
 
@@ -77,17 +79,47 @@ void MLASolvePhase(MySolver *mysolver, MLAGraph *mla, int gcr_restart)
      *     r_H size: n_prolongation x 1
      *     e_H size: n_prolongation x 1
      */
-    Mat a_H;
+    // Mat a_H;
     Vec r_H, e_H;
     KSP ksp_H;
     PC pc;
 
-    PetscCall(MatPtAP(mysolver->solver_a, mla->prolongation, MAT_INITIAL_MATRIX, PETSC_DETERMINE, &a_H));
+    // PetscCall(MatPtAP(mysolver->solver_a, mla->prolongation, MAT_INITIAL_MATRIX, PETSC_DETERMINE, &a_H));
+#if 1
+    int m_a_H = 0, n_a_H = 0;
+    // PetscCall(MatGetSize(a_H, &m_a_H, &n_a_H));
+    PetscCall(MatGetSize(mla->operator_coarse, &m_a_H, &n_a_H));
+    printf("\n>>>>>>>> m_a_H = %d, n_a_H = %d\n", m_a_H, n_a_H);
+#endif // coarse operator
 
 #if 0
     int m_a_H = 0, n_a_H = 0;
     PetscCall(MatGetSize(a_H, &m_a_H, &n_a_H));
     printf(">>>>>>>> size of a_H: m = %d, n = %d\n", m_a_H, n_a_H);
+    double prolongation_f_norm = 0., coarse_f_norm = 0., fine_f_norm = 0., mat_tmp_f_norm = 0.;
+    PetscCall(MatNorm(mysolver->solver_a, NORM_FROBENIUS, &fine_f_norm));
+    PetscCall(MatNorm(mla->prolongation, NORM_FROBENIUS, &prolongation_f_norm));
+    PetscCall(MatNorm(a_H, NORM_FROBENIUS, &coarse_f_norm));
+
+#if 0
+    Mat mat_tmp;
+    PetscCall(MatCreate(PETSC_COMM_WORLD, &mat_tmp));
+    PetscCall(MatSetSizes(mat_tmp, PETSC_DECIDE, PETSC_DECIDE, m_a_H, n_a_H));
+    PetscCall(MatSetUp(mat_tmp));
+    PetscCall(MatSetFromOptions(mat_tmp));
+    PetscCall(MatDuplicate(a_H, MAT_DO_NOT_COPY_VALUES, &mat_tmp));
+    PetscCall(MatAXPY(mat_tmp, -1., a_H, UNKNOWN_NONZERO_PATTERN));
+    PetscCall(MatAXPY(mat_tmp, 1., mysolver->solver_a, UNKNOWN_NONZERO_PATTERN));
+    PetscCall(MatNorm(mat_tmp, NORM_FROBENIUS, &mat_tmp_f_norm));
+#endif
+
+    printf(">>>> ||*||_f\n");
+    printf("prolongation = %021.16le\n"
+           "fine_mat = %021.16le\n"
+           "coarse_mat = %021.16le\n"
+           "minus_fine_coarse = %021.16le\n",
+           prolongation_f_norm, fine_f_norm, coarse_f_norm, mat_tmp_f_norm);
+
     PetscCall(MatView(a_H, PETSC_VIEWER_STDOUT_WORLD));
     PetscCall(MatView(mla->prolongation, PETSC_VIEWER_STDOUT_WORLD));
 #endif
@@ -109,29 +141,129 @@ void MLASolvePhase(MySolver *mysolver, MLAGraph *mla, int gcr_restart)
     PetscCall(MatMultTranspose(mla->prolongation, mysolver->solver_r, r_H));
     // PetscCall(VecSet(r_H, 1.));
 
-    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp_H));
-    PetscCall(KSPSetOperators(ksp_H, a_H, a_H));
-    PetscCall(KSPSetType(ksp_H, KSPGCR));
-    // PetscCall(KSPGetPC(ksp_H, &pc));
-    // PetscCall(PCSetType(pc, PCLU));
-    PetscCall(KSPGCRSetRestart(ksp_H, gcr_restart));
-    PetscCall(KSPSetNormType(ksp_H, KSP_NORM_UNPRECONDITIONED));
-    PetscCall(KSPSetFromOptions(ksp_H));
-    PetscCall(KSPSetTolerances(mysolver->ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
+    if (mla->coarse->size * 6 == n_prolongation)
+    {
+        // rbm order 1
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp_H));
+        PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
+        PetscCall(KSPSetOperators(ksp_H, mla->operator_coarse, mla->operator_coarse));
+        PetscCall(KSPSetType(ksp_H, KSPGCR));
+        // PetscCall(KSPGetPC(ksp_H, &pc));
+        // PetscCall(PCSetType(pc, PCLU));
+        PetscCall(KSPGCRSetRestart(ksp_H, gcr_restart));
+        PetscCall(KSPSetNormType(ksp_H, KSP_NORM_UNPRECONDITIONED));
+        PetscCall(KSPSetFromOptions(ksp_H));
+        PetscCall(KSPSetTolerances(ksp_H, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
 
-    PetscCall(KSPSolve(ksp_H, r_H, e_H));
+        PetscCall(KSPSolve(ksp_H, r_H, e_H));
+    }
+    else if (mla->coarse->size * 9 == n_prolongation)
+    {
+// rbm order 2
+#if 0
+        printf("==== rbm order 2\n");
+        int null_space_coarse_size = mla->coarse->size * 3;
+        Vec null_space_coarse_basis[null_space_coarse_size];
+
+        int cnt_mod_0 = 0, cnt_mod_1 = 0, cnt_mod_2 = 0;
+
+        for (int index = 0; index < null_space_coarse_size; ++index)
+        {
+            PetscCall(VecCreate(PETSC_COMM_WORLD, null_space_coarse_basis + index));
+            PetscCall(VecSetSizes(null_space_coarse_basis[index], PETSC_DECIDE, n_prolongation));
+            PetscCall(VecSetFromOptions(null_space_coarse_basis[index]));
+
+            double *values_tmp = (double *)calloc(n_prolongation, sizeof(double));
+            assert(values_tmp);
+
+            if (index % 3 == 0)
+            {
+                values_tmp[6 + 9 * cnt_mod_0] = 1.;
+
+                for (int index_i = 0; index_i < n_prolongation; ++index_i)
+                {
+                    PetscCall(VecSetValues(null_space_coarse_basis[index],
+                                           1, &index_i, values_tmp + index_i, INSERT_VALUES));
+                }
+                PetscCall(VecAssemblyBegin(null_space_coarse_basis[index]));
+                PetscCall(VecAssemblyEnd(null_space_coarse_basis[index]));
+
+                ++cnt_mod_0;
+            }
+            else if (index % 3 == 1)
+            {
+                values_tmp[7 + 9 * cnt_mod_1] = 1.;
+
+                for (int index_i = 0; index_i < n_prolongation; ++index_i)
+                {
+                    PetscCall(VecSetValues(null_space_coarse_basis[index],
+                                           1, &index_i, values_tmp + index_i, INSERT_VALUES));
+                }
+                PetscCall(VecAssemblyBegin(null_space_coarse_basis[index]));
+                PetscCall(VecAssemblyEnd(null_space_coarse_basis[index]));
+
+                ++cnt_mod_1;
+            }
+            else if (index % 3 == 2)
+            {
+                values_tmp[8 + 9 * cnt_mod_2] = 1.;
+
+                for (int index_i = 0; index_i < n_prolongation; ++index_i)
+                {
+                    PetscCall(VecSetValues(null_space_coarse_basis[index],
+                                           1, &index_i, values_tmp + index_i, INSERT_VALUES));
+                }
+                PetscCall(VecAssemblyBegin(null_space_coarse_basis[index]));
+                PetscCall(VecAssemblyEnd(null_space_coarse_basis[index]));
+
+                ++cnt_mod_2;
+            }
+
+            // free memory
+            free(values_tmp);
+
+            double null_spcae_norm_tmp = 0.;
+            PetscCall(MatMult(a_H, null_space_coarse_basis[index], e_H));
+            PetscCall(VecNorm(e_H, NORM_2, &null_spcae_norm_tmp));
+            printf(">>>> null space vector %d, Ax = %021.16le\n", index, null_spcae_norm_tmp);
+        }
+
+        MatNullSpace null_coarse_space;
+        PetscCall(MatNullSpaceCreate(PETSC_COMM_WORLD, PETSC_FALSE, null_space_coarse_size,
+                                     null_space_coarse_basis, &null_coarse_space));
+        PetscCall(MatSetNullSpace(a_H, null_coarse_space));
+#endif // null space
+
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp_H));
+        PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
+        PetscCall(KSPSetOperators(ksp_H, mla->operator_coarse, mla->operator_coarse));
+        PetscCall(KSPSetType(ksp_H, KSPGCR));
+        // PetscCall(KSPSetType(ksp_H, KSPGMRES));
+        PetscCall(KSPGetPC(ksp_H, &pc));
+        PetscCall(PCSetType(pc, PCSVD));
+        PetscCall(KSPGCRSetRestart(ksp_H, gcr_restart));
+        PetscCall(KSPSetNormType(ksp_H, KSP_NORM_UNPRECONDITIONED));
+        PetscCall(KSPSetFromOptions(ksp_H));
+        PetscCall(KSPSetTolerances(ksp_H, 1e-4, 1e-4, PETSC_DEFAULT, 1));
+
+        PetscCall(KSPSolve(ksp_H, r_H, e_H));
+    }
 
 #if 1
     double norm_r_H = 0.;
     PetscCall(VecNorm(r_H, NORM_2, &norm_r_H));
     Vec tmp_r_H;
     PetscCall(VecDuplicate(r_H, &tmp_r_H));
-    PetscCall(MatMult(a_H, e_H, tmp_r_H));
+    PetscCall(MatMult(mla->operator_coarse, e_H, tmp_r_H));
     PetscCall(VecAXPY(tmp_r_H, -1., r_H));
     double norm_tmp_r_H = 0.;
     PetscCall(VecNorm(tmp_r_H, NORM_2, &norm_tmp_r_H));
 
+    double norm_e_H = 0.;
+    PetscCall(VecNorm(e_H, NORM_2, &norm_e_H));
+
     printf(">>>>>>>> coarse correction: norm_r_H = %021.16le\n", norm_r_H);
+    printf(">>>>>>>> coarse correction: norm_e_H = %021.16le\n", norm_e_H);
     printf(">>>>>>>> coarse correction: relative = %021.16le\n\n", norm_tmp_r_H / norm_r_H);
 #endif
 
@@ -144,12 +276,11 @@ void MLASolvePhase(MySolver *mysolver, MLAGraph *mla, int gcr_restart)
 
     // free memory
     PetscCall(KSPDestroy(&ksp_H));
-    PetscCall(MatDestroy(&a_H));
     PetscCall(VecDestroy(&r_H));
     PetscCall(VecDestroy(&e_H));
 }
 
-void MLASetupPhase(MLAGraph *mla, int order_rbm)
+void MLASetupPhase(MySolver *mysolver, MLAGraph *mla, int order_rbm)
 {
     if (mla->prolongation_set == 1)
     {
@@ -284,6 +415,14 @@ void MLASetupPhase(MLAGraph *mla, int order_rbm)
                               (node_coarse_y - node_aggregation_y) / 2.; // (3, 8) yy/2
                 p_loc[2][8] = (node_coarse_x - node_aggregation_x) *
                               (node_coarse_y - node_aggregation_y); // (3, 9) xy
+#if 0
+                p_loc[3][7] = p_loc[0][4];                          // (4, 8) z
+                p_loc[3][8] = p_loc[0][5];                          // (4, 9) -y
+                p_loc[4][6] = p_loc[1][3];                          // (5, 7) -z
+                p_loc[4][8] = p_loc[1][5];                          // (5, 9) x
+                p_loc[5][6] = p_loc[2][3];                          // (6, 7) y
+                p_loc[5][7] = p_loc[2][4];                          // (6, 8) -x
+#endif
 
                 // p_loc in prolongation operator location
                 /*
@@ -307,6 +446,10 @@ void MLASetupPhase(MLAGraph *mla, int order_rbm)
     }
     PetscCall(MatAssemblyBegin(mla->prolongation, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(mla->prolongation, MAT_FINAL_ASSEMBLY));
+
+    PetscCall(MatPtAP(mysolver->solver_a, mla->prolongation,
+                      MAT_INITIAL_MATRIX, PETSC_DETERMINE,
+                      &(mla->operator_coarse)));
 
     mla->prolongation_set = 1;
 }
@@ -334,7 +477,7 @@ void MLAIterationSolver(MySolver *mysolver, MLAGraph *mla,
     // setup phase
     if (mla_pahse == 0 || mla_pahse == 2)
     {
-        MLASetupPhase(mla, order_rbm);
+        MLASetupPhase(mysolver, mla, order_rbm);
     }
 
     // solve phase
@@ -354,5 +497,6 @@ void MLAIterationSolver(MySolver *mysolver, MLAGraph *mla,
             MLARelativeResidual(mysolver, &rela_resid);
             ++cnt;
         }
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", cnt, rela_resid));
     }
 }

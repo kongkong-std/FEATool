@@ -118,6 +118,7 @@ void DeleteNodeMeshGraphAdjList(MeshGraphAdjList *list, MeshGraphAdjNode *node)
 
 MeshGraph *AggregationMeshGraph(MeshGraph *graph)
 {
+#if 1
     int cnt_aggregation = 0;
     for (int index = 0; index < graph->size; ++index)
     {
@@ -169,6 +170,16 @@ MeshGraph *AggregationMeshGraph(MeshGraph *graph)
             ++cnt;
         }
     }
+#endif // aggregation technique
+
+#if 0
+    MeshGraph *graph_aggregation = CreateMeshGraph(graph->size);
+    for (int index = 0; index < graph->size; ++index)
+    {
+        MeshGraphAdjNode *graph_node = graph->array[index].head;
+        AddNodeMeshGraphAdjList(graph_aggregation->array + index, graph_node->node);
+    }
+#endif // every single node as a aggregation body
 
     return graph_aggregation;
 }

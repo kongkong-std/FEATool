@@ -156,11 +156,17 @@ int main(int argc, char **argv)
      */
     MLAGraph mla; // multilevel aggregation variable
     mla.fine = graph;
+#if 1
     mla.aggregation = graph_aggregation;
     mla.coarse = coarse_graph;
+#endif // classic aggregation techinique
+#if 0
+    mla.aggregation = graph;
+    mla.coarse = graph;
+#endif // aggregation with 1 node
     mla.prolongation_set = 0;
     MLAIterationSolver(&mysolver, &mla, mla_phase, gcr_restart,
-                       mla_rtol, mla_max_it, 
+                       mla_rtol, mla_max_it,
                        mla_v_pre_smooth, mla_v_post_smooth,
                        order_rbm);
 

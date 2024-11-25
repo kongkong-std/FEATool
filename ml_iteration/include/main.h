@@ -93,7 +93,7 @@ typedef struct mla_graph
     MeshGraph *fine;
     MeshGraph *aggregation;
     MeshGraph *coarse;
-    Mat prolongation;
+    Mat prolongation, operator_coarse;
     int prolongation_set; // 0 represents unset, 1 represents setting
 } MLAGraph;
 
@@ -116,7 +116,7 @@ void MLAPreSmoothPhase(MySolver *mysolver, int v_pre_smooth);
 /*
  * mla setup phase constructs prolongation operator
  */
-void MLASetupPhase(MLAGraph *, int /*rbm order*/);
+void MLASetupPhase(MySolver *, MLAGraph *, int /*rbm order*/);
 
 /*
  * computing relative residual of mla

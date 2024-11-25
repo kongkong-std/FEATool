@@ -1,0 +1,112 @@
+Matrix file: ../input/linsys/petsc-bin-mat-refine0
+RHS file: ../input/linsys/petsc-bin-rhs-refine0
+Mesh file: ../input/mesh/linear-elasticity-2d-22.msh
+label_omega = 2
+label_bound = 1
+order_rbm = 1
+mla_phase = 2
+gcr_restart = 50
+mla_rtol = 1.000000e-06
+mla_max_it = 1000
+mla_v_pre_smooth time = 10
+mla_v_post_smooth time = 10
+==== basic information of linear system ====
+matrix Row = 1506, matrix Column = 1506
+matrix nz_allocated = 27747, matrix nz_used = 27747, matrix nz_unneeded = 0
+vector Row = 1506
+>>>>>>>> setup phase:
+ prolongation_block_row = 251, col = 251
+size of prolongation: m = 1506, n = 1506
+0 MLA ||r(i)||/||b|| 1.0000000000000000e+00
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
+>>>>>>>> coarse correction: norm_r_H = 3.1110933974829864e+00
+>>>>>>>> coarse correction: relative = 7.8719589333188578e-01
+
+1 MLA ||r(i)||/||b|| 1.4043691843306438e+00
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
+>>>>>>>> coarse correction: norm_r_H = 3.6840818062980274e+00
+>>>>>>>> coarse correction: relative = 6.5784689282604880e-01
+
+2 MLA ||r(i)||/||b|| 2.0891520583303800e+00
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
+>>>>>>>> coarse correction: norm_r_H = 5.4800621921517640e+00
+>>>>>>>> coarse correction: relative = 5.6462192090570917e-01
+
+3 MLA ||r(i)||/||b|| 3.5985805800567068e+00
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
+>>>>>>>> coarse correction: norm_r_H = 9.4461609454676765e+00
+>>>>>>>> coarse correction: relative = 2.2396783328387593e-01
+
+4 MLA ||r(i)||/||b|| 6.8229013968707566e+00
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
+>>>>>>>> coarse correction: norm_r_H = 1.7927896960617954e+01
+>>>>>>>> coarse correction: relative = 5.3309985742641941e-01
+
+5 MLA ||r(i)||/||b|| 1.3475553767599113e+01
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
+>>>>>>>> coarse correction: norm_r_H = 3.5437624079371282e+01
+>>>>>>>> coarse correction: relative = 2.8475559729499705e-02
+
+6 MLA ||r(i)||/||b|| 2.6523118308648982e+01
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
+>>>>>>>> coarse correction: norm_r_H = 6.9799833512061056e+01
+>>>>>>>> coarse correction: relative = 1.2157699827243770e-01
+
+7 MLA ||r(i)||/||b|| 5.2161874211535810e+01
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
+>>>>>>>> coarse correction: norm_r_H = 1.3731572445805494e+02
+>>>>>>>> coarse correction: relative = 7.7462725727302464e-02
+
+8 MLA ||r(i)||/||b|| 1.0304484802547333e+02
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
+>>>>>>>> coarse correction: norm_r_H = 2.7135289606605301e+02
+>>>>>>>> coarse correction: relative = 5.2600068743762510e-02
+
+9 MLA ||r(i)||/||b|| 2.0369129038188260e+02
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
+>>>>>>>> coarse correction: norm_r_H = 5.3652707088121122e+02
+>>>>>>>> coarse correction: relative = 7.1074864674885774e-02
+
+10 MLA ||r(i)||/||b|| 4.0304123612065541e+02
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
+>>>>>>>> coarse correction: norm_r_H = 1.0619183501909963e+03
+>>>>>>>> coarse correction: relative = 2.0516852928870854e-02
+
+11 MLA ||r(i)||/||b|| 7.9756104356260084e+02
+
+>>>>>>>> m_solver_a = 1506, n_solver_a = 1506
+>>>>>>>> m_prolongation = 1506, n_prolongation = 1506
+>>>>>>>> n_solver_r = 1506
