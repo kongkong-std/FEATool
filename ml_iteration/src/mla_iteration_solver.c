@@ -236,15 +236,17 @@ void MLASolvePhase(MySolver *mysolver, MLAGraph *mla, int gcr_restart)
 
         PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp_H));
         PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
-        PetscCall(KSPSetOperators(ksp_H, mla->operator_coarse, mla->operator_coarse));
+        double shift = 1e-10;
+        PetscCall(MatShift(mla->operator_coarse, shift));
+        PetscCall(KSPSetOperators(ksp_H, mla->operator_coarse, mla->operator_coarse));    // add shift to diagonal
         PetscCall(KSPSetType(ksp_H, KSPGCR));
         // PetscCall(KSPSetType(ksp_H, KSPGMRES));
-        PetscCall(KSPGetPC(ksp_H, &pc));
-        PetscCall(PCSetType(pc, PCSVD));
+        // PetscCall(KSPGetPC(ksp_H, &pc));
+        // PetscCall(PCSetType(pc, PCSVD));
         PetscCall(KSPGCRSetRestart(ksp_H, gcr_restart));
         PetscCall(KSPSetNormType(ksp_H, KSP_NORM_UNPRECONDITIONED));
         PetscCall(KSPSetFromOptions(ksp_H));
-        PetscCall(KSPSetTolerances(ksp_H, 1e-4, 1e-4, PETSC_DEFAULT, 1));
+        PetscCall(KSPSetTolerances(ksp_H, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
 
         PetscCall(KSPSolve(ksp_H, r_H, e_H));
     }
