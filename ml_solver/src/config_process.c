@@ -1,8 +1,12 @@
 #include "../include/main.h"
 
 // 读取和解析 JSON 配置文件
-int ConfigParse(const char *filename, ConfigFile *file_config, ConfigMLA *mla_config)
+int ConfigParse(const char *filename, ConfigJSON *config)
 {
+    ConfigFile *file_config = &config->file_config;
+    ConfigMLA *mla_config = &config->mla_config;
+    ConfigMeshLabel *mesh_label_config = &config->mesh_label_config;
+
     // 读取 JSON 文件内容
     FILE *f = fopen(filename, "rb");
     if (!f)
@@ -64,6 +68,20 @@ int ConfigParse(const char *filename, ConfigFile *file_config, ConfigMLA *mla_co
             mla_config->mla_rtol = mla_rtol->valuedouble;
             mla_config->mla_level = mla_level->valueint;
             mla_config->mla_phase = mla_phase->valueint;
+        }
+    }
+
+    // mesh label config
+    cJSON *mesh_label_obj = cJSON_GetObjectItem(root, "mesh_label");
+    if (mesh_label_obj)
+    {
+        cJSON *label_bound = cJSON_GetObjectItem(mesh_label_obj, "label_bound");
+        cJSON *label_omega = cJSON_GetObjectItem(mesh_label_obj, "label_omega");
+
+        if (label_bound && label_omega)
+        {
+            mesh_label_config->label_bound = label_bound->valueint;
+            mesh_label_config->label_omega = label_omega->valueint;
         }
     }
 

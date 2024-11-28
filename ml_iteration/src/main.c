@@ -120,7 +120,9 @@ int main(int argc, char **argv)
 
     MeshGraph *graph = CreateMeshGraph(data_list_node.size);
     AssembleMeshGraph(graph, &data_list_node, &data_list_ele_omega);
-    // PrintMeshGraph(graph);
+#if 1
+    PrintMeshGraph(graph);
+#endif
 
     // aggregation
     MeshGraph *graph_tmp = CreateMeshGraph(graph->size);
@@ -129,12 +131,14 @@ int main(int argc, char **argv)
     // puts("\nCopied graph:");
     // PrintMeshGraph(graph_tmp);
 
-    // puts("\nAggregation graph:");
     MeshGraph *graph_aggregation = AggregationMeshGraph(graph_tmp);
+    // puts("\nAggregation graph:");
     // PrintMeshGraph(graph_tmp);
 
-    // puts("\nUpdating aggregation graph:");
-    // PrintMeshGraph(graph_aggregation);
+#if 1
+    puts("\nUpdating aggregation graph:");
+    PrintMeshGraph(graph_aggregation);
+#endif
 
     // coarse level processing
     MeshGraph *coarse_graph = CreateMeshGraph(graph_aggregation->size);
@@ -144,8 +148,10 @@ int main(int argc, char **argv)
     AssembleCoarseMeshNode(graph_aggregation, data_coarse_node);
 
     AssembleCoarseMeshGraph(coarse_graph, graph_aggregation, graph, data_coarse_node);
-    // puts("\n\nCoarse Graph:");
-    // PrintMeshGraph(coarse_graph);
+#if 1
+    puts("\n\nCoarse Graph:");
+    PrintMeshGraph(coarse_graph);
+#endif
 
     // step 3, multilevel iteration
     /*

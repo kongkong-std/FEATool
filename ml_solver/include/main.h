@@ -9,7 +9,12 @@
 #include <assert.h>
 #include <cjson/cJSON.h>
 
+#define MAX_SIZE PETSC_MAX_PATH_LEN
+
 // data struct
+/*
+ * json data struct
+ */
 typedef struct config_file
 {
     char file_mat[PETSC_MAX_PATH_LEN];
@@ -27,6 +32,23 @@ typedef struct config_mla
     int mla_phase;
 } ConfigMLA;
 
+typedef struct config_mesh_label
+{
+    /* data */
+    int label_bound, label_omega;
+} ConfigMeshLabel;
+
+typedef struct config_json
+{
+    /* data */
+    ConfigFile file_config;
+    ConfigMLA mla_config;
+    ConfigMeshLabel mesh_label_config;
+} ConfigJSON;
+
+/*
+ * mesh data struct
+ */
 typedef enum
 {
     TYPE_PHYSICAL_TAG,
@@ -94,6 +116,9 @@ typedef struct mesh_graph
     MeshGraphAdjList *array;
 } MeshGraph;
 
+/*
+ * solver data struct
+ */
 typedef struct my_solver
 {
     KSP ksp;
@@ -102,6 +127,9 @@ typedef struct my_solver
     Vec solver_b, solver_x, solver_r; // rhs, solution, residual
 } MySolver;
 
+/*
+ * mla data struct
+ */
 typedef struct mla_graph
 {
     /* data */
@@ -112,15 +140,148 @@ typedef struct mla_graph
     int level;                         // current level
 } MLAGraph;
 
-typedef struct mla_v_cycle
+typedef struct mla_context
 {
     /* data */
     int num_level; // total level
     MLAGraph *mla; // neighbouring level, size: num_level - 1
     int setup;     // setup flag, 0 represents un-setup, 1 represents setup
-} MLAVCycle;
+} MLAContext;
 
 // function prototype
+/*
+ * mla solver setup phase
+ *     number of levels
+ *     rbm order
+ *     neighbouring fine and coarse mesh
+ *     aggregation mesh
+ *     prolongation operator
+ *     coarse operator
+ */
+void MLASovlerSetupPhase(MySolver * /*linear system data*/,
+                         const MeshGraph * /*finest mesh data*/,
+                         int /*number of levels*/,
+                         int /*rbm order*/,
+                         MLAContext * /*mla context*/);
+
+/*
+ * mla solver
+ */
+void MLASolver(const MeshGraph * /*graph data*/,
+               MySolver * /*linear system data*/,
+               const ConfigJSON * /*config data*/,
+               int /*rbm order*/,
+               MLAContext * /*mla context*/);
+
+/*
+ * add node data node_u, node_v to graph
+ */
+void AddEdgeMeshGraphWitNode(MeshGraph *graph, MeshNode *node, int u, int v);
+
+/*
+ * check aggragation is connected or not
+ */
+int IsConnectAggregationMeshGraph(MeshGraph * /*graph aggregation*/, MeshGraph * /*fine graph*/,
+                                  int /*adjacency list u*/, int /*adjacency list v*/);
+
+/*
+ * center of aggregation is choosen as coarse node
+ */
+void AssembleCoarseMeshNode(MeshGraph * /*coarse graph*/, MeshNode * /*coarse node*/);
+
+/*
+ * coarse graph adjacency list represents and node is coarse node
+ */
+void AssembleCoarseMeshGraph(MeshGraph * /*coarse graph*/, MeshGraph * /*graph aggregation*/,
+                             MeshGraph * /*fine graph*/, MeshNode * /*coarse node data*/);
+
+/*
+ * delete specific node in adjacency list
+ */
+void DeleteNodeMeshGraphAdjList(MeshGraphAdjList *, MeshGraphAdjNode *);
+
+/*
+ * fine graph aggregation, deleting adjacency list
+ */
+MeshGraph *AggregationMeshGraph(MeshGraph * /*fine graph*/);
+
+/*
+ * copying a graph to another graph
+ */
+void CopyMeshGraph(MeshGraph * /*destination graph*/, MeshGraph * /*source graph*/);
+
+/*
+ * clear adjacency list
+ */
+void ClearMeshAdjList(MeshGraphAdjList *);
+
+/*
+ * clean graph
+ */
+void ClearMeshGraph(MeshGraph *);
+
+/*
+ * assembling graph with element data
+ */
+void AssembleMeshGraph(MeshGraph *, GenericList *, GenericList *);
+
+/*
+ * print graph
+ */
+void PrintMeshGraph(MeshGraph *);
+
+/*
+ * add edge to a graph
+ */
+void AddEdgeMeshGraph(MeshGraph *, GenericList * /*node data*/, int, int);
+
+/*
+ * print adjacency list
+ */
+void PrintMeshGraphAdjList(MeshGraphAdjList *);
+
+/*
+ * add node to adjacency list
+ */
+void AddNodeMeshGraphAdjList(MeshGraphAdjList *, MeshNode *);
+
+/*
+ * initialize adjacency list
+ */
+void InitializeMeshGraphAdjList(MeshGraphAdjList *);
+
+/*
+ * create a graph with number of vertices
+ */
+MeshGraph *CreateMeshGraph(int);
+
+/*
+ * check whether linked list is empty or not
+ *     0: not empty
+ *     1: empty
+ */
+int IsListEmpty(GenericList * /*linked list*/);
+
+/*
+ * add node to the list
+ */
+void AddNodeToList(GenericList * /*linked list*/, void * /*data*/, NodeType /*node type*/);
+
+/*
+ * clear linked list
+ */
+void ClearList(GenericList * /*linked list*/);
+
+/*
+ * initialize linked list
+ */
+void InitializeList(GenericList * /*linked list*/);
+
+/*
+ * mapping of element type to node of element
+ */
+int NodeListSizeMapping(int);
+
 void SolverPetscInitialize(const char *path_mat, const char *path_rhs, MySolver *mysolver);
 void SolverPetscResidualCheck(MySolver *mysolver);
 
@@ -128,7 +289,6 @@ void SolverPetscResidualCheck(MySolver *mysolver);
  * json config parse
  */
 int ConfigParse(const char * /*path to config file*/,
-                ConfigFile * /*config json of file*/,
-                ConfigMLA * /*config json of aggregation-based multilevel*/);
+                ConfigJSON * /*config data*/);
 
 #endif // main.h
