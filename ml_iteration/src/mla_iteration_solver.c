@@ -238,7 +238,7 @@ void MLASolvePhase(MySolver *mysolver, MLAGraph *mla, int gcr_restart)
         PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
         double shift = 1e-10;
         PetscCall(MatShift(mla->operator_coarse, shift));
-        PetscCall(KSPSetOperators(ksp_H, mla->operator_coarse, mla->operator_coarse));    // add shift to diagonal
+        PetscCall(KSPSetOperators(ksp_H, mla->operator_coarse, mla->operator_coarse)); // add shift to diagonal
         PetscCall(KSPSetType(ksp_H, KSPGCR));
         // PetscCall(KSPSetType(ksp_H, KSPGMRES));
         // PetscCall(KSPGetPC(ksp_H, &pc));

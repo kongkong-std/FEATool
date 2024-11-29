@@ -104,6 +104,10 @@ int main(int argc, char **argv)
     SolverPetscResidualCheck(&mysolver);
 
     // free memory
+    for (int index = 0; index < mla_ctx.num_level; ++index)
+    {
+        free(mla_ctx.mla[index].coarse_node);
+    }
     free(mla_ctx.mla);
     ClearMeshGraph(graph);
     ClearList(&data_list_ele_omega);

@@ -136,6 +136,7 @@ typedef struct mla_graph
     MeshGraph *fine;                   // fine mesh
     MeshGraph *aggregation;            // aggregation mesh
     MeshGraph *coarse;                 // coarse mesh
+    MeshNode *coarse_node;             // coarse mesh node data
     Mat prolongation, operator_coarse; // prolongation operator and coarse operator
     int level;                         // current level
 } MLAGraph;
@@ -150,6 +151,18 @@ typedef struct mla_context
 
 // function prototype
 /*
+ * mla solver solve phase recursive implementation
+ *     linear system
+ *     mla context, contains setup information
+ *     config, pre- and post- smooth times
+ *     a special case, rbm order is 2 and level is 1, coarse operator need shift
+ */
+void MLASolverSolvePhase(const ConfigJSON * /*config json*/,
+                         MLAContext * /*mla context*/,
+                         int /*rbm order*/,
+                         MySolver * /*linear system data*/);
+
+/*
  * mla solver setup phase
  *     number of levels
  *     rbm order
@@ -163,6 +176,13 @@ void MLASovlerSetupPhase(MySolver * /*linear system data*/,
                          int /*number of levels*/,
                          int /*rbm order*/,
                          MLAContext * /*mla context*/);
+
+/*
+ * mla solver relative residual computing
+ *     linear system
+ *     relative residual
+ */
+void MLASolverRelativeResidual(MySolver * /*linear system data*/, double * /*relative residual*/);
 
 /*
  * mla solver

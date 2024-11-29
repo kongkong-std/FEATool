@@ -4,6 +4,10 @@
       "file_rhs": "../input/linsys/petsc-bin-rhs-refine1",
       "file_mesh": "../input/mesh/linear-elasticity-2d-22-refine1.msh"
     },
+    "mesh_label":{
+      "label_bound": 1,
+      "label_omega": 2
+    },
     "mla": {
       "pre_smooth_v": 10,
       "post_smooth_v": 10,
