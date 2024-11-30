@@ -133,12 +133,14 @@ typedef struct my_solver
 typedef struct mla_graph
 {
     /* data */
-    MeshGraph *fine;                   // fine mesh
-    MeshGraph *aggregation;            // aggregation mesh
-    MeshGraph *coarse;                 // coarse mesh
-    MeshNode *coarse_node;             // coarse mesh node data
-    Mat prolongation, operator_coarse; // prolongation operator and coarse operator
-    int level;                         // current level
+    MeshGraph *fine;        // fine mesh
+    MeshGraph *aggregation; // aggregation mesh
+    MeshGraph *coarse;      // coarse mesh
+    MeshNode *coarse_node;  // coarse mesh node data
+    Mat prolongation;       // prolongation operator
+    Mat operator_coarse;    // coarse operator
+    Mat operator_fine;      // fine operator
+    int level;              // current level
 } MLAGraph;
 
 typedef struct mla_context
@@ -151,11 +153,59 @@ typedef struct mla_context
 
 // function prototype
 /*
+ * mla solver coarsest correction phase
+ */
+void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
+                                     int level,
+                                     MLAContext *mla_ctx,
+                                     Vec *mg_recur_x,
+                                     Vec *mg_recur_b);
+
+/*
+ * mla solver nested mg procedure pre-smooth
+ */
+void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
+                                   int level,
+                                   MLAContext *mla_ctx,
+                                   Vec *mg_recur_x,
+                                   Vec *mg_recur_b,
+                                   int v_pre_smooth);
+
+/*
+ * mla solver nested mg procedure post-smooth
+ */
+void MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
+                                    int level,
+                                    MLAContext *mla_ctx,
+                                    Vec *mg_recur_x,
+                                    Vec *mg_recur_b,
+                                    int v_post_smooth);
+
+/*
+ * mla solver nested mg procedure
+ *     level and number of levels
+ *     mla context
+ *     solution
+ *     rhs
+ *     pre- and post- smooth times
+ *     rbm order
+ */
+void MLAMGNestedProcedure(int /*level*/, int /*number of levels*/,
+                          MySolver * /*solver data*/,
+                          MLAContext * /*mla context*/,
+                          Vec * /*x*/,
+                          Vec * /*b*/,
+                          int /*pre-smooth times*/,
+                          int /*post-smooth times*/,
+                          int /*rbm order*/);
+
+/*
  * mla solver solve phase recursive implementation
  *     linear system
  *     mla context, contains setup information
  *     config, pre- and post- smooth times
  *     a special case, rbm order is 2 and level is 1, coarse operator need shift
+ *     level to recursive implementation
  */
 void MLASolverSolvePhase(const ConfigJSON * /*config json*/,
                          MLAContext * /*mla context*/,

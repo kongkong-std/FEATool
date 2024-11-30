@@ -107,6 +107,12 @@ int main(int argc, char **argv)
     for (int index = 0; index < mla_ctx.num_level; ++index)
     {
         free(mla_ctx.mla[index].coarse_node);
+        PetscCall(MatDestroy(&(mla_ctx.mla[index].prolongation)));
+        PetscCall(MatDestroy(&(mla_ctx.mla[index].operator_coarse)));
+        PetscCall(MatDestroy(&(mla_ctx.mla[index].operator_fine)));
+        ClearMeshGraph(mla_ctx.mla[index].aggregation);
+        ClearMeshGraph(mla_ctx.mla[index].fine);
+        ClearMeshGraph(mla_ctx.mla[index].coarse);
     }
     free(mla_ctx.mla);
     ClearMeshGraph(graph);
@@ -119,7 +125,7 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&mysolver.solver_x));
     PetscCall(VecDestroy(&mysolver.solver_r));
     PetscCall(KSPDestroy(&mysolver.ksp));
-    PetscCall(PCDestroy(&mysolver.pc));
+    //PetscCall(PCDestroy(&mysolver.pc));
 
     PetscCall(PetscFinalize());
     MPI_Finalize();
