@@ -149,48 +149,63 @@ void AssembleCoarseMeshNode(MeshGraph *graph, MeshNode *node)
 
 void DeleteNodeMeshGraphAdjList(MeshGraphAdjList *list, MeshGraphAdjNode *node)
 {
+    // Ensure the node is not NULL
+    if (node == NULL) return;
+
     MeshGraphAdjNode *to_delete = node;
+
+    // Handle the case where the node is at the head of the list
     if (node == list->head)
     {
         list->head = node->next;
     }
     else
     {
+        // Traverse the list to find the previous node
         MeshGraphAdjNode *prev = list->head;
         while (prev->next != node)
         {
             prev = prev->next;
         }
 
+        // Remove the node from the list
         prev->next = node->next;
     }
 
+    // Free the memory and set the node pointer to NULL to avoid dangling pointer
     free(to_delete);
     --(list->size);
+
+    // Optionally, set `node` to NULL to avoid further access to freed memory
+    node = NULL;
 }
 
 MeshGraph *AggregationMeshGraph(MeshGraph *graph)
 {
-#if 1
     int cnt_aggregation = 0;
+    // 标记访问的节点
     for (int index = 0; index < graph->size; ++index)
     {
         MeshGraphAdjNode *curr_head_node = graph->array[index].head;
 
         // 如果当前顶点没有被访问过（add_flag == 0）
-        if (curr_head_node->node->add_flag == 0)
+        if (curr_head_node && curr_head_node->node->add_flag == 0)
         {
             ++cnt_aggregation; // 增加聚类计数
+
             // 遍历该节点的所有邻接节点
             while (curr_head_node)
             {
                 if (curr_head_node->node->add_flag == 1)
                 {
+                    // 删除邻接节点之前要更新当前指针
+                    MeshGraphAdjNode *next_node = curr_head_node->next;
+
                     DeleteNodeMeshGraphAdjList(graph->array + index, curr_head_node);
 
                     // 更新当前节点为下一个节点
-                    curr_head_node = curr_head_node->next; // 正常跳到下一个节点
-                    continue;                              // 继续处理下一个节点
+                    curr_head_node = next_node; // 正常跳到下一个节点
+                    continue;                    // 继续处理下一个节点
                 }
                 else
                 {
@@ -208,6 +223,7 @@ MeshGraph *AggregationMeshGraph(MeshGraph *graph)
         }
     }
 
+    // 创建新的聚类图
     MeshGraph *graph_aggregation = CreateMeshGraph(cnt_aggregation);
     int cnt = 0;
     for (int index = 0; index < graph->size; ++index)
@@ -217,22 +233,13 @@ MeshGraph *AggregationMeshGraph(MeshGraph *graph)
             MeshGraphAdjNode *graph_node = graph->array[index].head;
             while (graph_node)
             {
+                // 将当前节点的邻接节点添加到新图中
                 AddNodeMeshGraphAdjList(graph_aggregation->array + cnt, graph_node->node);
                 graph_node = graph_node->next;
             }
             ++cnt;
         }
     }
-#endif // aggregation technique
-
-#if 0
-    MeshGraph *graph_aggregation = CreateMeshGraph(graph->size);
-    for (int index = 0; index < graph->size; ++index)
-    {
-        MeshGraphAdjNode *graph_node = graph->array[index].head;
-        AddNodeMeshGraphAdjList(graph_aggregation->array + index, graph_node->node);
-    }
-#endif // every single node as a aggregation body
 
     return graph_aggregation;
 }
@@ -257,11 +264,11 @@ void ClearMeshAdjList(MeshGraphAdjList *list)
     while (curr)
     {
         MeshGraphAdjNode *tmp = curr;
-        free(tmp);
-        curr = curr->next;
+        curr = curr->next;  // Move to the next node before freeing
+        free(tmp);  // Free current node
     }
+    list->head = NULL;  // Ensure the head pointer is NULL
     list->size = 0;
-    list->head = NULL;
 }
 
 void ClearMeshGraph(MeshGraph *graph)
@@ -271,7 +278,11 @@ void ClearMeshGraph(MeshGraph *graph)
         ClearMeshAdjList(graph->array + index);
     }
 
+    // After clearing, set the array pointer to NULL to avoid dangling pointer access
     free(graph->array);
+    graph->array = NULL;
+
+    // Finally, free the graph structure itself
     free(graph);
 }
 
@@ -346,7 +357,6 @@ void PrintMeshGraphAdjList(MeshGraphAdjList *list)
 
 void AddNodeMeshGraphAdjList(MeshGraphAdjList *list, MeshNode *node)
 {
-#if 1
     // Check if the node is already in the adjacency list
     MeshGraphAdjNode *current = list->head;
     while (current != NULL)
@@ -357,39 +367,29 @@ void AddNodeMeshGraphAdjList(MeshGraphAdjList *list, MeshNode *node)
         }
         current = current->next;
     }
-#endif
 
     MeshGraphAdjNode *new_node = (MeshGraphAdjNode *)malloc(sizeof(MeshGraphAdjNode));
-    assert(new_node);
+    assert(new_node);  // Check for successful allocation
 
-#if 1
-    // new_node data
+    // Initialize the new node
     new_node->node = node;
     new_node->next = NULL;
 
     if (list->head == NULL)
     {
-        list->head = new_node;
-        ++(list->size);
-        return;
+        list->head = new_node;  // Insert at the head if the list is empty
     }
-
-    MeshGraphAdjNode *last_node = list->head;
-    while (last_node->next != NULL)
+    else
     {
-        last_node = last_node->next;
+        // Insert at the tail of the list
+        MeshGraphAdjNode *last_node = list->head;
+        while (last_node->next != NULL)
+        {
+            last_node = last_node->next;
+        }
+        last_node->next = new_node;
     }
-    last_node->next = new_node;
     ++(list->size);
-#endif // insert in tail of adjacency list
-
-#if 0
-    new_node->node = node;
-    new_node->next = list->head;
-
-    list->head = new_node;
-    ++(list->size);
-#endif // insert in head of adjacency list
 }
 
 void InitializeMeshGraphAdjList(MeshGraphAdjList *list)

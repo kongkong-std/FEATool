@@ -103,7 +103,7 @@ int main(int argc, char **argv)
     // check, computing residual
     SolverPetscResidualCheck(&mysolver);
 
-    // free memory
+// free memory
     for (int index = 0; index < mla_ctx.num_level; ++index)
     {
         free(mla_ctx.mla[index].coarse_node);
@@ -114,8 +114,10 @@ int main(int argc, char **argv)
         ClearMeshGraph(mla_ctx.mla[index].fine);
         ClearMeshGraph(mla_ctx.mla[index].coarse);
     }
+#if 1
     free(mla_ctx.mla);
-    ClearMeshGraph(graph);
+#endif
+    // ClearMeshGraph(graph);
     ClearList(&data_list_ele_omega);
     ClearList(&data_list_ele_bound);
     ClearList(&data_list_node);
@@ -125,7 +127,7 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&mysolver.solver_x));
     PetscCall(VecDestroy(&mysolver.solver_r));
     PetscCall(KSPDestroy(&mysolver.ksp));
-    //PetscCall(PCDestroy(&mysolver.pc));
+    PetscCall(PCDestroy(&mysolver.pc));
 
     PetscCall(PetscFinalize());
     MPI_Finalize();

@@ -352,6 +352,16 @@ void InitializeList(GenericList * /*linked list*/);
  */
 int NodeListSizeMapping(int);
 
+/*
+* mesh file process
+*/
+void MeshFileProcess(const char *path,
+                     int label_bound, int label_omega,
+                     GenericList *data_list_phy_tag,
+                     GenericList *data_list_node,
+                     GenericList *data_list_ele_bound,
+                     GenericList *data_list_ele_omega);
+
 void SolverPetscInitialize(const char *path_mat, const char *path_rhs, MySolver *mysolver);
 void SolverPetscResidualCheck(MySolver *mysolver);
 

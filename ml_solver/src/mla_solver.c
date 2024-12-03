@@ -7,14 +7,31 @@ void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
                                    Vec *mg_recur_b,
                                    int v_pre_smooth)
 {
+#if 0
+    if (ksp)
+    {
+        PetscCall(KSPDestroy(&ksp));
+        ksp = NULL;
+    }
+    if (pc)
+    {
+        PetscCall(PCDestroy(&pc));
+        pc = NULL;
+    }
+#endif
+
     // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     if (level != 0)
     {
         PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     }
 
+#if 1
+    // KSP ksp_loc;
+    // PC pc_loc;
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
     PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
+#endif
     PetscCall(KSPSetOperators(ksp,
                               (mla_ctx->mla + level)->operator_fine,
                               (mla_ctx->mla + level)->operator_fine));
@@ -31,6 +48,24 @@ void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
 
     PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
     PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+
+#if 0
+    PetscCall(KSPDestroy(&ksp_loc));
+    PetscCall(PCDestroy(&pc_loc));
+#endif
+
+#if 0
+    if (ksp)
+    {
+        PetscCall(KSPDestroy(&ksp));
+        ksp = NULL;
+    }
+    if (pc)
+    {
+        PetscCall(PCDestroy(&pc));
+        pc = NULL;
+    }
+#endif
 }
 
 void MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
@@ -40,8 +75,25 @@ void MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
                                     Vec *mg_recur_b,
                                     int v_post_smooth)
 {
+#if 0
+    if (ksp)
+    {
+        PetscCall(KSPDestroy(&ksp));
+        ksp = NULL;
+    }
+    if (pc)
+    {
+        PetscCall(PCDestroy(&pc));
+        pc = NULL;
+    }
+#endif
+
+#if 1
+    // KSP ksp_loc;
+    // PC pc_loc;
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
     PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
+#endif
     PetscCall(KSPSetOperators(ksp,
                               (mla_ctx->mla + level)->operator_fine,
                               (mla_ctx->mla + level)->operator_fine));
@@ -58,6 +110,19 @@ void MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
 
     PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
     PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+
+#if 0
+    if (ksp)
+    {
+        PetscCall(KSPDestroy(&ksp));
+        ksp = NULL;
+    }
+    if (pc)
+    {
+        PetscCall(PCDestroy(&pc));
+        pc = NULL;
+    }
+#endif
 }
 
 void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
@@ -66,12 +131,25 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
                                      Vec *mg_recur_x,
                                      Vec *mg_recur_b)
 {
+#if 0
+    if (ksp)
+    {
+        PetscCall(KSPDestroy(&ksp));
+        ksp = NULL;
+    }
+    if (pc)
+    {
+        PetscCall(PCDestroy(&pc));
+        pc = NULL;
+    }
+#endif
+
     PetscCall(VecDuplicate(mg_recur_b[level + 1], mg_recur_x + level + 1));
     int gcr_restart = 50;
 
-    #if 1
+#if 0
     PetscCall(VecView(mg_recur_b[level + 1], PETSC_VIEWER_STDOUT_WORLD));
-    #endif    // residual information
+#endif // residual information
 
 #if 0
     printf(">>>> in coarset level, level = %d\n", level);
@@ -80,7 +158,12 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
     PetscCall(VecGetSize(mg_recur_b[level + 1], &vec_size));
     printf("coarsest matrix size: m = %d, n = %d\n", m_a_H, n_a_H);
     printf("coarsest vector size: m = %d\n", vec_size);
-#endif    // size information
+#endif // size information
+
+#if 0
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
+    PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
+#endif
 
 #if 1
     if (order_rbm == 1)
@@ -139,6 +222,19 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
     printf(">>>>>>>> coarse correction: norm_e_H = %021.16le\n", norm_e_H);
     printf(">>>>>>>> coarse correction: relative = %021.16le\n\n", norm_tmp_r_H / norm_r_H);
 #endif
+
+#if 0
+    if (ksp)
+    {
+        PetscCall(KSPDestroy(&ksp));
+        ksp = NULL;
+    }
+    if (pc)
+    {
+        PetscCall(PCDestroy(&pc));
+        pc = NULL;
+    }
+#endif
 }
 
 void MLAMGNestedProcedure(int level, int num_level,
@@ -170,9 +266,12 @@ void MLAMGNestedProcedure(int level, int num_level,
     PetscCall(VecSetSizes(mg_recur_b[level + 1], PETSC_DECIDE, n_prolongation));
     PetscCall(VecSetFromOptions(mg_recur_b[level + 1]));
     PetscCall(MatMultTranspose((mla_ctx->mla + level)->prolongation, r_h, mg_recur_b[level + 1]));
+#if 0
+    PetscCall(VecView(mg_recur_b[level + 1], PETSC_VIEWER_STDOUT_WORLD));
+#endif // view mg_recur_b[level + 1]
 
     // recursive
-    if (level == num_level)
+    if (level == num_level - 1)
     {
 #if 1
         // the coarset level, solve it with direct method
@@ -198,7 +297,7 @@ void MLAMGNestedProcedure(int level, int num_level,
      */
     PetscCall(MatMult((mla_ctx->mla + level)->prolongation, mg_recur_x[level + 1], tmp_e_h));
     PetscCall(VecAXPY(mg_recur_x[level], 1., tmp_e_h));
-#endif
+#endif // recursive implementation
 
     // post-smoothing
     MLAMGNestedProcedurePostSmooth(mysolver->ksp, mysolver->pc,
@@ -211,14 +310,21 @@ void MLASolverSolvePhase(const ConfigJSON *config,
                          MySolver *mysolver)
 {
     // mg recursive implementation
-    Vec *mg_recur_x, *mg_recur_b;
     int v_pre_smooth = config->mla_config.pre_smooth_v;
     int v_post_smooth = config->mla_config.post_smooth_v;
     int num_level = mla_ctx->num_level;
+    // Vec mg_recur_x[num_level + 1], mg_recur_b[num_level + 1];
+    Vec *mg_recur_x, *mg_recur_b;
 
+#if 0
     mg_recur_x = (Vec *)malloc((num_level + 1) * sizeof(Vec));
     mg_recur_b = (Vec *)malloc((num_level + 1) * sizeof(Vec));
+#endif
+#if 1
+    mg_recur_x = (Vec *)malloc((num_level + 1) * sizeof(*mg_recur_x));
+    mg_recur_b = (Vec *)malloc((num_level + 1) * sizeof(*mg_recur_b));
     assert(mg_recur_x && mg_recur_b);
+#endif
 
     PetscCall(VecDuplicate(mysolver->solver_x, &mg_recur_x[0]));
     PetscCall(VecDuplicate(mysolver->solver_b, &mg_recur_b[0]));
@@ -241,7 +347,7 @@ void MLASolverSolvePhase(const ConfigJSON *config,
     PetscCall(VecCopy(mg_recur_x[0], mysolver->solver_x));
 
 // free memeory
-#if 0
+#if 1
     for (int index = 0; index < num_level + 1; ++index)
     {
         PetscCall(VecDestroy(mg_recur_x + index));
@@ -270,7 +376,7 @@ void MLASolverSetupPhase(MySolver *mysolver,
     assert(mla_ctx->mla);
 
     /*
-     * 1. mla_ctx->num_level = num_level
+     * 1. mla_ctx->num_level = num_level    // 0-base
      * 2. in coarset mesh, number of points no less than 50
      */
     int cnt_level = 0; // level count
@@ -503,9 +609,9 @@ void MLASolverSetupPhase(MySolver *mysolver,
            cnt_level,
            (mla_ctx->mla + cnt_level)->coarse->size);
 #endif // 1st level
+    ++cnt_level;
     while (cnt_level < num_level && (mla_ctx->mla + cnt_level)->coarse->size >= 50)
     {
-        ++cnt_level;
 
         (mla_ctx->mla + cnt_level)->fine = CreateMeshGraph((mla_ctx->mla + cnt_level - 1)->coarse->size);
         CopyMeshGraph((mla_ctx->mla + cnt_level)->fine, (mla_ctx->mla + cnt_level - 1)->coarse);
@@ -731,14 +837,16 @@ void MLASolverSetupPhase(MySolver *mysolver,
             }
             free(p_loc_tmp);
         }
+
+        ++cnt_level;
     }
 #if 1
     printf(">>>> num_level = %d, cnt_level = %d, coarse num_vertex = %d\n", num_level,
            cnt_level,
-           (mla_ctx->mla + cnt_level)->coarse->size);
-#endif // final leve
+           (mla_ctx->mla + cnt_level - 1)->coarse->size);
+#endif // final level
 
-    mla_ctx->num_level = (cnt_level < num_level) ? cnt_level : num_level; // number of level
+    mla_ctx->num_level = (cnt_level < num_level) ? cnt_level : num_level; // number of level, 1-base
 
 // free p_loc
 #if 1
@@ -811,9 +919,9 @@ void MLASolver(const MeshGraph *graph,
         PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", cnt, rela_resid));
     }
 
-#if 0
+#if 1
     puts("\n\n==== multilevel information ====");
-    for (int index = 0; index <= mla_ctx->num_level; ++index)
+    for (int index = 0; index < mla_ctx->num_level; ++index)
     {
         printf(">>>> in neighbouring level %d:\n", (mla_ctx->mla + index)->level);
         printf("there are %d vertices in fine mesh, %d vertices in coarse mesh!\n\n",
@@ -827,12 +935,12 @@ void MLASolver(const MeshGraph *graph,
         PetscCall(MatGetSize((mla_ctx->mla + index)->operator_coarse, &m_coar, &n_coar));
         printf(">>>> level %d: prolongation size m = %d, n = %d, coarse size m = %d, n = %d\n",
                index, m_pro, n_pro, m_coar, n_coar);
-        PetscCall(MatView((mla_ctx->mla + index)->prolongation, PETSC_VIEWER_STDOUT_WORLD));
+        // PetscCall(MatView((mla_ctx->mla + index)->prolongation, PETSC_VIEWER_STDOUT_WORLD));
 
         puts("\n\n======== coarse operator ========");
         printf(">>>> level %d: prolongation size m = %d, n = %d, coarse size m = %d, n = %d\n",
                index, m_pro, n_pro, m_coar, n_coar);
-        PetscCall(MatView((mla_ctx->mla + index)->operator_coarse, PETSC_VIEWER_STDOUT_WORLD));
+        // PetscCall(MatView((mla_ctx->mla + index)->operator_coarse, PETSC_VIEWER_STDOUT_WORLD));
     }
 #endif // basic information of multilevel
 }
