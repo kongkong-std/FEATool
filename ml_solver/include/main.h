@@ -136,10 +136,14 @@ typedef struct mla_graph
     MeshGraph *fine;        // fine mesh
     MeshGraph *aggregation; // aggregation mesh
     MeshGraph *coarse;      // coarse mesh
+    MeshGraph *mesh_tmp;    // temporary mesh
     MeshNode *coarse_node;  // coarse mesh node data
     Mat prolongation;       // prolongation operator
     Mat operator_coarse;    // coarse operator
     Mat operator_fine;      // fine operator
+    KSP ksp_presmooth;      // pre-smooth solver
+    KSP ksp_postsmooth;     // post-smooth solver
+    KSP ksp_coarse;         // coarse solver
     int level;              // current level
 } MLAGraph;
 
@@ -353,8 +357,8 @@ void InitializeList(GenericList * /*linked list*/);
 int NodeListSizeMapping(int);
 
 /*
-* mesh file process
-*/
+ * mesh file process
+ */
 void MeshFileProcess(const char *path,
                      int label_bound, int label_omega,
                      GenericList *data_list_phy_tag,

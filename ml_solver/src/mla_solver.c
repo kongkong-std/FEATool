@@ -366,6 +366,239 @@ void MLASolverSetupPhase(MySolver *mysolver,
 {
     if (mla_ctx->setup == 1)
     {
+        // prolongation operator has been constructed
+        return;
+    }
+
+    mla_ctx->mla = (MeshGraph *)malloc(num_level * sizeof(MeshGraph));
+    assert(mla_ctx->mla);
+
+    int cnt_level = 0;
+
+    // mesh information
+    (mla_ctx->mla + cnt_level)->level = cnt_level;
+    (mla_ctx->mla + cnt_level)->mesh_tmp = CreateMeshGraph(graph->size);
+    (mla_ctx->mla + cnt_level)->fine = CreateMeshGraph(graph->size);
+
+    CopyMeshGraph((mla_ctx->mla + cnt_level)->mesh_tmp, graph);
+    CopyMeshGraph((mla_ctx->mla + cnt_level)->fine, graph); // neighbouring fine mesh
+#if 0
+    printf("\n\n==== level %d neighbouring fine mesh:\n", cnt_level);
+    PrintMeshGraph((mla_ctx->mla + cnt_level)->fine);
+#endif // fine mesh
+
+    (mla_ctx->mla + cnt_level)->aggregation = AggregationMeshGraph((mla_ctx->mla + cnt_level)->mesh_tmp); // aggregation mesh
+#if 0
+    printf("\n\n==== level %d neighbouring aggregation mesh:\n", cnt_level);
+    PrintMeshGraph((mla_ctx->mla + cnt_level)->aggregation);
+#endif // aggregation mesh
+
+    (mla_ctx->mla + cnt_level)->coarse_node = (MeshNode *)malloc((mla_ctx->mla + cnt_level)->aggregation->size * sizeof(MeshNode));
+    assert((mla_ctx->mla + cnt_level)->coarse_node);
+    AssembleCoarseMeshNode((mla_ctx->mla + cnt_level)->aggregation,
+                           (mla_ctx->mla + cnt_level)->coarse_node);
+    (mla_ctx->mla + cnt_level)->coarse = CreateMeshGraph((mla_ctx->mla + cnt_level)->aggregation->size);
+    AssembleCoarseMeshGraph((mla_ctx->mla + cnt_level)->coarse,
+                            (mla_ctx->mla + cnt_level)->aggregation,
+                            (mla_ctx->mla + cnt_level)->fine,
+                            (mla_ctx->mla + cnt_level)->coarse_node); // neighbouring coarse mesh
+#if 0
+    printf("\n\n==== level %d neighbouring coarse mesh:\n", cnt_level);
+    PrintMeshGraph((mla_ctx->mla + cnt_level)->coarse);
+#endif
+
+    PetscCall(MatDuplicate(mysolver->solver_a,
+                           MAT_COPY_VALUES,
+                           &((mla_ctx->mla + cnt_level)->operator_fine)));
+#if 0
+    printf("\n\n==== level %d, neighbouring fine operator:\n", cnt_level);
+    PetscCall(MatView((mla_ctx->mla + cnt_level)->operator_fine, PETSC_VIEWER_STDOUT_WORLD));
+#endif                                                                     // print neighbouring fine operator
+    int prolongation_block_row = (mla_ctx->mla + cnt_level)->fine->size;   // vertex in fine mesh
+    int prolongation_block_col = (mla_ctx->mla + cnt_level)->coarse->size; // vertex in coarse mesh
+    int m_prolongation = prolongation_block_row * 6;                       // row of prolongation operator
+    int n_prolongation = 0;
+
+    if (order_rbm == 1)
+    {
+        // 6 dof in coarse point
+        n_prolongation = prolongation_block_col * 6;
+    }
+    else if (order_rbm == 2)
+    {
+        // 9 dof in coarse point
+        n_prolongation = prolongation_block_col * 9;
+    }
+
+#if 1
+    printf(">>>>>>>> setup phase:\n prolongation_block_row = %d, col = %d\n",
+           prolongation_block_row,
+           prolongation_block_col);
+    printf("size of prolongation: m = %d, n = %d\n", m_prolongation, n_prolongation);
+#endif
+
+    // memory allocation for prolongation operator
+    PetscCall(MatCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->prolongation)));
+    PetscCall(MatSetSizes((mla_ctx->mla + cnt_level)->prolongation, PETSC_DECIDE, PETSC_DECIDE, m_prolongation, n_prolongation));
+    PetscCall(MatSetUp((mla_ctx->mla + cnt_level)->prolongation));
+
+    // assigning value to prolongation operator
+    double **p_loc = (double **)malloc(6 * sizeof(double *));
+    assert(p_loc);
+    memset(p_loc, 0, 6 * sizeof(double *));
+
+    for (int index = 0; index < 6; ++index)
+    {
+        if (order_rbm == 1)
+        {
+            p_loc[index] = (double *)malloc(6 * sizeof(double));
+            memset(p_loc[index], 0, 6 * sizeof(double));
+        }
+        else if (order_rbm == 2)
+        {
+            p_loc[index] = (double *)malloc(9 * sizeof(double));
+            memset(p_loc[index], 0, 9 * sizeof(double));
+        }
+        else
+        {
+            fprintf(stderr, "invalid order_rbm 1 or 2!!!\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    // aggregation graph traverse
+    for (int index = 0; index < (mla_ctx->mla + cnt_level)->aggregation->size; ++index)
+    {
+        MeshGraphAdjNode *data_node_coarse = (mla_ctx->mla + cnt_level)->coarse->array[index].head;
+        MeshGraphAdjNode *data_node_aggregation = (mla_ctx->mla + cnt_level)->aggregation->array[index].head;
+
+        // coarse node coordinate
+        double node_coarse_x = data_node_coarse->node->node_x;
+        double node_coarse_y = data_node_coarse->node->node_y;
+        double node_coarse_z = data_node_coarse->node->node_z;
+
+        // aggregation graph adjacency list
+        for (int index_i = 0; index_i < (mla_ctx->mla + cnt_level)->aggregation->array[index].size; ++index_i)
+        {
+            // 0-base
+            int m_prolongation_block_tmp = data_node_aggregation->node->node_idx - 1;
+            int n_prolongation_block_tmp = index;
+
+            double node_aggregation_x = data_node_aggregation->node->node_x;
+            double node_aggregation_y = data_node_aggregation->node->node_y;
+            double node_aggregation_z = data_node_aggregation->node->node_z;
+
+            if (order_rbm == 1)
+            {
+                for (int index_tmp = 0; index_tmp < 6; ++index_tmp)
+                {
+                    p_loc[index_tmp][index_tmp] = 1.;
+                }
+                p_loc[0][4] = node_coarse_z - node_aggregation_z; // (1, 5) z
+                p_loc[0][5] = node_aggregation_y - node_coarse_y; // (1, 6) -y
+                p_loc[1][3] = -p_loc[0][4];                       // (2, 4) -z
+                p_loc[1][5] = node_coarse_x - node_aggregation_x; // (2, 6) x
+                p_loc[2][3] = -p_loc[0][5];                       // (3, 4) y
+                p_loc[2][4] = -p_loc[1][5];                       // (3, 5) -x
+
+                // p_loc in prolongation operator location
+                /*
+                 * (m_tmp, n_tmp) <-> {(m_tmp + 1) * 6 - 1, (n_tmp + 1) * 6 - 1}
+                 */
+                for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
+                {
+                    for (int index_tmp_j = 0; index_tmp_j < 6; ++index_tmp_j)
+                    {
+                        PetscCall(MatSetValue((mla_ctx->mla + cnt_level)->prolongation,
+                                              m_prolongation_block_tmp * 6 + index_tmp_i,
+                                              n_prolongation_block_tmp * 6 + index_tmp_j,
+                                              p_loc[index_tmp_i][index_tmp_j],
+                                              INSERT_VALUES));
+                    }
+                }
+            }
+            else if (order_rbm == 2)
+            {
+                for (int index_tmp = 0; index_tmp < 6; ++index_tmp)
+                {
+                    p_loc[index_tmp][index_tmp] = 1.;
+                }
+                p_loc[0][4] = node_coarse_z - node_aggregation_z; // (1, 5) z
+                p_loc[0][5] = node_aggregation_y - node_coarse_y; // (1, 6) -y
+                p_loc[1][3] = -p_loc[0][4];                       // (2, 4) -z
+                p_loc[1][5] = node_coarse_x - node_aggregation_x; // (2, 6) x
+                p_loc[2][3] = -p_loc[0][5];                       // (3, 4) y
+                p_loc[2][4] = -p_loc[1][5];                       // (3, 5) -x
+                p_loc[0][6] = (node_aggregation_z - node_coarse_z) *
+                              (node_coarse_x - node_aggregation_x); // (1, 7) -zx
+                p_loc[0][8] = (node_aggregation_z - node_coarse_z) *
+                              (node_coarse_y - node_aggregation_y); // (1, 9) -zy
+                p_loc[1][7] = p_loc[0][8];                          // (2, 8) -zy
+                p_loc[1][8] = p_loc[0][6];                          // (2, 9) -zx
+                p_loc[2][6] = (node_coarse_x - node_aggregation_x) *
+                              (node_coarse_x - node_aggregation_x) / 2.; // (3, 7) xx/2
+                p_loc[2][7] = (node_coarse_y - node_aggregation_y) *
+                              (node_coarse_y - node_aggregation_y) / 2.; // (3, 8) yy/2
+                p_loc[2][8] = (node_coarse_x - node_aggregation_x) *
+                              (node_coarse_y - node_aggregation_y); // (3, 9) xy
+#if 0
+                p_loc[3][7] = p_loc[0][4];                          // (4, 8) z
+                p_loc[3][8] = p_loc[0][5];                          // (4, 9) -y
+                p_loc[4][6] = p_loc[1][3];                          // (5, 7) -z
+                p_loc[4][8] = p_loc[1][5];                          // (5, 9) x
+                p_loc[5][6] = p_loc[2][3];                          // (6, 7) y
+                p_loc[5][7] = p_loc[2][4];                          // (6, 8) -x
+#endif
+
+                // p_loc in prolongation operator location
+                /*
+                 * (m_tmp, n_tmp) <-> {(m_tmp + 1) * 6 - 1, (n_tmp + 1) * 9 - 1}
+                 */
+                for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
+                {
+                    for (int index_tmp_j = 0; index_tmp_j < 9; ++index_tmp_j)
+                    {
+                        PetscCall(MatSetValue((mla_ctx->mla + cnt_level)->prolongation,
+                                              m_prolongation_block_tmp * 6 + index_tmp_i,
+                                              n_prolongation_block_tmp * 9 + index_tmp_j,
+                                              p_loc[index_tmp_i][index_tmp_j],
+                                              INSERT_VALUES));
+                    }
+                }
+            }
+
+            data_node_aggregation = data_node_aggregation->next;
+        }
+    }
+    PetscCall(MatAssemblyBegin((mla_ctx->mla + cnt_level)->prolongation, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd((mla_ctx->mla + cnt_level)->prolongation, MAT_FINAL_ASSEMBLY));
+#if 0
+    printf("\n\n==== level %d, neighbouring prolongation operator:\n", cnt_level);
+    PetscCall(MatView((mla_ctx->mla + cnt_level)->prolongation, PETSC_VIEWER_STDOUT_WORLD));
+#endif // neighbouring prolongation operator
+
+    PetscCall(MatPtAP((mla_ctx->mla + cnt_level)->operator_fine,
+                      (mla_ctx->mla + cnt_level)->prolongation,
+                      MAT_INITIAL_MATRIX,
+                      PETSC_DETERMINE,
+                      &((mla_ctx->mla + cnt_level)->operator_coarse)));
+#if 0
+    printf("\n\n==== level %d, neighbouring coarse operator:\n", cnt_level);
+    PetscCall(MatView((mla_ctx->mla + cnt_level)->operator_coarse, PETSC_VIEWER_STDOUT_WORLD));
+#endif
+
+    mla_ctx->setup = 1;
+
+    // free memory
+    for(int index = 0; index < 6; ++index)
+    {
+        free(p_loc[index]);
+    }
+    free(p_loc);
+
+#if 0
+    if (mla_ctx->setup == 1)
+    {
         // setup has beed done
         return;
     }
@@ -855,6 +1088,7 @@ void MLASolverSetupPhase(MySolver *mysolver,
         free(p_loc[index]);
     }
     free(p_loc);
+#endif
 #endif
 }
 

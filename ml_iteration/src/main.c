@@ -121,6 +121,7 @@ int main(int argc, char **argv)
     MeshGraph *graph = CreateMeshGraph(data_list_node.size);
     AssembleMeshGraph(graph, &data_list_node, &data_list_ele_omega);
 #if 1
+    puts("\n\nFine mesh graph:");
     PrintMeshGraph(graph);
 #endif
 
@@ -136,7 +137,7 @@ int main(int argc, char **argv)
     // PrintMeshGraph(graph_tmp);
 
 #if 1
-    puts("\nUpdating aggregation graph:");
+    puts("\n\nUpdating aggregation graph:");
     PrintMeshGraph(graph_aggregation);
 #endif
 

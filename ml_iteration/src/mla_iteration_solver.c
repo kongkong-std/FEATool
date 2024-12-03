@@ -452,6 +452,16 @@ void MLASetupPhase(MySolver *mysolver, MLAGraph *mla, int order_rbm)
     PetscCall(MatPtAP(mysolver->solver_a, mla->prolongation,
                       MAT_INITIAL_MATRIX, PETSC_DETERMINE,
                       &(mla->operator_coarse)));
+#if 1
+    puts("\n\n==== fine operator:");
+    PetscCall(MatView(mysolver->solver_a, PETSC_VIEWER_STDOUT_WORLD));
+
+    puts("\n\n==== prolongation operator:");
+    PetscCall(MatView(mla->prolongation, PETSC_VIEWER_STDOUT_WORLD));
+
+    puts("\n\n==== coarse operator:");
+    PetscCall(MatView(mla->operator_coarse, PETSC_VIEWER_STDOUT_WORLD));
+#endif
 
     mla->prolongation_set = 1;
 }
