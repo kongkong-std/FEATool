@@ -2,28 +2,32 @@
 
 void ClearList(GenericList *list)
 {
-    ListNode *current = list->head;
-    while (current != NULL)
+    // parameter non-null check
+    if (list)
     {
-        ListNode *temp = current;
-        current = current->next;
-        NodeType type = temp->type;
-        if (type == TYPE_ELEMENT)
+        ListNode *current = list->head;
+        while (current != NULL)
         {
-            MeshElement *element = (MeshElement *)temp->data;
-            free(element->ele_tag_idx);
-            free(element->ele_node_lst);
-            free(element);
+            ListNode *temp = current;
+            current = current->next;
+            NodeType type = temp->type;
+            if (type == TYPE_ELEMENT)
+            {
+                MeshElement *element = (MeshElement *)temp->data;
+                free(element->ele_tag_idx);
+                free(element->ele_node_lst);
+                free(element);
+            }
+            else
+            {
+                free(temp->data); // 释放节点数据
+            }
+            free(temp); // 释放节点
         }
-        else
-        {
-            free(temp->data); // 释放节点数据
-        }
-        free(temp); // 释放节点
+        list->head = NULL; // 清空头指针
+        list->tail = NULL; // 清空尾指针
+        list->size = 0;    // 重置大小
     }
-    list->head = NULL; // 清空头指针
-    list->tail = NULL; // 清空尾指针
-    list->size = 0;    // 重置大小
 }
 
 void AddNodeToList(GenericList *list, void *data, NodeType type)

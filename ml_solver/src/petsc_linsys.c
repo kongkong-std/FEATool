@@ -48,7 +48,7 @@ void SolverPetscInitialize(const char *path_mat, const char *path_rhs, MySolver 
     PetscCall(VecGetSize(mysolver->solver_b, &n_vec));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "vector Row = %d\n", n_vec));
 
-#if 0
+#if 1
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mysolver->ksp)));
     PetscCall(PCCreate(PETSC_COMM_WORLD, &(mysolver->pc)));
 #endif

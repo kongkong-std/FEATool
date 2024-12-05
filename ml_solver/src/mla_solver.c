@@ -7,26 +7,13 @@ void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
                                    Vec *mg_recur_b,
                                    int v_pre_smooth)
 {
-#if 0
-    if (ksp)
-    {
-        PetscCall(KSPDestroy(&ksp));
-        ksp = NULL;
-    }
-    if (pc)
-    {
-        PetscCall(PCDestroy(&pc));
-        pc = NULL;
-    }
-#endif
-
     // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     if (level != 0)
     {
         PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     }
 
-#if 1
+#if 0
     // KSP ksp_loc;
     // PC pc_loc;
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
@@ -53,19 +40,6 @@ void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
     PetscCall(KSPDestroy(&ksp_loc));
     PetscCall(PCDestroy(&pc_loc));
 #endif
-
-#if 0
-    if (ksp)
-    {
-        PetscCall(KSPDestroy(&ksp));
-        ksp = NULL;
-    }
-    if (pc)
-    {
-        PetscCall(PCDestroy(&pc));
-        pc = NULL;
-    }
-#endif
 }
 
 void MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
@@ -76,19 +50,6 @@ void MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
                                     int v_post_smooth)
 {
 #if 0
-    if (ksp)
-    {
-        PetscCall(KSPDestroy(&ksp));
-        ksp = NULL;
-    }
-    if (pc)
-    {
-        PetscCall(PCDestroy(&pc));
-        pc = NULL;
-    }
-#endif
-
-#if 1
     // KSP ksp_loc;
     // PC pc_loc;
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
@@ -110,19 +71,6 @@ void MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
 
     PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
     PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
-
-#if 0
-    if (ksp)
-    {
-        PetscCall(KSPDestroy(&ksp));
-        ksp = NULL;
-    }
-    if (pc)
-    {
-        PetscCall(PCDestroy(&pc));
-        pc = NULL;
-    }
-#endif
 }
 
 void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
@@ -131,19 +79,6 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
                                      Vec *mg_recur_x,
                                      Vec *mg_recur_b)
 {
-#if 0
-    if (ksp)
-    {
-        PetscCall(KSPDestroy(&ksp));
-        ksp = NULL;
-    }
-    if (pc)
-    {
-        PetscCall(PCDestroy(&pc));
-        pc = NULL;
-    }
-#endif
-
     PetscCall(VecDuplicate(mg_recur_b[level + 1], mg_recur_x + level + 1));
     int gcr_restart = 50;
 
@@ -246,62 +181,165 @@ void MLAMGNestedProcedure(int level, int num_level,
                           int v_post_smooth,
                           int order_rbm)
 {
-    // pre-smoothing
-    MLAMGNestedProcedurePreSmooth(mysolver->ksp, mysolver->pc,
-                                  level, mla_ctx, mg_recur_x, mg_recur_b, v_pre_smooth);
+    Vec *r_h = NULL, *tmp_e_h = NULL;
 
-#if 1
-    // computing residual
-    Vec r_h, tmp_e_h;
-    PetscCall(VecDuplicate(mg_recur_b[level], &r_h));
-    PetscCall(VecDuplicate(mg_recur_b[level], &tmp_e_h));
-    PetscCall(MatMult((mla_ctx->mla + level)->operator_fine,
-                      mg_recur_x[level], r_h));
-    PetscCall(VecAYPX(r_h, -1., mg_recur_b[level])); // b - Ax, ATTENTION!!!
+    r_h = (Vec *)malloc(num_level * sizeof(Vec));
+    tmp_e_h = (Vec *)malloc(num_level * sizeof(Vec));
+    assert(r_h && tmp_e_h);
 
-    // restriction
-    int m_prolongation, n_prolongation; // size of prolongation operator
-    PetscCall(MatGetSize((mla_ctx->mla + level)->prolongation, &m_prolongation, &n_prolongation));
-    PetscCall(VecCreate(PETSC_COMM_WORLD, mg_recur_b + level + 1));
-    PetscCall(VecSetSizes(mg_recur_b[level + 1], PETSC_DECIDE, n_prolongation));
-    PetscCall(VecSetFromOptions(mg_recur_b[level + 1]));
-    PetscCall(MatMultTranspose((mla_ctx->mla + level)->prolongation, r_h, mg_recur_b[level + 1]));
+    // loop implementation
+    /*
+     * v-cycle downward direction, from fine mesh to coarse mesh
+     */
+    for (level = 0; level < num_level; ++level)
+    {
+        PetscCall(VecDuplicate(mg_recur_b[level], r_h + level));
+
+        // pre-smooth procedure
+        MLAMGNestedProcedurePreSmooth((mla_ctx->mla + level)->ksp_presmooth,
+                                      (mla_ctx->mla + level)->pc_presmooth,
+                                      level,
+                                      mla_ctx,
+                                      mg_recur_x,
+                                      mg_recur_b,
+                                      v_pre_smooth);
+        PetscCall(MatMult((mla_ctx->mla + level)->operator_fine,
+                          mg_recur_x[level],
+                          r_h[level]));
+        PetscCall(VecAYPX(r_h[level], -1., mg_recur_b[level]));
+
+        // restriction
+        int m_prolongation = 0, n_prolongation = 0; // size of prolongation operator
+        PetscCall(MatGetSize((mla_ctx->mla + level)->prolongation,
+                             &m_prolongation,
+                             &n_prolongation));
+        PetscCall(VecCreate(PETSC_COMM_WORLD, mg_recur_b + level + 1));
+        PetscCall(VecSetSizes(mg_recur_b[level + 1], PETSC_DECIDE, n_prolongation));
+        PetscCall(VecSetFromOptions(mg_recur_b[level + 1]));
+        PetscCall(MatMultTranspose((mla_ctx->mla + level)->prolongation, r_h[level], mg_recur_b[level + 1]));
+    }
+
+    // coarsest level
+    MLASolverCoarsetCorrectionPhase(order_rbm,
+                                    (mla_ctx->mla + level - 1)->ksp_coarse,
+                                    (mla_ctx->mla + level - 1)->pc_coarse,
+                                    level - 1,
+                                    mla_ctx,
+                                    mg_recur_x,
+                                    mg_recur_b);
+
+    /*
+     * v-cycle upward direction, from coarse mesh to fine mesh
+     */
+    for (level = num_level - 1; level >= 0; --level)
+    {
+        PetscCall(VecDuplicate(mg_recur_x[level], tmp_e_h + level));
+
+        PetscCall(MatMult((mla_ctx->mla + level)->prolongation, mg_recur_x[level + 1], tmp_e_h[level]));
+        PetscCall(VecAXPY(mg_recur_x[level], 1., tmp_e_h[level]));
+
+        // post-smooth procedure
+        MLAMGNestedProcedurePostSmooth((mla_ctx->mla + level)->ksp_postsmooth,
+                                       (mla_ctx->mla + level)->pc_postsmooth,
+                                       level,
+                                       mla_ctx,
+                                       mg_recur_x,
+                                       mg_recur_b,
+                                       v_post_smooth);
+    }
+
+    // free memory
+    for (int index = 0; index < num_level; ++index)
+    {
+        PetscCall(VecDestroy(r_h + index));
+        PetscCall(VecDestroy(tmp_e_h + index));
+    }
+    free(r_h);
+    free(tmp_e_h);
+
 #if 0
-    PetscCall(VecView(mg_recur_b[level + 1], PETSC_VIEWER_STDOUT_WORLD));
-#endif // view mg_recur_b[level + 1]
-
     // recursive
     if (level == num_level - 1)
     {
 #if 1
         // the coarset level, solve it with direct method
-        MLASolverCoarsetCorrectionPhase(order_rbm, mysolver->ksp, mysolver->pc,
-                                        level, mla_ctx, mg_recur_x, mg_recur_b);
+        MLASolverCoarsetCorrectionPhase(order_rbm,
+                                        (mla_ctx->mla + level)->ksp_coarse,
+                                        (mla_ctx->mla + level)->pc_coarse,
+                                        level,
+                                        mla_ctx,
+                                        mg_recur_x,
+                                        mg_recur_b);
 #endif
         return;
     }
     else
     {
+        // pre-smoothing
+        // MLAMGNestedProcedurePreSmooth(mysolver->ksp, mysolver->pc,
+        MLAMGNestedProcedurePreSmooth((mla_ctx->mla + level)->ksp_presmooth,
+                                      (mla_ctx->mla + level)->pc_presmooth,
+                                      level,
+                                      mla_ctx,
+                                      mg_recur_x,
+                                      mg_recur_b,
+                                      v_pre_smooth);
+
+#if 1
+        // computing residual
+        Vec r_h, tmp_e_h;
+        PetscCall(VecDuplicate(mg_recur_b[level], &r_h));
+        PetscCall(VecDuplicate(mg_recur_b[level], &tmp_e_h));
+        PetscCall(MatMult((mla_ctx->mla + level)->operator_fine,
+                          mg_recur_x[level], r_h));
+        PetscCall(VecAYPX(r_h, -1., mg_recur_b[level])); // b - Ax, ATTENTION!!!
+
+        // restriction
+        int m_prolongation, n_prolongation; // size of prolongation operator
+        PetscCall(MatGetSize((mla_ctx->mla + level)->prolongation, &m_prolongation, &n_prolongation));
+        PetscCall(VecCreate(PETSC_COMM_WORLD, mg_recur_b + level + 1));
+        PetscCall(VecSetSizes(mg_recur_b[level + 1], PETSC_DECIDE, n_prolongation));
+        PetscCall(VecSetFromOptions(mg_recur_b[level + 1]));
+        PetscCall(MatMultTranspose((mla_ctx->mla + level)->prolongation, r_h, mg_recur_b[level + 1]));
+#if 0
+    PetscCall(VecView(mg_recur_b[level + 1], PETSC_VIEWER_STDOUT_WORLD));
+#endif // view mg_recur_b[level + 1]
+
         MLAMGNestedProcedure(level + 1, num_level,
                              mysolver,
                              mla_ctx,
                              mg_recur_x,
                              mg_recur_b,
                              v_pre_smooth, v_post_smooth, order_rbm);
-    }
 
-    // correction
-    /*
-     * tmp_e_h = P mg_recur_x[level + 1]
-     * mg_recur_x[level] += tmp_e_h
-     */
-    PetscCall(MatMult((mla_ctx->mla + level)->prolongation, mg_recur_x[level + 1], tmp_e_h));
-    PetscCall(VecAXPY(mg_recur_x[level], 1., tmp_e_h));
+        // correction
+/*
+ * tmp_e_h = P mg_recur_x[level + 1]
+ * mg_recur_x[level] += tmp_e_h
+ */
+#if 1
+        printf("\n\n======== in level %d, coarse error:\n", level);
+        PetscCall(VecView(mg_recur_x[level + 1], PETSC_VIEWER_STDOUT_WORLD));
+#endif // coarse error
+        PetscCall(MatMult((mla_ctx->mla + level)->prolongation, mg_recur_x[level + 1], tmp_e_h));
+        PetscCall(VecAXPY(mg_recur_x[level], 1., tmp_e_h));
+#if 1
+        printf("\n\n======== in level %d, after correction:\n", level);
+        PetscCall(VecView(mg_recur_x[level], PETSC_VIEWER_STDOUT_WORLD));
+#endif // fine solution
 #endif // recursive implementation
 
-    // post-smoothing
-    MLAMGNestedProcedurePostSmooth(mysolver->ksp, mysolver->pc,
-                                   level, mla_ctx, mg_recur_x, mg_recur_b, v_post_smooth);
+        // post-smoothing
+        // MLAMGNestedProcedurePostSmooth(mysolver->ksp, mysolver->pc,
+        MLAMGNestedProcedurePostSmooth((mla_ctx->mla + level)->ksp_postsmooth,
+                                       (mla_ctx->mla + level)->pc_postsmooth,
+                                       level,
+                                       mla_ctx,
+                                       mg_recur_x,
+                                       mg_recur_b,
+                                       v_post_smooth);
+    }
+#endif
 }
 
 void MLASolverSolvePhase(const ConfigJSON *config,
@@ -313,16 +351,11 @@ void MLASolverSolvePhase(const ConfigJSON *config,
     int v_pre_smooth = config->mla_config.pre_smooth_v;
     int v_post_smooth = config->mla_config.post_smooth_v;
     int num_level = mla_ctx->num_level;
-    // Vec mg_recur_x[num_level + 1], mg_recur_b[num_level + 1];
     Vec *mg_recur_x, *mg_recur_b;
 
-#if 0
+#if 1
     mg_recur_x = (Vec *)malloc((num_level + 1) * sizeof(Vec));
     mg_recur_b = (Vec *)malloc((num_level + 1) * sizeof(Vec));
-#endif
-#if 1
-    mg_recur_x = (Vec *)malloc((num_level + 1) * sizeof(*mg_recur_x));
-    mg_recur_b = (Vec *)malloc((num_level + 1) * sizeof(*mg_recur_b));
     assert(mg_recur_x && mg_recur_b);
 #endif
 
@@ -331,17 +364,12 @@ void MLASolverSolvePhase(const ConfigJSON *config,
     PetscCall(VecCopy(mysolver->solver_b, mg_recur_b[0]));
     PetscCall(VecCopy(mysolver->solver_x, mg_recur_x[0]));
 
-    MLAMGNestedProcedure(0, num_level, mysolver,
-                         mla_ctx, mg_recur_x, mg_recur_b,
-                         v_pre_smooth, v_post_smooth, order_rbm);
-
-#if 0
-    // pre-smooth phase
-    MLASolverPreSmoothPhase(mysolver, config->mla_config.pre_smooth_v);
-
-    // post-smooth phase
-    MLASolverPostSmoothPhase(mysolver, config->mla_config.post_smooth_v);
-#endif // pre- and post smoothing
+    MLAMGNestedProcedure(0, num_level,
+                         mysolver,
+                         mla_ctx,
+                         mg_recur_x, mg_recur_b,
+                         v_pre_smooth, v_post_smooth,
+                         order_rbm);
 
     // updating solution after nested mg procedure
     PetscCall(VecCopy(mg_recur_x[0], mysolver->solver_x));
@@ -349,6 +377,7 @@ void MLASolverSolvePhase(const ConfigJSON *config,
 // free memeory
 #if 1
     for (int index = 0; index < num_level + 1; ++index)
+    // for (int index = 0; index < num_level; ++index)
     {
         PetscCall(VecDestroy(mg_recur_x + index));
         PetscCall(VecDestroy(mg_recur_b + index));
@@ -370,8 +399,10 @@ void MLASolverSetupPhase(MySolver *mysolver,
         return;
     }
 
-    mla_ctx->mla = (MeshGraph *)malloc(num_level * sizeof(MeshGraph));
+#if 1
+    mla_ctx->mla = (MLAGraph *)malloc(num_level * sizeof(MLAGraph));
     assert(mla_ctx->mla);
+#endif
 
     int cnt_level = 0;
 
@@ -589,315 +620,78 @@ void MLASolverSetupPhase(MySolver *mysolver,
 
     mla_ctx->setup = 1;
 
-    // free memory
-    for(int index = 0; index < 6; ++index)
-    {
-        free(p_loc[index]);
-    }
-    free(p_loc);
+    // ksp and pc object
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->ksp_presmooth)));
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->ksp_postsmooth)));
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->ksp_coarse)));
+    PetscCall(PCCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->pc_presmooth)));
+    PetscCall(PCCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->pc_postsmooth)));
+    PetscCall(PCCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->pc_coarse)));
 
-#if 0
-    if (mla_ctx->setup == 1)
-    {
-        // setup has beed done
-        return;
-    }
-
-    mla_ctx->setup = 1;
-
-    mla_ctx->mla = (MLAGraph *)malloc(num_level * sizeof(MLAGraph));
-    assert(mla_ctx->mla);
-
-    /*
-     * 1. mla_ctx->num_level = num_level    // 0-base
-     * 2. in coarset mesh, number of points no less than 50
-     */
-    int cnt_level = 0; // level count
-
-    // finest and 2nd finest mesh
-    MeshGraph *graph_tmp = CreateMeshGraph(graph->size);
-    CopyMeshGraph(graph_tmp, graph);
-
-    (mla_ctx->mla + cnt_level)->fine = CreateMeshGraph(graph->size);
-    CopyMeshGraph((mla_ctx->mla + cnt_level)->fine, graph);
-#if 0
-    puts("\n>>>> 1st fine mesh:");
-    PrintMeshGraph((mla_ctx->mla + cnt_level)->fine);
-#endif
-
-    (mla_ctx->mla + cnt_level)->aggregation = AggregationMeshGraph(graph_tmp);
-#if 0
-    puts("\n>>>> 1st aggregation mesh:");
-    PrintMeshGraph((mla_ctx->mla + cnt_level)->aggregation);
-#endif
-
-    (mla_ctx->mla + cnt_level)->coarse = CreateMeshGraph((mla_ctx->mla + cnt_level)->aggregation->size);
-
-    (mla_ctx->mla + cnt_level)->coarse_node = (MeshNode *)malloc((mla_ctx->mla + cnt_level)->aggregation->size * sizeof(MeshNode));
-    assert((mla_ctx->mla + cnt_level)->coarse_node);
-
-    AssembleCoarseMeshNode((mla_ctx->mla + cnt_level)->aggregation,
-                           (mla_ctx->mla + cnt_level)->coarse_node);
-
-    AssembleCoarseMeshGraph((mla_ctx->mla + cnt_level)->coarse,
-                            (mla_ctx->mla + cnt_level)->aggregation,
-                            (mla_ctx->mla + cnt_level)->fine,
-                            (mla_ctx->mla + cnt_level)->coarse_node);
-    (mla_ctx->mla + cnt_level)->level = cnt_level;
-#if 0
-    puts("\n>>>> 1st coarse mesh:");
-    PrintMeshGraph((mla_ctx->mla + cnt_level)->coarse);
-#endif
-
-    // free temporary memory
-    // free(data_coarse_node);
-    ClearMeshGraph(graph_tmp);
-
-    // prolongation and coarse operator between finest mesh and 2nd finest mesh
-    int prolongation_block_row = (mla_ctx->mla + cnt_level)->fine->size;   // vertex in fine mesh
-    int prolongation_block_col = (mla_ctx->mla + cnt_level)->coarse->size; // vertex in coarse mesh
-    int m_prolongation = prolongation_block_row * 6;                       // row of prolongation operator
-    int n_prolongation = 0;
-
-    if (order_rbm == 1)
-    {
-        // 6 dof in coarse point
-        n_prolongation = prolongation_block_col * 6;
-    }
-    else if (order_rbm == 2)
-    {
-        // 9 dof in coarse point
-        n_prolongation = prolongation_block_col * 9;
-    }
-
-#if 1
-    printf(">>>>>>>> setup phase:\n %d level: prolongation_block_row = %d, col = %d\n",
-           cnt_level,
-           prolongation_block_row,
-           prolongation_block_col);
-    printf("%d level, size of prolongation: m = %d, n = %d\n", cnt_level,
-           m_prolongation,
-           n_prolongation);
-#endif
-
-    // memory allocation for prolongation operator
-    PetscCall(MatCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->prolongation)));
-    PetscCall(MatSetSizes((mla_ctx->mla + cnt_level)->prolongation, PETSC_DECIDE, PETSC_DECIDE, m_prolongation, n_prolongation));
-    PetscCall(MatSetUp((mla_ctx->mla + cnt_level)->prolongation));
-
-    // assigning value to prolongation operator
-    double **p_loc = (double **)malloc(6 * sizeof(double *));
-    assert(p_loc);
-    memset(p_loc, 0, 6 * sizeof(double *));
-
-    for (int index = 0; index < 6; ++index)
-    {
-        if (order_rbm == 1)
-        {
-            p_loc[index] = (double *)malloc(6 * sizeof(double));
-            memset(p_loc[index], 0, 6 * sizeof(double));
-        }
-        else if (order_rbm == 2)
-        {
-            p_loc[index] = (double *)malloc(9 * sizeof(double));
-            memset(p_loc[index], 0, 9 * sizeof(double));
-        }
-        else
-        {
-            fprintf(stderr, "invalid order_rbm 1 or 2!!!\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    // aggregation graph traverse
-    for (int index = 0; index < (mla_ctx->mla + cnt_level)->aggregation->size; ++index)
-    {
-        MeshGraphAdjNode *data_node_coarse = (mla_ctx->mla + cnt_level)->coarse->array[index].head;
-        MeshGraphAdjNode *data_node_aggregation = (mla_ctx->mla + cnt_level)->aggregation->array[index].head;
-
-        // coarse node coordinate
-        double node_coarse_x = data_node_coarse->node->node_x;
-        double node_coarse_y = data_node_coarse->node->node_y;
-        double node_coarse_z = data_node_coarse->node->node_z;
-
-        // aggregation graph adjacency list
-        for (int index_i = 0; index_i < (mla_ctx->mla + cnt_level)->aggregation->array[index].size; ++index_i)
-        {
-            // 0-base
-            int m_prolongation_block_tmp = data_node_aggregation->node->node_idx - 1;
-            int n_prolongation_block_tmp = index;
-
-            double node_aggregation_x = data_node_aggregation->node->node_x;
-            double node_aggregation_y = data_node_aggregation->node->node_y;
-            double node_aggregation_z = data_node_aggregation->node->node_z;
-
-            if (order_rbm == 1)
-            {
-                for (int index_tmp = 0; index_tmp < 6; ++index_tmp)
-                {
-                    p_loc[index_tmp][index_tmp] = 1.;
-                }
-                p_loc[0][4] = node_coarse_z - node_aggregation_z; // (1, 5) z
-                p_loc[0][5] = node_aggregation_y - node_coarse_y; // (1, 6) -y
-                p_loc[1][3] = -p_loc[0][4];                       // (2, 4) -z
-                p_loc[1][5] = node_coarse_x - node_aggregation_x; // (2, 6) x
-                p_loc[2][3] = -p_loc[0][5];                       // (3, 4) y
-                p_loc[2][4] = -p_loc[1][5];                       // (3, 5) -x
-
-                // p_loc in prolongation operator location
-                /*
-                 * (m_tmp, n_tmp) <-> {(m_tmp + 1) * 6 - 1, (n_tmp + 1) * 6 - 1}
-                 */
-                for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
-                {
-                    for (int index_tmp_j = 0; index_tmp_j < 6; ++index_tmp_j)
-                    {
-                        PetscCall(MatSetValue((mla_ctx->mla + cnt_level)->prolongation,
-                                              m_prolongation_block_tmp * 6 + index_tmp_i,
-                                              n_prolongation_block_tmp * 6 + index_tmp_j,
-                                              p_loc[index_tmp_i][index_tmp_j],
-                                              INSERT_VALUES));
-                    }
-                }
-            }
-            else if (order_rbm == 2)
-            {
-                for (int index_tmp = 0; index_tmp < 6; ++index_tmp)
-                {
-                    p_loc[index_tmp][index_tmp] = 1.;
-                }
-                p_loc[0][4] = node_coarse_z - node_aggregation_z; // (1, 5) z
-                p_loc[0][5] = node_aggregation_y - node_coarse_y; // (1, 6) -y
-                p_loc[1][3] = -p_loc[0][4];                       // (2, 4) -z
-                p_loc[1][5] = node_coarse_x - node_aggregation_x; // (2, 6) x
-                p_loc[2][3] = -p_loc[0][5];                       // (3, 4) y
-                p_loc[2][4] = -p_loc[1][5];                       // (3, 5) -x
-                p_loc[0][6] = (node_aggregation_z - node_coarse_z) *
-                              (node_coarse_x - node_aggregation_x); // (1, 7) -zx
-                p_loc[0][8] = (node_aggregation_z - node_coarse_z) *
-                              (node_coarse_y - node_aggregation_y); // (1, 9) -zy
-                p_loc[1][7] = p_loc[0][8];                          // (2, 8) -zy
-                p_loc[1][8] = p_loc[0][6];                          // (2, 9) -zx
-                p_loc[2][6] = (node_coarse_x - node_aggregation_x) *
-                              (node_coarse_x - node_aggregation_x) / 2.; // (3, 7) xx/2
-                p_loc[2][7] = (node_coarse_y - node_aggregation_y) *
-                              (node_coarse_y - node_aggregation_y) / 2.; // (3, 8) yy/2
-                p_loc[2][8] = (node_coarse_x - node_aggregation_x) *
-                              (node_coarse_y - node_aggregation_y); // (3, 9) xy
-#if 0
-                p_loc[3][7] = p_loc[0][4];                          // (4, 8) z
-                p_loc[3][8] = p_loc[0][5];                          // (4, 9) -y
-                p_loc[4][6] = p_loc[1][3];                          // (5, 7) -z
-                p_loc[4][8] = p_loc[1][5];                          // (5, 9) x
-                p_loc[5][6] = p_loc[2][3];                          // (6, 7) y
-                p_loc[5][7] = p_loc[2][4];                          // (6, 8) -x
-#endif
-
-                // p_loc in prolongation operator location
-                /*
-                 * (m_tmp, n_tmp) <-> {(m_tmp + 1) * 6 - 1, (n_tmp + 1) * 9 - 1}
-                 */
-                for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
-                {
-                    for (int index_tmp_j = 0; index_tmp_j < 9; ++index_tmp_j)
-                    {
-                        PetscCall(MatSetValue((mla_ctx->mla + cnt_level)->prolongation,
-                                              m_prolongation_block_tmp * 6 + index_tmp_i,
-                                              n_prolongation_block_tmp * 9 + index_tmp_j,
-                                              p_loc[index_tmp_i][index_tmp_j],
-                                              INSERT_VALUES));
-                    }
-                }
-            }
-
-            data_node_aggregation = data_node_aggregation->next;
-        }
-    }
-    PetscCall(MatAssemblyBegin((mla_ctx->mla + cnt_level)->prolongation, MAT_FINAL_ASSEMBLY));
-    PetscCall(MatAssemblyEnd((mla_ctx->mla + cnt_level)->prolongation, MAT_FINAL_ASSEMBLY));
-
-    // fine operator
-    PetscCall(MatDuplicate(mysolver->solver_a,
-                           MAT_COPY_VALUES,
-                           &((mla_ctx->mla + cnt_level)->operator_fine)));
-
-    // coarse operator
-    PetscCall(MatPtAP(mysolver->solver_a, (mla_ctx->mla + cnt_level)->prolongation,
-                      MAT_INITIAL_MATRIX, PETSC_DETERMINE,
-                      &((mla_ctx->mla + cnt_level)->operator_coarse)));
-
-#if 0
-    puts(">>>> 1st level, coarse mesh:");
-    PrintMeshGraph((mla_ctx->mla + cnt_level)->coarse);
-#endif
-
-// next level, after 1st level
-/*
- * the coarset mesh contains at least 50 nodes
- */
-// while (cnt_level < num_level && (mla_ctx->mla + cnt_level)->coarse->size >= 50)
-// while ((mla_ctx->mla + cnt_level)->coarse->size >= 50)
-#if 0
-    printf(">>>> num_level = %d, cnt_level = %d, coarse num_vertex = %d\n", num_level,
-           cnt_level,
-           (mla_ctx->mla + cnt_level)->coarse->size);
-#endif // 1st level
     ++cnt_level;
-    while (cnt_level < num_level && (mla_ctx->mla + cnt_level)->coarse->size >= 50)
+    while (cnt_level < num_level &&
+           (mla_ctx->mla + cnt_level - 1)->coarse->size > 50)
     {
-
+        // next level
+        (mla_ctx->mla + cnt_level)->level = cnt_level;
+        (mla_ctx->mla + cnt_level)->mesh_tmp = CreateMeshGraph((mla_ctx->mla + cnt_level - 1)->coarse->size);
         (mla_ctx->mla + cnt_level)->fine = CreateMeshGraph((mla_ctx->mla + cnt_level - 1)->coarse->size);
-        CopyMeshGraph((mla_ctx->mla + cnt_level)->fine, (mla_ctx->mla + cnt_level - 1)->coarse);
 
-        graph_tmp = CreateMeshGraph((mla_ctx->mla + cnt_level - 1)->coarse->size);
-        CopyMeshGraph(graph_tmp, (mla_ctx->mla + cnt_level - 1)->coarse);
+        CopyMeshGraph((mla_ctx->mla + cnt_level)->mesh_tmp, (mla_ctx->mla + cnt_level - 1)->coarse);
+        CopyMeshGraph((mla_ctx->mla + cnt_level)->fine, (mla_ctx->mla + cnt_level - 1)->coarse); // neighbouring fine mesh
+#if 0
+    printf("\n\n==== level %d neighbouring fine mesh:\n", cnt_level);
+    PrintMeshGraph((mla_ctx->mla + cnt_level)->fine);
+#endif // fine mesh
 
-        (mla_ctx->mla + cnt_level)->aggregation = AggregationMeshGraph(graph_tmp);
+        (mla_ctx->mla + cnt_level)->aggregation = AggregationMeshGraph((mla_ctx->mla + cnt_level)->mesh_tmp); // aggregation mesh
+#if 0
+    printf("\n\n==== level %d neighbouring aggregation mesh:\n", cnt_level);
+    PrintMeshGraph((mla_ctx->mla + cnt_level)->aggregation);
+#endif // aggregation mesh
 
-        (mla_ctx->mla + cnt_level)->coarse = CreateMeshGraph((mla_ctx->mla + cnt_level)->aggregation->size);
         (mla_ctx->mla + cnt_level)->coarse_node = (MeshNode *)malloc((mla_ctx->mla + cnt_level)->aggregation->size * sizeof(MeshNode));
         assert((mla_ctx->mla + cnt_level)->coarse_node);
-
         AssembleCoarseMeshNode((mla_ctx->mla + cnt_level)->aggregation,
                                (mla_ctx->mla + cnt_level)->coarse_node);
-
+        (mla_ctx->mla + cnt_level)->coarse = CreateMeshGraph((mla_ctx->mla + cnt_level)->aggregation->size);
         AssembleCoarseMeshGraph((mla_ctx->mla + cnt_level)->coarse,
                                 (mla_ctx->mla + cnt_level)->aggregation,
                                 (mla_ctx->mla + cnt_level)->fine,
-                                (mla_ctx->mla + cnt_level)->coarse_node);
-        (mla_ctx->mla + cnt_level)->level = cnt_level;
+                                (mla_ctx->mla + cnt_level)->coarse_node); // neighbouring coarse mesh
 #if 0
-        printf(">>>> num_level = %d, cnt_level = %d, coarse num_vertex = %d\n", num_level,
-               cnt_level,
-               (mla_ctx->mla + cnt_level)->coarse->size);
-#endif // cnt_level-th level
+    printf("\n\n==== level %d neighbouring coarse mesh:\n", cnt_level);
+    PrintMeshGraph((mla_ctx->mla + cnt_level)->coarse);
+#endif
 
-        // prolongation and coarse operator
+        PetscCall(MatDuplicate((mla_ctx->mla + cnt_level - 1)->operator_coarse,
+                               MAT_COPY_VALUES,
+                               &((mla_ctx->mla + cnt_level)->operator_fine)));
+#if 0
+    printf("\n\n==== level %d, neighbouring fine operator:\n", cnt_level);
+    PetscCall(MatView((mla_ctx->mla + cnt_level)->operator_fine, PETSC_VIEWER_STDOUT_WORLD));
+#endif                                                                     // print neighbouring fine operator
         prolongation_block_row = (mla_ctx->mla + cnt_level)->fine->size;   // vertex in fine mesh
         prolongation_block_col = (mla_ctx->mla + cnt_level)->coarse->size; // vertex in coarse mesh
 
         if (order_rbm == 1)
         {
             // 6 dof in coarse point
-            m_prolongation = prolongation_block_row * 6; // row of prolongation operator
-            n_prolongation = prolongation_block_col * 6; // col of prolongation operator
+            m_prolongation = prolongation_block_row * 6;
+            n_prolongation = prolongation_block_col * 6;
         }
         else if (order_rbm == 2)
         {
             // 9 dof in coarse point
-            m_prolongation = prolongation_block_row * 9; // row of prolongation operator
-            n_prolongation = prolongation_block_col * 9; // col of prolongation operator
+            m_prolongation = prolongation_block_row * 9;
+            n_prolongation = prolongation_block_col * 9;
         }
 
 #if 1
-        printf(">>>>>>>> setup phase:\n %d level: prolongation_block_row = %d, col = %d\n",
-               cnt_level,
+        printf(">>>>>>>> setup phase:\n prolongation_block_row = %d, col = %d\n",
                prolongation_block_row,
                prolongation_block_col);
-        printf("%d level, size of prolongation: m = %d, n = %d\n",
-               cnt_level,
-               m_prolongation,
-               n_prolongation);
+        printf("size of prolongation: m = %d, n = %d\n", m_prolongation, n_prolongation);
 #endif
 
         // memory allocation for prolongation operator
@@ -907,11 +701,12 @@ void MLASolverSetupPhase(MySolver *mysolver,
 
         // assigning value to prolongation operator
         double **p_loc_tmp = NULL;
-
         if (order_rbm == 1)
         {
             p_loc_tmp = (double **)malloc(6 * sizeof(double *));
+            assert(p_loc_tmp);
             memset(p_loc_tmp, 0, 6 * sizeof(double *));
+
             for (int index = 0; index < 6; ++index)
             {
                 p_loc_tmp[index] = (double *)malloc(6 * sizeof(double));
@@ -921,7 +716,9 @@ void MLASolverSetupPhase(MySolver *mysolver,
         else if (order_rbm == 2)
         {
             p_loc_tmp = (double **)malloc(9 * sizeof(double *));
+            assert(p_loc_tmp);
             memset(p_loc_tmp, 0, 9 * sizeof(double *));
+
             for (int index = 0; index < 9; ++index)
             {
                 p_loc_tmp[index] = (double *)malloc(9 * sizeof(double));
@@ -960,7 +757,7 @@ void MLASolverSetupPhase(MySolver *mysolver,
                 {
                     for (int index_tmp = 0; index_tmp < 6; ++index_tmp)
                     {
-                        p_loc_tmp[index_tmp][index_tmp] = 1.;
+                        p_loc[index_tmp][index_tmp] = 1.;
                     }
                     p_loc_tmp[0][4] = node_coarse_z - node_aggregation_z; // (1, 5) z
                     p_loc_tmp[0][5] = node_aggregation_y - node_coarse_y; // (1, 6) -y
@@ -969,7 +766,7 @@ void MLASolverSetupPhase(MySolver *mysolver,
                     p_loc_tmp[2][3] = -p_loc_tmp[0][5];                   // (3, 4) y
                     p_loc_tmp[2][4] = -p_loc_tmp[1][5];                   // (3, 5) -x
 
-                    // p_loc_tmp in prolongation operator location
+                    // p_loc in prolongation operator location
                     /*
                      * (m_tmp, n_tmp) <-> {(m_tmp + 1) * 6 - 1, (n_tmp + 1) * 6 - 1}
                      */
@@ -1010,24 +807,24 @@ void MLASolverSetupPhase(MySolver *mysolver,
                     p_loc_tmp[2][8] = (node_coarse_x - node_aggregation_x) *
                                       (node_coarse_y - node_aggregation_y); // (3, 9) xy
 #if 0
-                p_loc_tmp[3][7] = p_loc_tmp[0][4];                          // (4, 8) z
-                p_loc_tmp[3][8] = p_loc_tmp[0][5];                          // (4, 9) -y
-                p_loc_tmp[4][6] = p_loc_tmp[1][3];                          // (5, 7) -z
-                p_loc_tmp[4][8] = p_loc_tmp[1][5];                          // (5, 9) x
-                p_loc_tmp[5][6] = p_loc_tmp[2][3];                          // (6, 7) y
-                p_loc_tmp[5][7] = p_loc_tmp[2][4];                          // (6, 8) -x
+                p_loc[3][7] = p_loc[0][4];                          // (4, 8) z
+                p_loc[3][8] = p_loc[0][5];                          // (4, 9) -y
+                p_loc[4][6] = p_loc[1][3];                          // (5, 7) -z
+                p_loc[4][8] = p_loc[1][5];                          // (5, 9) x
+                p_loc[5][6] = p_loc[2][3];                          // (6, 7) y
+                p_loc[5][7] = p_loc[2][4];                          // (6, 8) -x
 #endif
 
-                    // p_loc_tmp in prolongation operator location
+                    // p_loc in prolongation operator location
                     /*
                      * (m_tmp, n_tmp) <-> {(m_tmp + 1) * 9 - 1, (n_tmp + 1) * 9 - 1}
                      */
-                    for (int index_tmp_i = 0; index_tmp_i < 9; ++index_tmp_i)
+                    for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
                     {
                         for (int index_tmp_j = 0; index_tmp_j < 9; ++index_tmp_j)
                         {
                             PetscCall(MatSetValue((mla_ctx->mla + cnt_level)->prolongation,
-                                                  m_prolongation_block_tmp * 9 + index_tmp_i,
+                                                  m_prolongation_block_tmp * 6 + index_tmp_i,
                                                   n_prolongation_block_tmp * 9 + index_tmp_j,
                                                   p_loc_tmp[index_tmp_i][index_tmp_j],
                                                   INSERT_VALUES));
@@ -1040,20 +837,32 @@ void MLASolverSetupPhase(MySolver *mysolver,
         }
         PetscCall(MatAssemblyBegin((mla_ctx->mla + cnt_level)->prolongation, MAT_FINAL_ASSEMBLY));
         PetscCall(MatAssemblyEnd((mla_ctx->mla + cnt_level)->prolongation, MAT_FINAL_ASSEMBLY));
+#if 0
+    printf("\n\n==== level %d, neighbouring prolongation operator:\n", cnt_level);
+    PetscCall(MatView((mla_ctx->mla + cnt_level)->prolongation, PETSC_VIEWER_STDOUT_WORLD));
+#endif // neighbouring prolongation operator
 
-        // fine operator
-        PetscCall(MatDuplicate((mla_ctx->mla + cnt_level - 1)->operator_coarse,
-                               MAT_COPY_VALUES,
-                               &((mla_ctx->mla + cnt_level)->operator_fine)));
-
-        // coarse operator
-        PetscCall(MatPtAP((mla_ctx->mla + cnt_level - 1)->operator_coarse,
+        PetscCall(MatPtAP((mla_ctx->mla + cnt_level)->operator_fine,
                           (mla_ctx->mla + cnt_level)->prolongation,
-                          MAT_INITIAL_MATRIX, PETSC_DETERMINE,
+                          MAT_INITIAL_MATRIX,
+                          PETSC_DETERMINE,
                           &((mla_ctx->mla + cnt_level)->operator_coarse)));
+#if 0
+    printf("\n\n==== level %d, neighbouring coarse operator:\n", cnt_level);
+    PetscCall(MatView((mla_ctx->mla + cnt_level)->operator_coarse, PETSC_VIEWER_STDOUT_WORLD));
+#endif
 
-        // free temporary memory
-        ClearMeshGraph(graph_tmp);
+        // ksp and pc object
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->ksp_presmooth)));
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->ksp_postsmooth)));
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->ksp_coarse)));
+        PetscCall(PCCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->pc_presmooth)));
+        PetscCall(PCCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->pc_postsmooth)));
+        PetscCall(PCCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->pc_coarse)));
+
+        ++cnt_level;
+
+        // memory free
         if (order_rbm == 1)
         {
             for (int index = 0; index < 6; ++index)
@@ -1070,26 +879,16 @@ void MLASolverSetupPhase(MySolver *mysolver,
             }
             free(p_loc_tmp);
         }
-
-        ++cnt_level;
     }
-#if 1
-    printf(">>>> num_level = %d, cnt_level = %d, coarse num_vertex = %d\n", num_level,
-           cnt_level,
-           (mla_ctx->mla + cnt_level - 1)->coarse->size);
-#endif // final level
 
-    mla_ctx->num_level = (cnt_level < num_level) ? cnt_level : num_level; // number of level, 1-base
+    mla_ctx->num_level = (cnt_level < num_level) ? cnt_level : num_level;
 
-// free p_loc
-#if 1
+    // free memory
     for (int index = 0; index < 6; ++index)
     {
         free(p_loc[index]);
     }
     free(p_loc);
-#endif
-#endif
 }
 
 void MLASolverRelativeResidual(MySolver *mysolver, double *value)
@@ -1153,7 +952,7 @@ void MLASolver(const MeshGraph *graph,
         PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", cnt, rela_resid));
     }
 
-#if 1
+#if 0
     puts("\n\n==== multilevel information ====");
     for (int index = 0; index < mla_ctx->num_level; ++index)
     {

@@ -144,6 +144,9 @@ typedef struct mla_graph
     KSP ksp_presmooth;      // pre-smooth solver
     KSP ksp_postsmooth;     // post-smooth solver
     KSP ksp_coarse;         // coarse solver
+    PC pc_presmooth;        // pre-smooth preconditioner
+    PC pc_postsmooth;       // post-smooth preconditioner
+    PC pc_coarse;           // coarse preconditioner
     int level;              // current level
 } MLAGraph;
 

@@ -98,30 +98,40 @@ int main(int argc, char **argv)
      */
     MLAContext mla_ctx;
     mla_ctx.setup = 0;
+#if 0
+    mla_ctx.mla = (MLAGraph *)malloc(config.mla_config.mla_level * sizeof(MLAGraph));
+    assert(mla_ctx.mla);
+#endif
+
     MLASolver(graph, &mysolver, &config, order_rbm, &mla_ctx);
 
     // check, computing residual
     SolverPetscResidualCheck(&mysolver);
 
-// free memory
+    // free memory
     for (int index = 0; index < mla_ctx.num_level; ++index)
     {
         free(mla_ctx.mla[index].coarse_node);
         PetscCall(MatDestroy(&(mla_ctx.mla[index].prolongation)));
         PetscCall(MatDestroy(&(mla_ctx.mla[index].operator_coarse)));
         PetscCall(MatDestroy(&(mla_ctx.mla[index].operator_fine)));
+        PetscCall(KSPDestroy(&(mla_ctx.mla[index].ksp_coarse)));
+        PetscCall(KSPDestroy(&(mla_ctx.mla[index].ksp_presmooth)));
+        PetscCall(KSPDestroy(&(mla_ctx.mla[index].ksp_postsmooth)));
+        PetscCall(PCDestroy(&(mla_ctx.mla[index].pc_coarse)));
+        PetscCall(PCDestroy(&(mla_ctx.mla[index].pc_presmooth)));
+        PetscCall(PCDestroy(&(mla_ctx.mla[index].pc_postsmooth)));
         ClearMeshGraph(mla_ctx.mla[index].aggregation);
         ClearMeshGraph(mla_ctx.mla[index].fine);
         ClearMeshGraph(mla_ctx.mla[index].coarse);
+        ClearMeshGraph(mla_ctx.mla[index].mesh_tmp);
     }
-#if 1
     free(mla_ctx.mla);
-#endif
-    // ClearMeshGraph(graph);
     ClearList(&data_list_ele_omega);
     ClearList(&data_list_ele_bound);
     ClearList(&data_list_node);
     ClearList(&data_list_phy_tag);
+    ClearMeshGraph(graph);
     PetscCall(MatDestroy(&mysolver.solver_a));
     PetscCall(VecDestroy(&mysolver.solver_b));
     PetscCall(VecDestroy(&mysolver.solver_x));

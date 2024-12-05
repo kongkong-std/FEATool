@@ -150,7 +150,8 @@ void AssembleCoarseMeshNode(MeshGraph *graph, MeshNode *node)
 void DeleteNodeMeshGraphAdjList(MeshGraphAdjList *list, MeshGraphAdjNode *node)
 {
     // Ensure the node is not NULL
-    if (node == NULL) return;
+    if (node == NULL)
+        return;
 
     MeshGraphAdjNode *to_delete = node;
 
@@ -205,7 +206,7 @@ MeshGraph *AggregationMeshGraph(MeshGraph *graph)
 
                     // 更新当前节点为下一个节点
                     curr_head_node = next_node; // 正常跳到下一个节点
-                    continue;                    // 继续处理下一个节点
+                    continue;                   // 继续处理下一个节点
                 }
                 else
                 {
@@ -260,30 +261,36 @@ void CopyMeshGraph(MeshGraph *graph_dst, MeshGraph *graph_src)
 
 void ClearMeshAdjList(MeshGraphAdjList *list)
 {
-    MeshGraphAdjNode *curr = list->head;
-    while (curr)
+    if (list)
     {
-        MeshGraphAdjNode *tmp = curr;
-        curr = curr->next;  // Move to the next node before freeing
-        free(tmp);  // Free current node
+        MeshGraphAdjNode *curr = list->head;
+        while (curr)
+        {
+            MeshGraphAdjNode *tmp = curr;
+            curr = curr->next; // Move to the next node before freeing
+            free(tmp);         // Free current node
+        }
+        list->head = NULL; // Ensure the head pointer is NULL
+        list->size = 0;
     }
-    list->head = NULL;  // Ensure the head pointer is NULL
-    list->size = 0;
 }
 
 void ClearMeshGraph(MeshGraph *graph)
 {
-    for (int index = 0; index < graph->size; ++index)
+    if (graph)
     {
-        ClearMeshAdjList(graph->array + index);
+        for (int index = 0; index < graph->size; ++index)
+        {
+            ClearMeshAdjList(graph->array + index);
+        }
+
+        // After clearing, set the array pointer to NULL to avoid dangling pointer access
+        free(graph->array);
+        graph->array = NULL;
+
+        // Finally, free the graph structure itself
+        free(graph);
     }
-
-    // After clearing, set the array pointer to NULL to avoid dangling pointer access
-    free(graph->array);
-    graph->array = NULL;
-
-    // Finally, free the graph structure itself
-    free(graph);
 }
 
 void AssembleMeshGraph(MeshGraph *graph, GenericList *data_node, GenericList *data_ele)
@@ -369,7 +376,7 @@ void AddNodeMeshGraphAdjList(MeshGraphAdjList *list, MeshNode *node)
     }
 
     MeshGraphAdjNode *new_node = (MeshGraphAdjNode *)malloc(sizeof(MeshGraphAdjNode));
-    assert(new_node);  // Check for successful allocation
+    assert(new_node); // Check for successful allocation
 
     // Initialize the new node
     new_node->node = node;
@@ -377,7 +384,7 @@ void AddNodeMeshGraphAdjList(MeshGraphAdjList *list, MeshNode *node)
 
     if (list->head == NULL)
     {
-        list->head = new_node;  // Insert at the head if the list is empty
+        list->head = new_node; // Insert at the head if the list is empty
     }
     else
     {
