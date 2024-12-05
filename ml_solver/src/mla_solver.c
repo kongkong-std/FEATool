@@ -13,28 +13,54 @@ void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
         PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     }
 
+    if (level == 0)
+    {
 #if 0
     // KSP ksp_loc;
     // PC pc_loc;
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
     PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
 #endif
-    PetscCall(KSPSetOperators(ksp,
-                              (mla_ctx->mla + level)->operator_fine,
-                              (mla_ctx->mla + level)->operator_fine));
-    PetscCall(KSPSetType(ksp, KSPRICHARDSON));
-    PetscCall(KSPGetPC(ksp, &pc));
-    PetscCall(PCSetType(pc, PCSOR));
-    PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
-    PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
-    PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
-    PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
-    PetscCall(KSPSetFromOptions(ksp));
+        PetscCall(KSPSetOperators(ksp,
+                                  (mla_ctx->mla + level)->operator_fine,
+                                  (mla_ctx->mla + level)->operator_fine));
+        PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+        PetscCall(KSPGetPC(ksp, &pc));
+        PetscCall(PCSetType(pc, PCSOR));
+        PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
+        PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
+        PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+        PetscCall(KSPSetFromOptions(ksp));
 
-    PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
 
-    PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
-    PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+        PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+        PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+    }
+    else
+    {
+#if 1
+        double shift = 1e-10;
+        PetscCall(MatShift((mla_ctx->mla + level)->operator_fine, shift));
+#endif
+        PetscCall(KSPSetOperators(ksp,
+                                  (mla_ctx->mla + level)->operator_fine,
+                                  (mla_ctx->mla + level)->operator_fine)); // add shift to diagonal
+        PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+        PetscCall(KSPGetPC(ksp, pc));
+        PetscCall(PCSetType(pc, PCSOR));
+        PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
+        PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
+        PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+        PetscCall(KSPSetFromOptions(ksp));
+
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+
+        PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+        PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+    }
 
 #if 0
     PetscCall(KSPDestroy(&ksp_loc));
@@ -103,19 +129,43 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
 #if 1
     if (order_rbm == 1)
     {
-        // rbm order 1
-        PetscCall(KSPSetOperators(ksp,
-                                  (mla_ctx->mla + level)->operator_coarse,
-                                  (mla_ctx->mla + level)->operator_coarse));
-        PetscCall(KSPSetType(ksp, KSPGCR));
-        // PetscCall(KSPGetPC(ksp_H, &pc));
-        // PetscCall(PCSetType(pc, PCLU));
-        PetscCall(KSPGCRSetRestart(ksp, gcr_restart));
-        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
-        PetscCall(KSPSetFromOptions(ksp));
-        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
+        if (level == 0)
+        {
+            // rbm order 1
+            PetscCall(KSPSetOperators(ksp,
+                                      (mla_ctx->mla + level)->operator_coarse,
+                                      (mla_ctx->mla + level)->operator_coarse));
+            PetscCall(KSPSetType(ksp, KSPGCR));
+            // PetscCall(KSPGetPC(ksp_H, &pc));
+            // PetscCall(PCSetType(pc, PCLU));
+            PetscCall(KSPGCRSetRestart(ksp, gcr_restart));
+            PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+            PetscCall(KSPSetFromOptions(ksp));
+            PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
 
-        PetscCall(KSPSolve(ksp, mg_recur_b[level + 1], mg_recur_x[level + 1]));
+            PetscCall(KSPSolve(ksp, mg_recur_b[level + 1], mg_recur_x[level + 1]));
+        }
+        else
+        {
+#if 1
+            double shift = 1e-10;
+            PetscCall(MatShift((mla_ctx->mla + level)->operator_coarse, shift));
+#endif
+            PetscCall(KSPSetOperators(ksp,
+                                      (mla_ctx->mla + level)->operator_coarse,
+                                      (mla_ctx->mla + level)->operator_coarse)); // add shift to diagonal
+            PetscCall(KSPSetType(ksp, KSPGCR));
+#if 0
+        PetscCall(KSPGetPC(ksp, pc));
+        PetscCall(PCSetType(pc, PCSVD));
+#endif
+            PetscCall(KSPGCRSetRestart(ksp, gcr_restart));
+            PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+            PetscCall(KSPSetFromOptions(ksp));
+            PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
+
+            PetscCall(KSPSolve(ksp, mg_recur_b[level + 1], mg_recur_x[level + 1]));
+        }
     }
     else if (order_rbm == 2)
     {
@@ -156,19 +206,6 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
     printf(">>>>>>>> coarse correction: norm_r_H = %021.16le\n", norm_r_H);
     printf(">>>>>>>> coarse correction: norm_e_H = %021.16le\n", norm_e_H);
     printf(">>>>>>>> coarse correction: relative = %021.16le\n\n", norm_tmp_r_H / norm_r_H);
-#endif
-
-#if 0
-    if (ksp)
-    {
-        PetscCall(KSPDestroy(&ksp));
-        ksp = NULL;
-    }
-    if (pc)
-    {
-        PetscCall(PCDestroy(&pc));
-        pc = NULL;
-    }
 #endif
 }
 
@@ -256,90 +293,6 @@ void MLAMGNestedProcedure(int level, int num_level,
     }
     free(r_h);
     free(tmp_e_h);
-
-#if 0
-    // recursive
-    if (level == num_level - 1)
-    {
-#if 1
-        // the coarset level, solve it with direct method
-        MLASolverCoarsetCorrectionPhase(order_rbm,
-                                        (mla_ctx->mla + level)->ksp_coarse,
-                                        (mla_ctx->mla + level)->pc_coarse,
-                                        level,
-                                        mla_ctx,
-                                        mg_recur_x,
-                                        mg_recur_b);
-#endif
-        return;
-    }
-    else
-    {
-        // pre-smoothing
-        // MLAMGNestedProcedurePreSmooth(mysolver->ksp, mysolver->pc,
-        MLAMGNestedProcedurePreSmooth((mla_ctx->mla + level)->ksp_presmooth,
-                                      (mla_ctx->mla + level)->pc_presmooth,
-                                      level,
-                                      mla_ctx,
-                                      mg_recur_x,
-                                      mg_recur_b,
-                                      v_pre_smooth);
-
-#if 1
-        // computing residual
-        Vec r_h, tmp_e_h;
-        PetscCall(VecDuplicate(mg_recur_b[level], &r_h));
-        PetscCall(VecDuplicate(mg_recur_b[level], &tmp_e_h));
-        PetscCall(MatMult((mla_ctx->mla + level)->operator_fine,
-                          mg_recur_x[level], r_h));
-        PetscCall(VecAYPX(r_h, -1., mg_recur_b[level])); // b - Ax, ATTENTION!!!
-
-        // restriction
-        int m_prolongation, n_prolongation; // size of prolongation operator
-        PetscCall(MatGetSize((mla_ctx->mla + level)->prolongation, &m_prolongation, &n_prolongation));
-        PetscCall(VecCreate(PETSC_COMM_WORLD, mg_recur_b + level + 1));
-        PetscCall(VecSetSizes(mg_recur_b[level + 1], PETSC_DECIDE, n_prolongation));
-        PetscCall(VecSetFromOptions(mg_recur_b[level + 1]));
-        PetscCall(MatMultTranspose((mla_ctx->mla + level)->prolongation, r_h, mg_recur_b[level + 1]));
-#if 0
-    PetscCall(VecView(mg_recur_b[level + 1], PETSC_VIEWER_STDOUT_WORLD));
-#endif // view mg_recur_b[level + 1]
-
-        MLAMGNestedProcedure(level + 1, num_level,
-                             mysolver,
-                             mla_ctx,
-                             mg_recur_x,
-                             mg_recur_b,
-                             v_pre_smooth, v_post_smooth, order_rbm);
-
-        // correction
-/*
- * tmp_e_h = P mg_recur_x[level + 1]
- * mg_recur_x[level] += tmp_e_h
- */
-#if 1
-        printf("\n\n======== in level %d, coarse error:\n", level);
-        PetscCall(VecView(mg_recur_x[level + 1], PETSC_VIEWER_STDOUT_WORLD));
-#endif // coarse error
-        PetscCall(MatMult((mla_ctx->mla + level)->prolongation, mg_recur_x[level + 1], tmp_e_h));
-        PetscCall(VecAXPY(mg_recur_x[level], 1., tmp_e_h));
-#if 1
-        printf("\n\n======== in level %d, after correction:\n", level);
-        PetscCall(VecView(mg_recur_x[level], PETSC_VIEWER_STDOUT_WORLD));
-#endif // fine solution
-#endif // recursive implementation
-
-        // post-smoothing
-        // MLAMGNestedProcedurePostSmooth(mysolver->ksp, mysolver->pc,
-        MLAMGNestedProcedurePostSmooth((mla_ctx->mla + level)->ksp_postsmooth,
-                                       (mla_ctx->mla + level)->pc_postsmooth,
-                                       level,
-                                       mla_ctx,
-                                       mg_recur_x,
-                                       mg_recur_b,
-                                       v_post_smooth);
-    }
-#endif
 }
 
 void MLASolverSolvePhase(const ConfigJSON *config,
@@ -819,12 +772,12 @@ void MLASolverSetupPhase(MySolver *mysolver,
                     /*
                      * (m_tmp, n_tmp) <-> {(m_tmp + 1) * 9 - 1, (n_tmp + 1) * 9 - 1}
                      */
-                    for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
+                    for (int index_tmp_i = 0; index_tmp_i < 9; ++index_tmp_i)
                     {
                         for (int index_tmp_j = 0; index_tmp_j < 9; ++index_tmp_j)
                         {
                             PetscCall(MatSetValue((mla_ctx->mla + cnt_level)->prolongation,
-                                                  m_prolongation_block_tmp * 6 + index_tmp_i,
+                                                  m_prolongation_block_tmp * 9 + index_tmp_i,
                                                   n_prolongation_block_tmp * 9 + index_tmp_j,
                                                   p_loc_tmp[index_tmp_i][index_tmp_j],
                                                   INSERT_VALUES));
@@ -838,8 +791,8 @@ void MLASolverSetupPhase(MySolver *mysolver,
         PetscCall(MatAssemblyBegin((mla_ctx->mla + cnt_level)->prolongation, MAT_FINAL_ASSEMBLY));
         PetscCall(MatAssemblyEnd((mla_ctx->mla + cnt_level)->prolongation, MAT_FINAL_ASSEMBLY));
 #if 0
-    printf("\n\n==== level %d, neighbouring prolongation operator:\n", cnt_level);
-    PetscCall(MatView((mla_ctx->mla + cnt_level)->prolongation, PETSC_VIEWER_STDOUT_WORLD));
+        printf("\n\n==== level %d, neighbouring prolongation operator:\n", cnt_level);
+        PetscCall(MatView((mla_ctx->mla + cnt_level)->prolongation, PETSC_VIEWER_STDOUT_WORLD));
 #endif // neighbouring prolongation operator
 
         PetscCall(MatPtAP((mla_ctx->mla + cnt_level)->operator_fine,
@@ -848,8 +801,8 @@ void MLASolverSetupPhase(MySolver *mysolver,
                           PETSC_DETERMINE,
                           &((mla_ctx->mla + cnt_level)->operator_coarse)));
 #if 0
-    printf("\n\n==== level %d, neighbouring coarse operator:\n", cnt_level);
-    PetscCall(MatView((mla_ctx->mla + cnt_level)->operator_coarse, PETSC_VIEWER_STDOUT_WORLD));
+        printf("\n\n==== level %d, neighbouring coarse operator:\n", cnt_level);
+        PetscCall(MatView((mla_ctx->mla + cnt_level)->operator_coarse, PETSC_VIEWER_STDOUT_WORLD));
 #endif
 
         // ksp and pc object
