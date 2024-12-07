@@ -176,7 +176,8 @@ void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
                                    MLAContext *mla_ctx,
                                    Vec *mg_recur_x,
                                    Vec *mg_recur_b,
-                                   int v_pre_smooth);
+                                   int v_pre_smooth,
+                                   int order_rbm);
 
 /*
  * mla solver nested mg procedure post-smooth

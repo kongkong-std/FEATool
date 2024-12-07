@@ -5,7 +5,8 @@ void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
                                    MLAContext *mla_ctx,
                                    Vec *mg_recur_x,
                                    Vec *mg_recur_b,
-                                   int v_pre_smooth)
+                                   int v_pre_smooth,
+                                   int order_rbm)
 {
     // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     if (level != 0)
@@ -13,7 +14,7 @@ void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
         PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     }
 
-    if (level == 0)
+    if (order_rbm == 1)
     {
 #if 0
     // KSP ksp_loc;
@@ -41,7 +42,7 @@ void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
     else
     {
 #if 1
-        double shift = 1e-10;
+        double shift = 1e-12;
         PetscCall(MatShift((mla_ctx->mla + level)->operator_fine, shift));
 #endif
         PetscCall(KSPSetOperators(ksp,
@@ -129,6 +130,28 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
 #if 1
     if (order_rbm == 1)
     {
+        // rbm order 1
+        PetscCall(KSPSetOperators(ksp,
+                                  (mla_ctx->mla + level)->operator_coarse,
+                                  (mla_ctx->mla + level)->operator_coarse));
+#if 0
+        PetscCall(KSPSetType(ksp, KSPGCR));
+        PetscCall(KSPGCRSetRestart(ksp, gcr_restart));
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
+#endif
+#if 1
+        PetscCall(KSPSetType(ksp, KSPGCR));
+        PetscCall(KSPGCRSetRestart(ksp, gcr_restart));
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
+        PetscCall(KSPGetPC(ksp, pc));
+        PetscCall(PCSetType(pc, PCLU));
+        PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERMUMPS));
+#endif
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+        PetscCall(KSPSetFromOptions(ksp));
+
+        PetscCall(KSPSolve(ksp, mg_recur_b[level + 1], mg_recur_x[level + 1]));
+#if 0
         if (level == 0)
         {
             // rbm order 1
@@ -147,7 +170,7 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
         }
         else
         {
-#if 1
+#if 0
             double shift = 1e-10;
             PetscCall(MatShift((mla_ctx->mla + level)->operator_coarse, shift));
 #endif
@@ -166,11 +189,12 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
 
             PetscCall(KSPSolve(ksp, mg_recur_b[level + 1], mg_recur_x[level + 1]));
         }
+#endif
     }
     else if (order_rbm == 2)
     {
 #if 1
-        double shift = 1e-10;
+        double shift = 1e-12;
         PetscCall(MatShift((mla_ctx->mla + level)->operator_coarse, shift));
 #endif
         PetscCall(KSPSetOperators(ksp,
@@ -239,7 +263,8 @@ void MLAMGNestedProcedure(int level, int num_level,
                                       mla_ctx,
                                       mg_recur_x,
                                       mg_recur_b,
-                                      v_pre_smooth);
+                                      v_pre_smooth,
+                                      order_rbm);
         PetscCall(MatMult((mla_ctx->mla + level)->operator_fine,
                           mg_recur_x[level],
                           r_h[level]));
@@ -710,7 +735,7 @@ void MLASolverSetupPhase(MySolver *mysolver,
                 {
                     for (int index_tmp = 0; index_tmp < 6; ++index_tmp)
                     {
-                        p_loc[index_tmp][index_tmp] = 1.;
+                        p_loc_tmp[index_tmp][index_tmp] = 1.;
                     }
                     p_loc_tmp[0][4] = node_coarse_z - node_aggregation_z; // (1, 5) z
                     p_loc_tmp[0][5] = node_aggregation_y - node_coarse_y; // (1, 6) -y
