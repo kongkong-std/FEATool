@@ -142,13 +142,14 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
             PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
             // PetscCall(KSPSetFromOptions(ksp));
             PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
+            // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 10));
 
             PetscCall(KSPSolve(ksp, mg_recur_b[level + 1], mg_recur_x[level + 1]));
         }
         else
         {
 #if 1
-            double shift = 1e-10;
+            double shift = 1e-12;
             PetscCall(MatShift((mla_ctx->mla + level)->operator_coarse, shift));
 #endif
             PetscCall(KSPSetOperators(ksp,
@@ -163,6 +164,7 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
             PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
             // PetscCall(KSPSetFromOptions(ksp));
             PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
+            // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 10));
 
             PetscCall(KSPSolve(ksp, mg_recur_b[level + 1], mg_recur_x[level + 1]));
         }
@@ -170,7 +172,7 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
     else if (order_rbm == 2)
     {
 #if 1
-        double shift = 1e-10;
+        double shift = 1e-12;
         PetscCall(MatShift((mla_ctx->mla + level)->operator_coarse, shift));
 #endif
         PetscCall(KSPSetOperators(ksp,
@@ -185,6 +187,7 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
         PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
         // PetscCall(KSPSetFromOptions(ksp));
         PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
+        // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 10));
 
         PetscCall(KSPSolve(ksp, mg_recur_b[level + 1], mg_recur_x[level + 1]));
     }
@@ -507,24 +510,99 @@ void MLASolverSetupPhase(MySolver *mysolver,
                 {
                     p_loc[index_tmp][index_tmp] = 1.;
                 }
+#if 0
                 p_loc[0][4] = node_coarse_z - node_aggregation_z; // (1, 5) z
                 p_loc[0][5] = node_aggregation_y - node_coarse_y; // (1, 6) -y
                 p_loc[1][3] = -p_loc[0][4];                       // (2, 4) -z
                 p_loc[1][5] = node_coarse_x - node_aggregation_x; // (2, 6) x
                 p_loc[2][3] = -p_loc[0][5];                       // (3, 4) y
                 p_loc[2][4] = -p_loc[1][5];                       // (3, 5) -x
+#endif
+#if 1
+                p_loc[0][4] = -(node_coarse_z - node_aggregation_z); // (1, 5) z
+                p_loc[0][5] = -(node_aggregation_y - node_coarse_y); // (1, 6) -y
+                p_loc[1][3] = -p_loc[0][4];                          // (2, 4) -z
+                p_loc[1][5] = -(node_coarse_x - node_aggregation_x); // (2, 6) x
+                p_loc[2][3] = -p_loc[0][5];                          // (3, 4) y
+                p_loc[2][4] = -p_loc[1][5];                          // (3, 5) -x
+#endif
+#if 0
+                p_loc[0][3] = -(node_coarse_z - node_aggregation_z); // (1, 4) z, phi modified
+                p_loc[0][5] = -(node_aggregation_y - node_coarse_y); // (1, 6) -y, phi modified
+                p_loc[1][4] = p_loc[0][3];                           // (2, 5) z, phi modified
+                p_loc[1][5] = -(node_coarse_x - node_aggregation_x); // (2, 6) x, phi modified
+                p_loc[2][3] = -p_loc[1][5];                          // (3, 4) -x, phi modified
+                p_loc[2][4] = p_loc[0][5];                           // (3, 5) -y, phi modified
+#endif
+
+#if 0
                 p_loc[0][6] = (node_aggregation_z - node_coarse_z) *
                               (node_coarse_x - node_aggregation_x); // (1, 7) -zx
+#endif
+#if 1
+                p_loc[0][6] = (node_coarse_z - node_aggregation_z) *
+                              (node_coarse_x - node_aggregation_x); // (1, 7) zx, modified
+#endif
+#if 0
+                p_loc[0][6] = -(node_coarse_z - node_aggregation_z) *
+                              (node_coarse_x - node_aggregation_x); // (1, 7) -zx, phi modified
+#endif
+
+#if 0 
                 p_loc[0][8] = (node_aggregation_z - node_coarse_z) *
                               (node_coarse_y - node_aggregation_y); // (1, 9) -zy
-                p_loc[1][7] = p_loc[0][8];                          // (2, 8) -zy
-                p_loc[1][8] = p_loc[0][6];                          // (2, 9) -zx
+#endif
+#if 1
+                p_loc[0][8] = -(node_aggregation_z - node_coarse_z) *
+                              (node_coarse_y - node_aggregation_y) / 2.; // (1, 9) zy/2, modified
+#endif
+#if 0
+                p_loc[0][8] = (node_aggregation_z - node_coarse_z) *
+                              (node_coarse_y - node_aggregation_y) / 2.; // (1, 9) -zy/2, phi modified
+#endif
+
+#if 0
+                p_loc[1][7] = p_loc[0][8]; // (2, 8) -zy
+                p_loc[1][8] = p_loc[0][6]; // (2, 9) -zx
+#endif
+#if 1
+                p_loc[1][7] = 2. * p_loc[0][8]; // (2, 8) zy, modified
+                p_loc[1][8] = p_loc[0][6] / 2.; // (2, 9) zx/2, modified
+#endif
+#if 0
+                p_loc[1][7] = -2. * p_loc[0][8]; // (2, 8) -zy, phi modified
+                p_loc[1][8] = -p_loc[0][6] / 2.; // (2, 9) -zx/2, phi modified
+#endif
+
+#if 0
                 p_loc[2][6] = (node_coarse_x - node_aggregation_x) *
                               (node_coarse_x - node_aggregation_x) / 2.; // (3, 7) xx/2
-                p_loc[2][7] = (node_coarse_y - node_aggregation_y) *
-                              (node_coarse_y - node_aggregation_y) / 2.; // (3, 8) yy/2
-                p_loc[2][8] = (node_coarse_x - node_aggregation_x) *
-                              (node_coarse_y - node_aggregation_y); // (3, 9) xy
+#endif
+                p_loc[2][6] = -(node_coarse_x - node_aggregation_x) *
+                              (node_coarse_x - node_aggregation_x) / 2.; // (3, 7) -xx/2, modified
+                p_loc[2][7] = -(node_coarse_y - node_aggregation_y) *
+                              (node_coarse_y - node_aggregation_y) / 2.; // (3, 8) -yy/2, modified
+                p_loc[2][8] = -(node_coarse_x - node_aggregation_x) *
+                              (node_coarse_y - node_aggregation_y) / 2.; // (3, 9) -xy/2, modified
+
+#if 0
+                p_loc[3][7] = p_loc[0][5];       // (4, 8) -y, modified
+                p_loc[3][8] = -p_loc[1][5] / 2.; // (4, 9) -x/2, modified
+                p_loc[4][6] = -2. * p_loc[3][8]; // (5, 7) x, modified
+                p_loc[4][8] = -p_loc[3][7] / 2.; // (5, 9) y/2, modified
+#endif
+#if 0
+                p_loc[3][6] = -p_loc[1][5];      // (4, 7) -x, phi modified
+                p_loc[3][8] = -p_loc[0][5] / 2.; // (4, 9) -y/2, phi modified
+                p_loc[4][7] = 2. * p_loc[3][8];  // (5, 8) -y, phi modified
+                p_loc[4][8] = p_loc[3][6] / 2.;  // (5, 9) -x/2, phi modified
+#endif
+
+#if 0
+                p_loc[3][6] = 1e-1;
+                p_loc[4][7] = 1e-1;
+                p_loc[5][8] = 1e-1;
+#endif
 #if 0
                 p_loc[3][7] = p_loc[0][4];                          // (4, 8) z
                 p_loc[3][8] = p_loc[0][5];                          // (4, 9) -y
@@ -532,6 +610,15 @@ void MLASolverSetupPhase(MySolver *mysolver,
                 p_loc[4][8] = p_loc[1][5];                          // (5, 9) x
                 p_loc[5][6] = p_loc[2][3];                          // (6, 7) y
                 p_loc[5][7] = p_loc[2][4];                          // (6, 8) -x
+#endif
+#if 0
+                p_loc[3][6] = p_loc[0][6];
+                p_loc[3][8] = p_loc[0][8];
+                p_loc[4][7] = p_loc[1][7];
+                p_loc[4][8] = p_loc[1][8];
+                p_loc[5][6] = p_loc[2][6];
+                p_loc[5][7] = p_loc[2][7];
+                p_loc[5][8] = p_loc[2][8];
 #endif
 
                 // p_loc in prolongation operator location
@@ -741,24 +828,98 @@ void MLASolverSetupPhase(MySolver *mysolver,
                     {
                         p_loc_tmp[index_tmp][index_tmp] = 1.;
                     }
+#if 0
                     p_loc_tmp[0][4] = node_coarse_z - node_aggregation_z; // (1, 5) z
                     p_loc_tmp[0][5] = node_aggregation_y - node_coarse_y; // (1, 6) -y
                     p_loc_tmp[1][3] = -p_loc_tmp[0][4];                   // (2, 4) -z
                     p_loc_tmp[1][5] = node_coarse_x - node_aggregation_x; // (2, 6) x
                     p_loc_tmp[2][3] = -p_loc_tmp[0][5];                   // (3, 4) y
                     p_loc_tmp[2][4] = -p_loc_tmp[1][5];                   // (3, 5) -x
+#endif
+#if 1
+                    p_loc_tmp[0][4] = -(node_coarse_z - node_aggregation_z); // (1, 5) z
+                    p_loc_tmp[0][5] = -(node_aggregation_y - node_coarse_y); // (1, 6) -y
+                    p_loc_tmp[1][3] = -p_loc_tmp[0][4];                      // (2, 4) -z
+                    p_loc_tmp[1][5] = -(node_coarse_x - node_aggregation_x); // (2, 6) x
+                    p_loc_tmp[2][3] = -p_loc_tmp[0][5];                      // (3, 4) y
+                    p_loc_tmp[2][4] = -p_loc_tmp[1][5];                      // (3, 5) -x
+#endif
+#if 0
+                    p_loc_tmp[0][3] = -(node_coarse_z - node_aggregation_z); // (1, 4) z, phi modified
+                    p_loc_tmp[0][5] = -(node_aggregation_y - node_coarse_y); // (1, 6) -y, phi modified
+                    p_loc_tmp[1][4] = p_loc_tmp[0][3];                       // (2, 5) z, phi modified
+                    p_loc_tmp[1][5] = -(node_coarse_x - node_aggregation_x); // (2, 6) x, phi modified
+                    p_loc_tmp[2][3] = -p_loc_tmp[1][5];                      // (3, 4) -x, phi modified
+                    p_loc_tmp[2][4] = p_loc_tmp[0][5];                       // (3, 5) -y, phi modified
+#endif
+
+#if 0
                     p_loc_tmp[0][6] = (node_aggregation_z - node_coarse_z) *
                                       (node_coarse_x - node_aggregation_x); // (1, 7) -zx
+#endif
+#if 1
+                    p_loc_tmp[0][6] = (node_coarse_z - node_aggregation_z) *
+                                      (node_coarse_x - node_aggregation_x); // (1, 7) zx, modified
+#endif
+#if 0
+                    p_loc_tmp[0][6] = -(node_coarse_z - node_aggregation_z) *
+                                      (node_coarse_x - node_aggregation_x); // (1, 7) -zx, phi modified
+#endif
+
+#if 0 
                     p_loc_tmp[0][8] = (node_aggregation_z - node_coarse_z) *
                                       (node_coarse_y - node_aggregation_y); // (1, 9) -zy
-                    p_loc_tmp[1][7] = p_loc_tmp[0][8];                      // (2, 8) -zy
-                    p_loc_tmp[1][8] = p_loc_tmp[0][6];                      // (2, 9) -zx
+#endif
+#if 1
+                    p_loc_tmp[0][8] = -(node_aggregation_z - node_coarse_z) *
+                                      (node_coarse_y - node_aggregation_y) / 2.; // (1, 9) zy/2, modified
+#endif
+#if 0
+                    p_loc_tmp[0][8] = (node_aggregation_z - node_coarse_z) *
+                                      (node_coarse_y - node_aggregation_y) / 2.; // (1, 9) -zy/2, phi modified
+#endif
+
+#if 0
+                    p_loc_tmp[1][7] = p_loc_tmp[0][8]; // (2, 8) -zy
+                    p_loc_tmp[1][8] = p_loc_tmp[0][6]; // (2, 9) -zx
+#endif
+#if 1
+                    p_loc_tmp[1][7] = 2. * p_loc_tmp[0][8]; // (2, 8) zy, modified
+                    p_loc_tmp[1][8] = p_loc_tmp[0][6] / 2.; // (2, 9) zx/2, modified
+#endif
+#if 0
+                    p_loc_tmp[1][7] = -2. * p_loc_tmp[0][8]; // (2, 8) -zy, phi modified
+                    p_loc_tmp[1][8] = -p_loc_tmp[0][6] / 2.; // (2, 9) -zx/2, phi modified
+#endif
+
+#if 0
                     p_loc_tmp[2][6] = (node_coarse_x - node_aggregation_x) *
                                       (node_coarse_x - node_aggregation_x) / 2.; // (3, 7) xx/2
-                    p_loc_tmp[2][7] = (node_coarse_y - node_aggregation_y) *
-                                      (node_coarse_y - node_aggregation_y) / 2.; // (3, 8) yy/2
-                    p_loc_tmp[2][8] = (node_coarse_x - node_aggregation_x) *
-                                      (node_coarse_y - node_aggregation_y); // (3, 9) xy
+#endif
+                    p_loc_tmp[2][6] = -(node_coarse_x - node_aggregation_x) *
+                                      (node_coarse_x - node_aggregation_x) / 2.; // (3, 7) -xx/2, modified
+                    p_loc_tmp[2][7] = -(node_coarse_y - node_aggregation_y) *
+                                      (node_coarse_y - node_aggregation_y) / 2.; // (3, 8) -yy/2, modified
+                    p_loc_tmp[2][8] = -(node_coarse_x - node_aggregation_x) *
+                                      (node_coarse_y - node_aggregation_y) / 2.; // (3, 9) -xy/2, modified
+#if 0
+                    p_loc_tmp[3][7] = p_loc_tmp[0][5];       // (4, 8) -y, modified
+                    p_loc_tmp[3][8] = -p_loc_tmp[1][5] / 2.; // (4, 9) -x/2, modified
+                    p_loc_tmp[4][6] = -2. * p_loc_tmp[3][8]; // (5, 7) x, modified
+                    p_loc_tmp[4][8] = -p_loc_tmp[3][7] / 2.; // (5, 9) y/2, modified
+#endif
+#if 0
+                    p_loc_tmp[3][6] = -p_loc_tmp[1][5];      // (4, 7) -x, phi modified
+                    p_loc_tmp[3][8] = -p_loc_tmp[0][5] / 2.; // (4, 9) -y/2, phi modified
+                    p_loc_tmp[4][7] = -2. * p_loc_tmp[3][8]; // (5, 8) -y, phi modified
+                    p_loc_tmp[4][8] = -p_loc_tmp[3][6] / 2.; // (5, 9) -x/2, phi modified
+#endif
+
+#if 0
+                    p_loc_tmp[3][6] = 1.;
+                    p_loc_tmp[4][7] = 1.;
+                    p_loc_tmp[5][8] = 1.;
+#endif
 #if 0
                 p_loc[3][7] = p_loc[0][4];                          // (4, 8) z
                 p_loc[3][8] = p_loc[0][5];                          // (4, 9) -y

@@ -223,4 +223,7 @@ void DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src)
  *     -ksp_gmres_restart 50
  *     -ksp_monitor_true_residual
  *     -ksp_norm_type unpreconditioned
+ *     -pc_type hypre
+ *     -pc_hypre_type boomeramg
+ *     -pc_hypre_boomeramg_numfunctions
  */
