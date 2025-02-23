@@ -1,0 +1,23 @@
+Config file: ../input/config/mla_v_cycle-refine0.json
+order_rbm = 2
+==== basic information of linear system ====
+matrix Row = 1506, matrix Column = 1506
+matrix nz_allocated = 27747, matrix nz_used = 27747, matrix nz_unneeded = 0
+vector Row = 1506
+>>>>>>>> setup phase:
+ prolongation_block_row = 251, col = 65
+size of prolongation: m = 1506, n = 585
+  0 KSP unpreconditioned resid norm 2.650113947035e+00 true resid norm 2.650113947035e+00 ||r(i)||/||b|| 1.000000000000e+00
+  1 KSP unpreconditioned resid norm 2.649819437861e+00 true resid norm 2.649819437861e+00 ||r(i)||/||b|| 9.998888692409e-01
+  2 KSP unpreconditioned resid norm 2.649759019554e+00 true resid norm 2.649759019554e+00 ||r(i)||/||b|| 9.998660708604e-01
+  3 KSP unpreconditioned resid norm 2.649421633030e+00 true resid norm 2.649421633030e+00 ||r(i)||/||b|| 9.997387606651e-01
+  4 KSP unpreconditioned resid norm 2.391997170731e+00 true resid norm 2.391997170733e+00 ||r(i)||/||b|| 9.026016309259e-01
+  5 KSP unpreconditioned resid norm 2.252253087885e-01 true resid norm 2.252253087805e-01 ||r(i)||/||b|| 8.498702821154e-02
+  6 KSP unpreconditioned resid norm 1.580600909524e-02 true resid norm 1.580600908896e-02 ||r(i)||/||b|| 5.964275274519e-03
+  7 KSP unpreconditioned resid norm 8.800713762980e-04 true resid norm 8.800713671344e-04 ||r(i)||/||b|| 3.320881232745e-04
+  8 KSP unpreconditioned resid norm 6.369744066108e-05 true resid norm 6.369744519057e-05 ||r(i)||/||b|| 2.403573826017e-05
+  9 KSP unpreconditioned resid norm 4.941287854189e-06 true resid norm 4.941281251912e-06 ||r(i)||/||b|| 1.864554260937e-06
+ 10 KSP unpreconditioned resid norm 2.843331339892e-07 true resid norm 2.843313148604e-07 ||r(i)||/||b|| 1.072902224369e-07
+ 11 KSP unpreconditioned resid norm 1.553345782501e-08 true resid norm 1.556267882667e-08 ||r(i)||/||b|| 5.872456482139e-09
+            || b ||_2 = 2.6501139470351753e+00
+|| r ||_2 / || b ||_2 = 5.8724564821385099e-09

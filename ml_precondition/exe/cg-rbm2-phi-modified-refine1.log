@@ -1,0 +1,60 @@
+Config file: ../input/config/mla_v_cycle-refine1.json
+order_rbm = 2
+==== basic information of linear system ====
+matrix Row = 5340, matrix Column = 5340
+matrix nz_allocated = 104619, matrix nz_used = 104619, matrix nz_unneeded = 0
+vector Row = 5340
+>>>>>>>> setup phase:
+ prolongation_block_row = 890, col = 263
+size of prolongation: m = 5340, n = 2367
+  0 KSP unpreconditioned resid norm 1.385199406759e+00 true resid norm 1.385199406759e+00 ||r(i)||/||b|| 1.000000000000e+00
+  1 KSP unpreconditioned resid norm 4.726187467898e+01 true resid norm 4.726187467898e+01 ||r(i)||/||b|| 3.411918489741e+01
+  2 KSP unpreconditioned resid norm 1.811487911098e+02 true resid norm 1.811487911098e+02 ||r(i)||/||b|| 1.307745225893e+02
+  3 KSP unpreconditioned resid norm 7.094193022973e+01 true resid norm 7.094193022974e+01 ||r(i)||/||b|| 5.121423665329e+01
+  4 KSP unpreconditioned resid norm 2.821299670645e+01 true resid norm 2.821299670644e+01 ||r(i)||/||b|| 2.036746230816e+01
+  5 KSP unpreconditioned resid norm 6.407434464316e+00 true resid norm 6.407434464312e+00 ||r(i)||/||b|| 4.625640491216e+00
+  6 KSP unpreconditioned resid norm 2.275228896098e+00 true resid norm 2.275228896095e+00 ||r(i)||/||b|| 1.642528061298e+00
+  7 KSP unpreconditioned resid norm 1.459775494630e+00 true resid norm 1.459775494624e+00 ||r(i)||/||b|| 1.053837799454e+00
+  8 KSP unpreconditioned resid norm 1.341842545447e+00 true resid norm 1.341842545454e+00 ||r(i)||/||b|| 9.686999134612e-01
+  9 KSP unpreconditioned resid norm 1.655187722374e+00 true resid norm 1.655187722389e+00 ||r(i)||/||b|| 1.194909349739e+00
+ 10 KSP unpreconditioned resid norm 1.354680716716e+00 true resid norm 1.354680716713e+00 ||r(i)||/||b|| 9.779680168090e-01
+ 11 KSP unpreconditioned resid norm 8.916820353632e-01 true resid norm 8.916820353567e-01 ||r(i)||/||b|| 6.437210635566e-01
+ 12 KSP unpreconditioned resid norm 8.757310942331e-01 true resid norm 8.757310942182e-01 ||r(i)||/||b|| 6.322057964689e-01
+ 13 KSP unpreconditioned resid norm 3.857716059754e-01 true resid norm 3.857716059912e-01 ||r(i)||/||b|| 2.784953589418e-01
+ 14 KSP unpreconditioned resid norm 2.762377242858e-01 true resid norm 2.762377242907e-01 ||r(i)||/||b|| 1.994209086019e-01
+ 15 KSP unpreconditioned resid norm 1.553766831234e-01 true resid norm 1.553766831220e-01 ||r(i)||/||b|| 1.121691811041e-01
+ 16 KSP unpreconditioned resid norm 1.513513218405e-01 true resid norm 1.513513218413e-01 ||r(i)||/||b|| 1.092632014588e-01
+ 17 KSP unpreconditioned resid norm 1.120713343485e-01 true resid norm 1.120713343622e-01 ||r(i)||/||b|| 8.090628238459e-02
+ 18 KSP unpreconditioned resid norm 5.178683410558e-02 true resid norm 5.178683410773e-02 ||r(i)||/||b|| 3.738583329956e-02
+ 19 KSP unpreconditioned resid norm 1.933472424550e-02 true resid norm 1.933472425959e-02 ||r(i)||/||b|| 1.395808008959e-02
+ 20 KSP unpreconditioned resid norm 6.365730051282e-03 true resid norm 6.365730044394e-03 ||r(i)||/||b|| 4.595533331399e-03
+ 21 KSP unpreconditioned resid norm 6.110406071271e-03 true resid norm 6.110406066198e-03 ||r(i)||/||b|| 4.411210426732e-03
+ 22 KSP unpreconditioned resid norm 2.957313832942e-03 true resid norm 2.957313815562e-03 ||r(i)||/||b|| 2.134937252450e-03
+ 23 KSP unpreconditioned resid norm 2.931661991843e-03 true resid norm 2.931661997745e-03 ||r(i)||/||b|| 2.116418750571e-03
+ 24 KSP unpreconditioned resid norm 1.617431799649e-03 true resid norm 1.617431811932e-03 ||r(i)||/||b|| 1.167652688876e-03
+ 25 KSP unpreconditioned resid norm 1.460874678799e-03 true resid norm 1.460874694492e-03 ||r(i)||/||b|| 1.054631331319e-03
+ 26 KSP unpreconditioned resid norm 1.043133223251e-03 true resid norm 1.043133212852e-03 ||r(i)||/||b|| 7.530563525816e-04
+ 27 KSP unpreconditioned resid norm 3.637879217230e-04 true resid norm 3.637878892020e-04 ||r(i)||/||b|| 2.626249242001e-04
+ 28 KSP unpreconditioned resid norm 2.483425059484e-04 true resid norm 2.483424916733e-04 ||r(i)||/||b|| 1.792828458210e-04
+ 29 KSP unpreconditioned resid norm 1.066711504197e-04 true resid norm 1.066711298204e-04 ||r(i)||/||b|| 7.700777902440e-05
+ 30 KSP unpreconditioned resid norm 2.456488473545e-05 true resid norm 2.456488841519e-05 ||r(i)||/||b|| 1.773382828157e-05
+ 31 KSP unpreconditioned resid norm 1.064754223935e-05 true resid norm 1.064753046254e-05 ||r(i)||/||b|| 7.686640934574e-06
+ 32 KSP unpreconditioned resid norm 1.064148907952e-05 true resid norm 1.064148494962e-05 ||r(i)||/||b|| 7.682276571658e-06
+ 33 KSP unpreconditioned resid norm 1.063787019946e-05 true resid norm 1.063786300995e-05 ||r(i)||/||b|| 7.679661829223e-06
+ 34 KSP unpreconditioned resid norm 1.030286433308e-05 true resid norm 1.030284932021e-05 ||r(i)||/||b|| 7.437809509548e-06
+ 35 KSP unpreconditioned resid norm 1.027221787254e-05 true resid norm 1.027221276059e-05 ||r(i)||/||b|| 7.415692434221e-06
+ 36 KSP unpreconditioned resid norm 7.084919657757e-06 true resid norm 7.084915694415e-06 ||r(i)||/||b|| 5.114726197431e-06
+ 37 KSP unpreconditioned resid norm 3.385315752958e-06 true resid norm 3.385312663266e-06 ||r(i)||/||b|| 2.443917205529e-06
+ 38 KSP unpreconditioned resid norm 1.650851671153e-06 true resid norm 1.650848752248e-06 ||r(i)||/||b|| 1.191776970300e-06
+ 39 KSP unpreconditioned resid norm 6.099842471553e-07 true resid norm 6.099814258231e-07 ||r(i)||/||b|| 4.403564012855e-07
+ 40 KSP unpreconditioned resid norm 2.763965503927e-07 true resid norm 2.763855843097e-07 ||r(i)||/||b|| 1.995276513700e-07
+ 41 KSP unpreconditioned resid norm 1.407729459892e-07 true resid norm 1.407567905477e-07 ||r(i)||/||b|| 1.016148215635e-07
+ 42 KSP unpreconditioned resid norm 4.850494687429e-08 true resid norm 4.853328842728e-08 ||r(i)||/||b|| 3.503704101407e-08
+ 43 KSP unpreconditioned resid norm 1.631116121815e-08 true resid norm 1.637280768209e-08 ||r(i)||/||b|| 1.181982002173e-08
+ 44 KSP unpreconditioned resid norm 5.196304724395e-09 true resid norm 5.374732653905e-09 ||r(i)||/||b|| 3.880114752923e-09
+            || b ||_2 = 1.3851994067587832e+00
+|| r ||_2 / || b ||_2 = 3.8801147529231984e-09
+WARNING! There are options you set that were not used!
+WARNING! could be spelling mistake, etc!
+There is one unused database option. It is:
+Option left: name:-ksp_gmres_restart value: 50 source: command line

@@ -561,7 +561,7 @@ void MLASolverSetupPhase(MySolver *mysolver,
                 p_loc[0][6] = (node_coarse_z - node_aggregation_z) *
                               (node_coarse_x - node_aggregation_x); // (1, 7) zx, modified
 #endif
-#if 1
+#if 0
                 p_loc[0][6] = (node_coarse_z - node_aggregation_z) *
                               (node_coarse_x - node_aggregation_x); // (1, 7) zx, phi modified
 #endif
@@ -574,7 +574,7 @@ void MLASolverSetupPhase(MySolver *mysolver,
                 p_loc[0][8] = -(node_aggregation_z - node_coarse_z) *
                               (node_coarse_y - node_aggregation_y) / 2.; // (1, 9) zy/2, modified
 #endif
-#if 1
+#if 0
                 p_loc[0][8] = -(node_aggregation_z - node_coarse_z) *
                               (node_coarse_y - node_aggregation_y) / 2.; // (1, 9) zy/2, phi modified
 #endif
@@ -587,7 +587,7 @@ void MLASolverSetupPhase(MySolver *mysolver,
                 p_loc[1][7] = 2. * p_loc[0][8]; // (2, 8) zy, modified
                 p_loc[1][8] = p_loc[0][6] / 2.; // (2, 9) zx/2, modified
 #endif
-#if 1
+#if 0
                 p_loc[1][7] = 2. * p_loc[0][8]; // (2, 8) zy, phi modified
                 p_loc[1][8] = p_loc[0][6] / 2.; // (2, 9) zx/2, phi modified
 #endif
@@ -596,14 +596,16 @@ void MLASolverSetupPhase(MySolver *mysolver,
                 p_loc[2][6] = (node_coarse_x - node_aggregation_x) *
                               (node_coarse_x - node_aggregation_x) / 2.; // (3, 7) xx/2
 #endif
+#if 0
                 p_loc[2][6] = -(node_coarse_x - node_aggregation_x) *
                               (node_coarse_x - node_aggregation_x) / 2.; // (3, 7) -xx/2, modified
                 p_loc[2][7] = -(node_coarse_y - node_aggregation_y) *
                               (node_coarse_y - node_aggregation_y) / 2.; // (3, 8) -yy/2, modified
                 p_loc[2][8] = -(node_coarse_x - node_aggregation_x) *
                               (node_coarse_y - node_aggregation_y) / 2.; // (3, 9) -xy/2, modified
+                              #endif
 
-#if 1 // lame constant modify
+#if 0 // lame constant modify
                 p_loc[1][7] *= lame_constant_modify;
                 p_loc[2][7] *= lame_constant_modify;
 #endif
@@ -614,11 +616,20 @@ void MLASolverSetupPhase(MySolver *mysolver,
                 p_loc[4][6] = -2. * p_loc[3][8]; // (5, 7) x, modified
                 p_loc[4][8] = -p_loc[3][7] / 2.; // (5, 9) y/2, modified
 #endif
-#if 1
+#if 0
                 p_loc[3][6] = p_loc[1][5];      // (4, 7) x, phi modified
                 p_loc[3][8] = -p_loc[0][5] / 2.; // (4, 9) y/2, phi modified
                 p_loc[4][7] = 2. * p_loc[3][8];  // (5, 8) y, phi modified
                 p_loc[4][8] = p_loc[3][6] / 2.;  // (5, 9) x/2, phi modified
+#endif
+
+#if 1    // null space
+    p_loc[0][7] = (node_coarse_x - node_aggregation_x) * (node_coarse_y - node_aggregation_y);    // (0, 7) xy
+    p_loc[0][8] = (node_coarse_x - node_aggregation_x) * (node_coarse_z - node_aggregation_z);    // (0, 8) xz
+    p_loc[1][6] = p_loc[0][7];    // (1, 6) xy
+    p_loc[1][8] = -(node_coarse_y - node_aggregation_y) * (node_coarse_z - node_aggregation_z);    // (1, 8) -yz
+    p_loc[2][6] = -p_loc[0][8];    // (2, 6) -xz
+    p_loc[2][7] = p_loc[1][8];    // (2, 7) -yz
 #endif
 
                 // p_loc in prolongation operator location
@@ -924,7 +935,7 @@ void MLASolverSetupPhase(MySolver *mysolver,
                     p_loc_tmp[4][6] = -2. * p_loc_tmp[3][8]; // (5, 7) x, modified
                     p_loc_tmp[4][8] = -p_loc_tmp[3][7] / 2.; // (5, 9) y/2, modified
 #endif
-#if 1
+#if 0
                     p_loc_tmp[3][6] = p_loc_tmp[1][5];      // (4, 7) x, phi modified
                     p_loc_tmp[3][8] = -p_loc_tmp[0][5] / 2.; // (4, 9) y/2, phi modified
                     p_loc_tmp[4][7] = 2. * p_loc_tmp[3][8]; // (5, 8) y, phi modified
