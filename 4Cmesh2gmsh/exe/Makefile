@@ -28,4 +28,4 @@ app_msh_exe: $(OBJECT)
 	$(CC) $(CFLAGS) $(CMD) $(INCL) "$<" -o "$@"
 
 clean:
-	rm -f app_petsc_exe $(OBJECT)
+	rm -f app_msh_exe $(OBJECT)
