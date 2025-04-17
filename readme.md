@@ -21,3 +21,8 @@ The mesh data is used as an input file. This project uses unstructured meshes to
 
 >node data
 >> 3D coordinates, (x, y, z)
+
+## Aggregation
+Calling METIS/ParMETIS to implement mesh aggregation
+
+## Aggregation-based Multilevel method

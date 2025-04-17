@@ -1,0 +1,35 @@
+Config file: ../input/config/mla_v_cycle-refine1.json
+order_rbm = 1
+==== basic information of linear system ====
+matrix Row = 5340, matrix Column = 5340
+matrix nz_allocated = 104619, matrix nz_used = 104619, matrix nz_unneeded = 0
+vector Row = 5340
+>>>>>>>> setup phase:
+ prolongation_block_row = 890, col = 263
+size of prolongation: m = 5340, n = 1578
+  0 KSP unpreconditioned resid norm 1.385199406759e+00 true resid norm 1.385199406759e+00 ||r(i)||/||b|| 1.000000000000e+00
+  1 KSP unpreconditioned resid norm 1.375111621568e+00 true resid norm 1.375111621568e+00 ||r(i)||/||b|| 9.927174490967e-01
+  2 KSP unpreconditioned resid norm 1.359628768312e+00 true resid norm 1.359628768312e+00 ||r(i)||/||b|| 9.815401029472e-01
+  3 KSP unpreconditioned resid norm 1.127317692925e+00 true resid norm 1.127317692933e+00 ||r(i)||/||b|| 8.138306206543e-01
+  4 KSP unpreconditioned resid norm 7.424175920933e-01 true resid norm 7.424175920999e-01 ||r(i)||/||b|| 5.359644167312e-01
+  5 KSP unpreconditioned resid norm 2.098921227573e-01 true resid norm 2.098921227747e-01 ||r(i)||/||b|| 1.515248431024e-01
+  6 KSP unpreconditioned resid norm 7.802511309888e-02 true resid norm 7.802511310136e-02 ||r(i)||/||b|| 5.632771189524e-02
+  7 KSP unpreconditioned resid norm 2.527545129005e-02 true resid norm 2.527545129653e-02 ||r(i)||/||b|| 1.824679621807e-02
+  8 KSP unpreconditioned resid norm 8.046505481223e-03 true resid norm 8.046505509141e-03 ||r(i)||/||b|| 5.808914925808e-03
+  9 KSP unpreconditioned resid norm 2.681393880622e-03 true resid norm 2.681393909583e-03 ||r(i)||/||b|| 1.935745782520e-03
+ 10 KSP unpreconditioned resid norm 9.702783377410e-04 true resid norm 9.702784312101e-04 ||r(i)||/||b|| 7.004611945947e-04
+ 11 KSP unpreconditioned resid norm 3.793907241056e-04 true resid norm 3.793907559334e-04 ||r(i)||/||b|| 2.738889102047e-04
+ 12 KSP unpreconditioned resid norm 1.248077446813e-04 true resid norm 1.248077848651e-04 ||r(i)||/||b|| 9.010095171575e-05
+ 13 KSP unpreconditioned resid norm 4.375853198991e-05 true resid norm 4.375857718078e-05 ||r(i)||/||b|| 3.159009234863e-05
+ 14 KSP unpreconditioned resid norm 1.278698915551e-05 true resid norm 1.278697124814e-05 ||r(i)||/||b|| 9.231141152493e-06
+ 15 KSP unpreconditioned resid norm 3.597651493795e-06 true resid norm 3.597633260042e-06 ||r(i)||/||b|| 2.597195207050e-06
+ 16 KSP unpreconditioned resid norm 8.491835773371e-07 true resid norm 8.491766229072e-07 ||r(i)||/||b|| 6.130356530358e-07
+ 17 KSP unpreconditioned resid norm 2.099617377032e-07 true resid norm 2.099330196849e-07 ||r(i)||/||b|| 1.515543673067e-07
+ 18 KSP unpreconditioned resid norm 4.980977047591e-08 true resid norm 4.978993760635e-08 ||r(i)||/||b|| 3.594423832656e-08
+ 19 KSP unpreconditioned resid norm 1.020270028472e-08 true resid norm 1.023293325287e-08 ||r(i)||/||b|| 7.387335861492e-09
+            || b ||_2 = 1.3851994067587832e+00
+|| r ||_2 / || b ||_2 = 7.3873358614919026e-09
+WARNING! There are options you set that were not used!
+WARNING! could be spelling mistake, etc!
+There is one unused database option. It is:
+Option left: name:-ksp_gmres_resart value: 50 source: command line

@@ -1,0 +1,19 @@
+{
+    "file": {
+      "file_mat": "../input/linsys/petsc-bin-mat-refine0",
+      "file_rhs": "../input/linsys/petsc-bin-rhs-refine0",
+      "file_mesh": "../input/mesh/linear-elasticity-2d-22.msh"
+    },
+    "mesh_label":{
+      "label_bound": 1,
+      "label_omega": 2
+    },
+    "mla": {
+      "pre_smooth_v": 2,
+      "post_smooth_v": 2,
+      "mla_max_it": 1,
+      "mla_rtol": 1e-10,
+      "mla_level": 1,
+      "mla_phase": 2
+    }
+  }
