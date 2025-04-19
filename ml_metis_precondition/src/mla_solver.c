@@ -1,11 +1,11 @@
 #include "../include/main.h"
 
-void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
-                                   int level,
-                                   MLAContext *mla_ctx,
-                                   Vec *mg_recur_x,
-                                   Vec *mg_recur_b,
-                                   int v_pre_smooth)
+int MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
+                                             int level,
+                                             MLAContext *mla_ctx,
+                                             Vec *mg_recur_x,
+                                             Vec *mg_recur_b,
+                                             int v_pre_smooth)
 {
     // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     if (level != 0)
@@ -48,7 +48,7 @@ void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
                                   (mla_ctx->mla + level)->operator_fine,
                                   (mla_ctx->mla + level)->operator_fine)); // add shift to diagonal
         PetscCall(KSPSetType(ksp, KSPRICHARDSON));
-        PetscCall(KSPGetPC(ksp, pc));
+        PetscCall(KSPGetPC(ksp, &pc));
         PetscCall(PCSetType(pc, PCSOR));
         PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
         PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
@@ -66,14 +66,16 @@ void MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
     PetscCall(KSPDestroy(&ksp_loc));
     PetscCall(PCDestroy(&pc_loc));
 #endif
+
+    return 0;
 }
 
-void MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
-                                    int level,
-                                    MLAContext *mla_ctx,
-                                    Vec *mg_recur_x,
-                                    Vec *mg_recur_b,
-                                    int v_post_smooth)
+int MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
+                                              int level,
+                                              MLAContext *mla_ctx,
+                                              Vec *mg_recur_x,
+                                              Vec *mg_recur_b,
+                                              int v_post_smooth)
 {
 #if 0
     // KSP ksp_loc;
@@ -97,13 +99,15 @@ void MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
 
     PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
     PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+
+    return 0;
 }
 
-void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
-                                     int level,
-                                     MLAContext *mla_ctx,
-                                     Vec *mg_recur_x,
-                                     Vec *mg_recur_b)
+int MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
+                                               int level,
+                                               MLAContext *mla_ctx,
+                                               Vec *mg_recur_x,
+                                               Vec *mg_recur_b)
 {
     PetscCall(VecDuplicate(mg_recur_b[level + 1], mg_recur_x + level + 1));
     int gcr_restart = 50;
@@ -210,16 +214,18 @@ void MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
     printf(">>>>>>>> coarse correction: norm_e_H = %021.16le\n", norm_e_H);
     printf(">>>>>>>> coarse correction: relative = %021.16le\n\n", norm_tmp_r_H / norm_r_H);
 #endif // print coarse level correction information
+
+    return 0;
 }
 
-void MLAMGNestedProcedure(int level, int num_level,
-                          MySolver *mysolver,
-                          MLAContext *mla_ctx,
-                          Vec *mg_recur_x,
-                          Vec *mg_recur_b,
-                          int v_pre_smooth,
-                          int v_post_smooth,
-                          int order_rbm)
+int MLAMGNestedProcedure(int level, int num_level,
+                                    MySolver *mysolver,
+                                    MLAContext *mla_ctx,
+                                    Vec *mg_recur_x,
+                                    Vec *mg_recur_b,
+                                    int v_pre_smooth,
+                                    int v_post_smooth,
+                                    int order_rbm)
 {
     Vec *r_h = NULL, *tmp_e_h = NULL;
 
@@ -296,12 +302,14 @@ void MLAMGNestedProcedure(int level, int num_level,
     }
     free(r_h);
     free(tmp_e_h);
+
+    return 0;
 }
 
-void MLASolverSolvePhase(const ConfigJSON *config,
-                         MLAContext *mla_ctx,
-                         int order_rbm,
-                         MySolver *mysolver)
+int MLASolverSolvePhase(const ConfigJSON *config,
+                                   MLAContext *mla_ctx,
+                                   int order_rbm,
+                                   MySolver *mysolver)
 {
     // mg recursive implementation
     int v_pre_smooth = config->mla_config.pre_smooth_v;
@@ -341,18 +349,20 @@ void MLASolverSolvePhase(const ConfigJSON *config,
 #endif
     free(mg_recur_x);
     free(mg_recur_b);
+
+    return 0;
 }
 
-void MLASolverSetupPhase(MySolver *mysolver,
-                         const MeshGraph *graph,
-                         int num_level,
-                         int order_rbm,
-                         MLAContext *mla_ctx)
+int MLASolverSetupPhase(MySolver *mysolver,
+                                   const MeshGraph *graph,
+                                   int num_level,
+                                   int order_rbm,
+                                   MLAContext *mla_ctx)
 {
     if (mla_ctx->setup == 1)
     {
         // prolongation operator has been constructed
-        return;
+        PetscFunctionReturn(PETSC_SUCCESS);
     }
 
 #if 1
@@ -456,10 +466,11 @@ void MLASolverSetupPhase(MySolver *mysolver,
     // lame constant
     double lame_e = 21e5, lame_nu = 0.28;
     double lame_lambda = 0., lame_mu = 0.;
+    double lame_constant_modify = 0.;
     lame_lambda = lame_e * lame_nu / (1 + lame_nu) / (1 - 2 * lame_nu);
     lame_mu = lame_e / 2. / (1 + lame_nu);
-    // double lame_constant_modify = lame_mu / (lame_lambda + lame_mu);
-    double lame_constant_modify = 1.;
+    lame_constant_modify = lame_mu / (lame_lambda + lame_mu);
+    lame_constant_modify = 1.;
 
     // aggregation graph traverse
     for (int index = 0; index < (mla_ctx->mla + cnt_level)->aggregation->size; ++index)
@@ -603,7 +614,7 @@ void MLASolverSetupPhase(MySolver *mysolver,
                               (node_coarse_y - node_aggregation_y) / 2.; // (3, 8) -yy/2, modified
                 p_loc[2][8] = -(node_coarse_x - node_aggregation_x) *
                               (node_coarse_y - node_aggregation_y) / 2.; // (3, 9) -xy/2, modified
-                              #endif
+#endif
 
 #if 0 // lame constant modify
                 p_loc[1][7] *= lame_constant_modify;
@@ -623,13 +634,13 @@ void MLASolverSetupPhase(MySolver *mysolver,
                 p_loc[4][8] = p_loc[3][6] / 2.;  // (5, 9) x/2, phi modified
 #endif
 
-#if 1    // null space
-    p_loc[0][7] = (node_coarse_x - node_aggregation_x) * (node_coarse_y - node_aggregation_y);    // (0, 7) xy
-    p_loc[0][8] = (node_coarse_x - node_aggregation_x) * (node_coarse_z - node_aggregation_z);    // (0, 8) xz
-    p_loc[1][6] = p_loc[0][7];    // (1, 6) xy
-    p_loc[1][8] = -(node_coarse_y - node_aggregation_y) * (node_coarse_z - node_aggregation_z);    // (1, 8) -yz
-    p_loc[2][6] = -p_loc[0][8];    // (2, 6) -xz
-    p_loc[2][7] = p_loc[1][8];    // (2, 7) -yz
+#if 1                                                                                                       // null space
+                p_loc[0][7] = (node_coarse_x - node_aggregation_x) * (node_coarse_y - node_aggregation_y);  // (0, 7) xy
+                p_loc[0][8] = (node_coarse_x - node_aggregation_x) * (node_coarse_z - node_aggregation_z);  // (0, 8) xz
+                p_loc[1][6] = p_loc[0][7];                                                                  // (1, 6) xy
+                p_loc[1][8] = -(node_coarse_y - node_aggregation_y) * (node_coarse_z - node_aggregation_z); // (1, 8) -yz
+                p_loc[2][6] = -p_loc[0][8];                                                                 // (2, 6) -xz
+                p_loc[2][7] = p_loc[1][8];                                                                  // (2, 7) -yz
 #endif
 
                 // p_loc in prolongation operator location
@@ -1016,9 +1027,11 @@ void MLASolverSetupPhase(MySolver *mysolver,
         free(p_loc[index]);
     }
     free(p_loc);
+
+    return 0;
 }
 
-void MLASolverRelativeResidual(MySolver *mysolver, double *value)
+int MLASolverRelativeResidual(MySolver *mysolver, double *value)
 {
     PetscReal b_norm_2 = 0.;
     PetscReal r_norm_2 = 0.;
@@ -1030,14 +1043,16 @@ void MLASolverRelativeResidual(MySolver *mysolver, double *value)
     PetscCall(VecNorm(mysolver->solver_r, NORM_2, &r_norm_2));
 
     *value = r_norm_2 / b_norm_2;
+
+    return 0;
 }
 
-void MLASolver(const MeshGraph *graph,
-               MySolver *mysolver,
-               const ConfigJSON *config,
-               int order_rbm,
-               MLAContext *mla_ctx,
-               int mla_phase)
+int MLASolver(const MeshGraph *graph,
+                         MySolver *mysolver,
+                         const ConfigJSON *config,
+                         int order_rbm,
+                         MLAContext *mla_ctx,
+                         int mla_phase)
 {
     // int mla_phase = config->mla_config.mla_phase;
     int num_level = config->mla_config.mla_level;
@@ -1107,4 +1122,6 @@ void MLASolver(const MeshGraph *graph,
         // PetscCall(MatView((mla_ctx->mla + index)->operator_coarse, PETSC_VIEWER_STDOUT_WORLD));
     }
 #endif // basic information of multilevel
+
+    return 0;
 }

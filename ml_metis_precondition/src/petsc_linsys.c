@@ -1,6 +1,6 @@
 #include "../include/main.h"
 
-void SolverPetscResidualCheck(MySolver *mysolver)
+int SolverPetscResidualCheck(MySolver *mysolver)
 {
     PetscReal b_norm_2 = 0.;
     PetscReal r_norm_2 = 0.;
@@ -13,9 +13,11 @@ void SolverPetscResidualCheck(MySolver *mysolver)
 
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "            || b ||_2 = %021.16le\n", b_norm_2));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "|| r ||_2 / || b ||_2 = %021.16le\n", r_norm_2 / b_norm_2));
+
+    return 0;
 }
 
-void SolverPetscInitialize(const char *path_mat, const char *path_rhs, MySolver *mysolver)
+int SolverPetscInitialize(const char *path_mat, const char *path_rhs, MySolver *mysolver)
 {
     PetscViewer fd;
 
@@ -37,7 +39,7 @@ void SolverPetscInitialize(const char *path_mat, const char *path_rhs, MySolver 
 
     // size of matrix
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "==== basic information of linear system ====\n"));
-    int m_mat = 0, n_mat = 0, nnz_mat = 0;
+    int m_mat = 0, n_mat = 0; // nnz_mat = 0;
     PetscCall(MatGetSize(mysolver->solver_a, &m_mat, &n_mat));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "matrix Row = %d, matrix Column = %d\n", m_mat, n_mat));
     MatInfo info_mat;
@@ -52,6 +54,8 @@ void SolverPetscInitialize(const char *path_mat, const char *path_rhs, MySolver 
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mysolver->ksp)));
     PetscCall(PCCreate(PETSC_COMM_WORLD, &(mysolver->pc)));
 #endif
+
+    return 0;
 }
 
 #if 0

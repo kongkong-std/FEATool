@@ -245,7 +245,7 @@ MeshGraph *AggregationMeshGraph(MeshGraph *graph)
     return graph_aggregation;
 }
 
-void CopyMeshGraph(MeshGraph *graph_dst, MeshGraph *graph_src)
+void CopyMeshGraph(MeshGraph *graph_dst, const MeshGraph *graph_src)
 {
     for (int index = 0; index < graph_src->size; ++index)
     {

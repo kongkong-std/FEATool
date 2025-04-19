@@ -1,6 +1,6 @@
 #include "../include/main.h"
 
-void DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src);
+int DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src);
 
 int main(int argc, char **argv)
 {
@@ -26,6 +26,11 @@ int main(int argc, char **argv)
     PetscCall(PetscOptionsGetInt(NULL, NULL, "-order_rbm", &order_rbm, &path_flag));
     if (path_flag)
     {
+        // parameter order_rbm
+        /*
+         * order_rbm = 1, classical rbm type prolongation operator
+         * order_rbm = 2, krichhoff type prolongation operator
+         */
         PetscCall(PetscPrintf(PETSC_COMM_WORLD, "order_rbm = %d\n", order_rbm));
     }
 
@@ -43,6 +48,9 @@ int main(int argc, char **argv)
     {
         exit(EXIT_FAILURE);
     }
+    mla_ctx.metis_mla = (MetisMLAGraph *)malloc(mla_ctx.config.mla_config.mla_level *
+                                                sizeof(MetisMLAGraph));
+    assert(mla_ctx.metis_mla);
 #if 0
     printf("File Config:\n");
     printf("file_mat: %s\n", config.file_config.file_mat);
@@ -69,7 +77,57 @@ int main(int argc, char **argv)
     // deep copy
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mla_ctx.mysolver.ksp)));
     PetscCall(PCCreate(PETSC_COMM_WORLD, &(mla_ctx.mysolver.pc)));
-    DeepCopyMLAContextMySolver(&(mla_ctx.mysolver), &mysolver);
+    PetscCall(DeepCopyMLAContextMySolver(&(mla_ctx.mysolver), &mysolver));
+
+    /*
+     * step 2, gmsh data process
+     */
+    mla_ctx.data_gmsh = (DataGmsh *)malloc(sizeof(DataGmsh));
+    assert(mla_ctx.data_gmsh);
+    MetisFileProcessGmsh(mla_ctx.config.file_config.file_mesh,
+                         mla_ctx.data_gmsh);
+#if 1
+    puts("\n==== gmsh data information ====");
+    printf("number of nodes: %d\n", mla_ctx.data_gmsh->nn);
+    printf("number of elements: %d\n", mla_ctx.data_gmsh->ne);
+    for (int index = 0; index < mla_ctx.data_gmsh->nn; ++index)
+    {
+        printf("node %d: %021.16le\t%021.16le\t%021.16le\n", index,
+               mla_ctx.data_gmsh->coordinates[3 * index],
+               mla_ctx.data_gmsh->coordinates[3 * index + 1],
+               mla_ctx.data_gmsh->coordinates[3 * index + 2]);
+    }
+    printf("number of elements in boundary: %d\n", mla_ctx.data_gmsh->ne_bd);
+    for (int index = 0; index < mla_ctx.data_gmsh->ne_bd + 1; ++index)
+    {
+        printf("data_gmsh.eptr_bd[%d] = %" PRIDX "\n", index, mla_ctx.data_gmsh->eptr_bd[index]);
+    }
+    printf("number of elements in inner: %d\n", mla_ctx.data_gmsh->ne_in);
+    for (int index = 0; index < mla_ctx.data_gmsh->ne_in + 1; ++index)
+    {
+        printf("data_gmsh.eptr_in[%d] = %" PRIDX "\n", index, mla_ctx.data_gmsh->eptr_in[index]);
+    }
+    printf("nodes in inner elements:\n");
+    for (int index = 0; index < mla_ctx.data_gmsh->ne_in; ++index)
+    {
+        printf("element %d: ", index);
+        for (int index_i = 0; index_i < mla_ctx.data_gmsh->nne_in; ++index_i)
+        {
+            printf("%" PRIDX "\t", mla_ctx.data_gmsh->eind_in[index * mla_ctx.data_gmsh->nne_in + index_i]);
+        }
+        putchar('\n');
+    }
+#endif // print gmsh file data
+
+#if 1
+    puts("\n==== test metis function ====");
+    TestMetisFunctionGmsh(*(mla_ctx.data_gmsh));
+#endif // test metis function
+
+    /*
+     * step 3, calling MetisMLASolver()
+     */
+    PetscCall(MetisMLASolver(&mla_ctx, 2));
 
     /*
      * step 2, mesh process
@@ -159,6 +217,14 @@ int main(int argc, char **argv)
     SolverPetscResidualCheck(&mysolver);
 
     // free memory
+    free(mla_ctx.data_gmsh->coordinates);
+    free(mla_ctx.data_gmsh->eptr_bd);
+    free(mla_ctx.data_gmsh->eind_bd);
+    free(mla_ctx.data_gmsh->eptr_in);
+    free(mla_ctx.data_gmsh->eind_in);
+    free(mla_ctx.data_gmsh->epart_in);
+    free(mla_ctx.data_gmsh->npart_in);
+    free(mla_ctx.data_gmsh);
     for (int index = 0; index < mla_ctx.num_level; ++index)
     {
         free(mla_ctx.mla[index].coarse_node);
@@ -194,7 +260,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src)
+int DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src)
 {
     PetscCall(VecDuplicate(src->solver_b, &(dst->solver_b)));
     PetscCall(VecCopy(src->solver_b, dst->solver_b));
@@ -204,6 +270,8 @@ void DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src)
     PetscCall(VecCopy(src->solver_r, dst->solver_r));
 
     PetscCall(MatDuplicate(src->solver_a, MAT_COPY_VALUES, &(dst->solver_a)));
+
+    return 0;
 }
 
 // command line
