@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     PetscBool path_flag;
 
     char path_config[PETSC_MAX_PATH_LEN];
-    int order_rbm = 0;
+    PetscInt order_rbm = 0;
 
     PetscCall(PetscOptionsGetString(NULL, NULL, "-config", path_config, sizeof(path_config), &path_flag));
     if (path_flag)
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
          * order_rbm = 1, classical rbm type prolongation operator
          * order_rbm = 2, krichhoff type prolongation operator
          */
-        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "order_rbm = %d\n", order_rbm));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "order_rbm = %" PetscInt_FMT "\n", order_rbm));
     }
 
     // user-defined precondition

@@ -9,9 +9,9 @@
 #include <assert.h>
 #include <cjson/cJSON.h>
 #include <stdbool.h>
-// #include <parmetis.h>
+#include <parmetis.h>
 #include <metis.h>
-#include <GKlib.h>
+//#include <GKlib.h>
 
 #define MAX_SIZE PETSC_MAX_PATH_LEN
 #define BUF_MAX_SIZE PETSC_MAX_PATH_LEN

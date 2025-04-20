@@ -222,7 +222,7 @@ void MetisFileProcessGmsh(const char *path /*path to gmsh file*/,
     data->nne_in = nn_ele_in;
     data->nparts = data->nn / 4;
 
-    // data->epart_in = (idx_t *)malloc(data->ne_in * sizeof(idx_t));
+    data->epart_in = (idx_t *)malloc(data->ne_in * sizeof(idx_t));
     data->npart_in = (idx_t *)malloc(data->nn * sizeof(idx_t));
     assert(data->epart_in && data->npart_in);
 

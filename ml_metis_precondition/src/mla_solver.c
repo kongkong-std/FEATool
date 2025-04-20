@@ -255,7 +255,7 @@ int MLAMGNestedProcedure(int level, int num_level,
         PetscCall(VecAYPX(r_h[level], -1., mg_recur_b[level]));
 
         // restriction
-        int m_prolongation = 0, n_prolongation = 0; // size of prolongation operator
+        PetscInt m_prolongation = 0, n_prolongation = 0; // size of prolongation operator
         PetscCall(MatGetSize((mla_ctx->mla + level)->prolongation,
                              &m_prolongation,
                              &n_prolongation));

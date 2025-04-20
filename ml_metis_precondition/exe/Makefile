@@ -10,15 +10,14 @@ CMD = -fPIC -Wall -Wwrite-strings \
       -fstack-protector -fvisibility=hidden -g -O3 \
       -march=native -mtune=native
 
-INCL = -I/home/kongkong/software/petsc/3.21.4/real/0openmp/include \
+INCL = -I/home/kongkong/software/petsc/3.21.4/real/gklib-metis/include \
        -I${MPICH_HOME}/include \
 	   -I${CJSON_INCLUDE_PATH} \
-	   -I${GKLIB_INCLUDE} \
 	   -I${METIS_INCLUDE} \
 	   -I${PARMETIS_INCLUDE}
 
-LIB_PATH = -Wl,-rpath,/home/kongkong/software/petsc/3.21.4/real/0openmp/lib \
-	   -L/home/kongkong/software/petsc/3.21.4/real/0openmp/lib \
+LIB_PATH = -Wl,-rpath,/home/kongkong/software/petsc/3.21.4/real/gklib-metis/lib \
+	   -L/home/kongkong/software/petsc/3.21.4/real/gklib-metis/lib \
 	   -Wl,-rpath,${MPICH_HOME}/lib \
 	   -L${MPICH_HOME}/lib \
 	   -Wl,-rpath,/opt/apps/compilers/gcc-10.3.0/lib/gcc/x86_64-pc-linux-gnu/10.3.0 \
@@ -37,13 +36,12 @@ LIB_PATH = -Wl,-rpath,/home/kongkong/software/petsc/3.21.4/real/0openmp/lib \
 	   -Wl,-rpath,${PARMETIS_LIB}
 
 
+
 LIB_FLAG = -lpetsc -lHYPRE -ldmumps -lsmumps -lzmumps -lcmumps -lmumps_common \
 	   -lpord -lpthread -lscalapack -lopenblas \
-	   -lptesmumps -lptscotchparmetisv3 -lptscotch -lptscotcherr \
-	   -lesmumps -lscotch -lscotcherr -lpthread \
-	   -lparmetis -lmetis -lGKlib -lm -lX11 -ldl \
-	   -lmpifort -lmpi -lgfortran -lm -lgfortran -lm \
-	   -lgcc_s -lquadmath -lstdc++ -lrt -lquadmath -ldl -lcjson
+	   -lpthread -lparmetis -lmetis -lGKlib -lmetis -lGKlib \
+	   -lm -lX11 -ldl -lmpifort -lmpi -lgfortran -lm -lgfortran \
+	   -lm -lgcc_s -lquadmath -lstdc++ -lquadmath -ldl -lcjson
 
 LIB = $(LIB_PATH) $(LIB_FLAG)
 OBJECT := $(patsubst %.c,%.o,$(wildcard $(SRC)/*.c))
