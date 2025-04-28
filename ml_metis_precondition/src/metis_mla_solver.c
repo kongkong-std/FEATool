@@ -38,20 +38,20 @@ int TestMetisFunctionGmsh(DataGmsh data)
                                  NULL, options,
                                  &objval, data.epart_in, data.npart_in);
 
-#if 0
+#if 1
     puts("\n==== metis function result ====");
     printf("status = %d, METIS_OK = %d\n", status, METIS_OK);
-    printf("partition objective value = %ld\n", objval);
+    printf("partition objective value = %" PRIDX "\n", objval);
     printf("element partition:\n");
     for (int index = 0; index < ne; ++index)
     {
-        printf("epart[%d] = %ld\n", index, data.epart_in[index]);
+        printf("epart[%d] = %" PRIDX "\n", index, data.epart_in[index]);
     }
     printf("node partition:\n");
     for (int index = 0; index < nn; ++index)
     {
         // printf("npart[%d] = %ld\n", index, npart[index]);
-        printf("%ld\n", data.npart_in[index]);
+        printf("npart[%d] = %" PRIDX "\n", index, data.npart_in[index]);
     }
 #endif // metis function result
 
@@ -92,8 +92,137 @@ int MetisMLASolverSolvePhase(MLAContext *mla_ctx)
     return 0;
 }
 
+void GmshCoarseLevelGenerator(DataGmsh *coarse_data /*gmsh coarse level data pointer*/,
+                              DataGmsh *fine_data /*gmsh fine level data pointer*/)
+{
+    coarse_data->nn = fine_data->nparts;
+    coarse_data->ne_in = coarse_data->nn; // adjacency list size, number of elements equal to number of nodes
+    coarse_data->nparts = coarse_data->nn / 4;
+    coarse_data->nne_bd = NumNodeEleTypeMap(1); // segment line element
+    coarse_data->nne_in = NumNodeEleTypeMap(1); // segment line element
+
+    // coarse level node coordinates
+    coarse_data->coordinates = (double *)malloc(coarse_data->nn * 3 * sizeof(double));
+    assert(coarse_data->coordinates);
+    memset(coarse_data->coordinates, 0, 3 * coarse_data->nn * sizeof(double));
+
+    int *cnt_node_partition = NULL; // nodes in current partition
+    cnt_node_partition = (int *)malloc(coarse_data->nn * sizeof(int));
+    assert(cnt_node_partition);
+    memset(cnt_node_partition, 0, coarse_data->nn * sizeof(int));
+
+    for (int index = 0; index < fine_data->nn; ++index)
+    {
+        idx_t id_part = fine_data->npart_in[index]; // 0-base
+        coarse_data->coordinates[id_part * 3] += fine_data->coordinates[index * 3];
+        coarse_data->coordinates[id_part * 3 + 1] += fine_data->coordinates[index * 3 + 1];
+        coarse_data->coordinates[id_part * 3 + 2] += fine_data->coordinates[index * 3 + 2];
+        ++(cnt_node_partition[id_part]);
+    }
+
+    for (int index = 0; index < coarse_data->nn; ++index)
+    {
+        coarse_data->coordinates[3 * index] /= cnt_node_partition[index];
+        coarse_data->coordinates[3 * index + 1] /= cnt_node_partition[index];
+        coarse_data->coordinates[3 * index + 2] /= cnt_node_partition[index];
+    }
+
+    // coarse level adjacency list
+    coarse_data->eptr_in = (idx_t *)malloc((coarse_data->ne_in + 1) * sizeof(idx_t));
+    assert(coarse_data->eptr_in);
+    memset(coarse_data->eptr_in, 0, (coarse_data->ne_in + 1) * sizeof(idx_t));
+
+    // adjacency matrix
+    bool **mat_adj = NULL;
+    mat_adj = (bool **)malloc(coarse_data->nn * sizeof(bool *));
+    assert(mat_adj);
+    for (int index = 0; index < coarse_data->nn; ++index)
+    {
+        mat_adj[index] = (bool *)calloc(coarse_data->nn, sizeof(bool));
+        assert(mat_adj[index]);
+        // mat_adj[index][index] = true;
+    }
+
+    // elements in fine level traversal
+    for (int index = 0; index < fine_data->ne_in; ++index)
+    {
+        idx_t index_start = fine_data->eptr_in[index];
+        idx_t index_end = fine_data->eptr_in[index + 1];
+
+        for (idx_t index_i = index_start; index_i < index_end; ++index_i)
+        {
+            idx_t fine_node_i = fine_data->eind_in[index_i];
+            idx_t coarse_node_i = fine_data->npart_in[fine_node_i];
+
+            for (idx_t index_j = index_i + 1; index_j < index_end; ++index_j)
+            {
+                idx_t fine_node_j = fine_data->eind_in[index_j];
+                idx_t coarse_node_j = fine_data->npart_in[fine_node_j];
+
+                mat_adj[coarse_node_i][coarse_node_j] = true;
+                mat_adj[coarse_node_j][coarse_node_i] = true;
+            }
+        }
+    }
+
+    // diagonal = 0
+    for (int index = 0; index < coarse_data->nn; ++index)
+    {
+        mat_adj[index][index] = 0;
+    }
+
+    // assign value to coarse_data->eptr_in
+    for (int index_i = 0; index_i < coarse_data->nn; ++index_i)
+    {
+        int cnt_tmp = 0;
+        for (int index_j = 0; index_j < coarse_data->nn; ++index_j)
+        {
+            if (mat_adj[index_i][index_j])
+            {
+                ++cnt_tmp;
+            }
+        }
+        coarse_data->eptr_in[index_i + 1] = coarse_data->eptr_in[index_i] + cnt_tmp;
+    }
+
+    // assign value to coarse_data->eind_in
+    coarse_data->eind_in = (idx_t *)malloc(coarse_data->eptr_in[coarse_data->nn] * sizeof(idx_t));
+    assert(coarse_data);
+    int pos_tmp = 0;
+    for (int index_i = 0; index_i < coarse_data->nn; ++index_i)
+    {
+        for (int index_j = 0; index_j < coarse_data->nn; ++index_j)
+        {
+            if (mat_adj[index_i][index_j])
+            {
+                coarse_data->eind_in[pos_tmp] = index_j;
+                ++pos_tmp;
+            }
+        }
+    }
+
+    coarse_data->npart_in = (idx_t *)malloc(coarse_data->nn * sizeof(idx_t));
+    assert(coarse_data->npart_in);
+
+    // free memory
+    free(cnt_node_partition);
+    for (int index = 0; index < coarse_data->nn; ++index)
+    {
+        free(mat_adj[index]);
+    }
+    free(mat_adj);
+}
+
 int MetisMLASolverSetupPhase(MLAContext *mla_ctx)
 {
+    if (mla_ctx->setup == 1)
+    {
+        // setup phase has been done
+        return 0;
+    }
+
+    mla_ctx->setup = 1;
+
     idx_t options[METIS_NOPTIONS];
     idx_t objval;
     idx_t nn = 0, ne = 0;
@@ -152,7 +281,48 @@ int MetisMLASolverSetupPhase(MLAContext *mla_ctx)
                                             options, &objval,
                                             mla_ctx->metis_mla[cnt_num_level].fine->epart_in,
                                             mla_ctx->metis_mla[cnt_num_level].fine->npart_in);
+#if 1
     printf("metis status_metis_part = %d\n", status_metis_part);
+    printf("partition objective value = %" PRIDX "\n", objval);
+    puts("fine level node partition:");
+    for (int index = 0; index < nn; ++index)
+    {
+        printf("npart[%d] = %" PRIDX "\n", index, mla_ctx->metis_mla[cnt_num_level].fine->npart_in[index]);
+    }
+#endif
+
+    // coarse level data gmsh
+    GmshCoarseLevelGenerator(mla_ctx->metis_mla[cnt_num_level].coarse,
+                             mla_ctx->metis_mla[cnt_num_level].fine);
+#if 1
+    puts("\ncoarse level data:");
+    puts("nodes:");
+    for (int index = 0; index < mla_ctx->metis_mla[cnt_num_level].coarse->nn; ++index)
+    {
+        printf("nodes[%d]\t%021.16le\t%021.16le\t%021.16le\n", index,
+               mla_ctx->metis_mla[cnt_num_level].coarse->coordinates[3 * index],
+               mla_ctx->metis_mla[cnt_num_level].coarse->coordinates[3 * index + 1],
+               mla_ctx->metis_mla[cnt_num_level].coarse->coordinates[3 * index + 2]);
+    }
+    puts("adjacency:");
+    for (int index = 0; index < mla_ctx->metis_mla[cnt_num_level].coarse->nn; ++index)
+    {
+        idx_t index_start = mla_ctx->metis_mla[cnt_num_level].coarse->eptr_in[index];
+        idx_t index_end = mla_ctx->metis_mla[cnt_num_level].coarse->eptr_in[index + 1];
+        // printf("node %d: ", index);
+        printf("%d\t", index);
+        for (idx_t index_i = index_start; index_i < index_end; ++index_i)
+        {
+            printf("%" PRIDX "\t", mla_ctx->metis_mla[cnt_num_level].coarse->eind_in[index_i]);
+        }
+        putchar('\n');
+    }
+#endif // print coarse level data
+
+    for (cnt_num_level = 1; cnt_num_level < config_num_level; ++cnt_num_level)
+    {
+        printf("in level %d:\n", cnt_num_level);
+    }
 
     return 0;
 }
@@ -169,6 +339,12 @@ int MetisMLASolver(MLAContext *mla_ctx,
     // solve phase
     if (mla_phase == 1 || mla_phase == 2)
     {
+        if (mla_ctx->setup == 0)
+        {
+            PetscCall(PetscPrintf(PETSC_COMM_WORLD, "setup phase has not been done! failed\n"));
+            exit(EXIT_FAILURE);
+        }
+
         int iter_cnt = 0;
         double rela_resid = 0.;
         MLASolverRelativeResidual(&(mla_ctx->mysolver), &rela_resid);

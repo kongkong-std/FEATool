@@ -220,6 +220,9 @@ typedef struct mla_context
 } MLAContext;
 
 // function prototype
+void GmshCoarseLevelGenerator(DataGmsh *coarse_data /*gmsh coarse level data pointer*/,
+                              DataGmsh *fine_data /*gmsh fine level data pointer*/);
+
 int TestMetisFunctionGmsh(DataGmsh data);
 
 /*

@@ -119,7 +119,7 @@ int main(int argc, char **argv)
     }
 #endif // print gmsh file data
 
-#if 1
+#if 0
     puts("\n==== test metis function ====");
     TestMetisFunctionGmsh(*(mla_ctx.data_gmsh));
 #endif // test metis function
