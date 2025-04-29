@@ -2640,8 +2640,69 @@ adjacency:
 59	50	51	54	58	60	
 60	54	57	58	59	61	
 61	56	57	60	
-in level 1:
-in level 2:
+==== coarse level partition
+npart[0] = 9
+npart[1] = 10
+npart[2] = 9
+npart[3] = 10
+npart[4] = 10
+npart[5] = 10
+npart[6] = 10
+npart[7] = 7
+npart[8] = 7
+npart[9] = 9
+npart[10] = 9
+npart[11] = 8
+npart[12] = 7
+npart[13] = 8
+npart[14] = 8
+npart[15] = 14
+npart[16] = 13
+npart[17] = 13
+npart[18] = 13
+npart[19] = 14
+npart[20] = 14
+npart[21] = 13
+npart[22] = 14
+npart[23] = 11
+npart[24] = 14
+npart[25] = 12
+npart[26] = 12
+npart[27] = 12
+npart[28] = 12
+npart[29] = 11
+npart[30] = 11
+npart[31] = 2
+npart[32] = 2
+npart[33] = 2
+npart[34] = 6
+npart[35] = 6
+npart[36] = 2
+npart[37] = 2
+npart[38] = 1
+npart[39] = 1
+npart[40] = 1
+npart[41] = 1
+npart[42] = 0
+npart[43] = 0
+npart[44] = 0
+npart[45] = 0
+npart[46] = 6
+npart[47] = 6
+npart[48] = 6
+npart[49] = 5
+npart[50] = 5
+npart[51] = 5
+npart[52] = 5
+npart[53] = 4
+npart[54] = 4
+npart[55] = 4
+npart[56] = 4
+npart[57] = 4
+npart[58] = 3
+npart[59] = 3
+npart[60] = 3
+npart[61] = 3
 0 MLA ||r(i)||/||b|| 1.0000000000000000e+00
 1 MLA ||r(i)||/||b|| 1.0000000000000000e+00
             || b ||_2 = 2.6501139470351753e+00

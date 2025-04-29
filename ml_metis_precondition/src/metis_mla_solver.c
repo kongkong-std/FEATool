@@ -319,6 +319,25 @@ int MetisMLASolverSetupPhase(MLAContext *mla_ctx)
     }
 #endif // print coarse level data
 
+    // coarse level partition
+    idx_t nvtxs = mla_ctx->metis_mla[cnt_num_level].coarse->nn, ncon = 1;
+    METIS_SetDefaultOptions(options);
+    status_metis_part = METIS_PartGraphKway(&nvtxs, &ncon,
+                                            mla_ctx->metis_mla[cnt_num_level].coarse->eptr_in,
+                                            mla_ctx->metis_mla[cnt_num_level].coarse->eind_in,
+                                            NULL, NULL, NULL,
+                                            &(mla_ctx->metis_mla[cnt_num_level].coarse->nparts),
+                                            NULL, NULL, options,
+                                            &objval, mla_ctx->metis_mla[cnt_num_level].coarse->npart_in);
+#if 1
+    puts("==== coarse level partition");
+    for (int index = 0; index < mla_ctx->metis_mla[cnt_num_level].coarse->nn; ++index)
+    {
+        printf("npart[%d] = %" PRIDX "\n", index,
+               mla_ctx->metis_mla[cnt_num_level].coarse->npart_in[index]);
+    }
+#endif // print coarse level partition
+
     for (cnt_num_level = 1; cnt_num_level < config_num_level; ++cnt_num_level)
     {
         printf("in level %d:\n", cnt_num_level);
