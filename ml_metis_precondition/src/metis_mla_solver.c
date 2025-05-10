@@ -1,7 +1,5 @@
 #include "../include/main.h"
 
-int DeepCopyMetisDataGmsh(DataGmsh *dst, DataGmsh *src);
-
 int TestMetisFunctionGmsh(DataGmsh data)
 {
     int status = 0;
@@ -62,6 +60,33 @@ int TestMetisFunctionGmsh(DataGmsh data)
 #endif
 
     return status;
+}
+
+int DeepCopyKLevelMetisDataMesh(DataGmsh *dst, DataGmsh *src)
+{
+    dst->nn = src->nn;
+    dst->ne_in = src->ne_in;
+    dst->nparts = src->nparts;
+    dst->nne_bd = src->nne_bd;
+    dst->nne_in = src->nne_in;
+
+    dst->coordinates = (double *)malloc(3 * dst->nn * sizeof(double));
+    assert(dst->coordinates);
+    memcpy(dst->coordinates, src->coordinates, 3 * dst->nn * sizeof(double));
+
+    dst->eptr_in = (idx_t *)malloc((dst->ne_in + 1) * sizeof(idx_t));
+    assert(dst->eptr_in);
+    memcpy(dst->eptr_in, src->eptr_in, (dst->ne_in + 1) * sizeof(idx_t));
+
+    dst->eind_in = (idx_t *)malloc(dst->eptr_in[dst->nn] * sizeof(idx_t));
+    assert(dst->eind_in);
+    memcpy(dst->eind_in, src->eind_in, dst->eptr_in[dst->nn] * sizeof(idx_t));
+
+    dst->npart_in = (idx_t *)malloc(dst->nn * sizeof(idx_t));
+    assert(dst->npart_in);
+    memcpy(dst->npart_in, src->npart_in, dst->nn * sizeof(idx_t));
+
+    return 0;
 }
 
 int DeepCopyMetisDataGmsh(DataGmsh *dst, DataGmsh *src)
@@ -341,7 +366,23 @@ int MetisMLASolverSetupPhase(MLAContext *mla_ctx)
     for (cnt_num_level = 1; cnt_num_level < config_num_level; ++cnt_num_level)
     {
         printf("in level %d:\n", cnt_num_level);
+        mla_ctx->metis_mla[cnt_num_level].fine = (DataGmsh *)malloc(sizeof(DataGmsh));
+        mla_ctx->metis_mla[cnt_num_level].coarse = (DataGmsh *)malloc(sizeof(DataGmsh));
+        assert(mla_ctx->metis_mla[cnt_num_level].fine &&
+               mla_ctx->metis_mla[cnt_num_level].coarse);
+
+        DeepCopyKLevelMetisDataMesh(mla_ctx->metis_mla[cnt_num_level].fine,
+                                    mla_ctx->metis_mla[cnt_num_level - 1].coarse);
+        puts("test test");
+
+        if (mla_ctx->metis_mla[cnt_num_level].fine->nn < 100)
+        {
+            printf("nodes in level %d is %d, less than 100, break!\n", cnt_num_level,
+                   mla_ctx->metis_mla[cnt_num_level].fine->nn);
+            break;
+        }
     }
+    mla_ctx->true_num_level = cnt_num_level;
 
     return 0;
 }

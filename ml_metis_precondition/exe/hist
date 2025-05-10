@@ -2703,6 +2703,9 @@ npart[58] = 3
 npart[59] = 3
 npart[60] = 3
 npart[61] = 3
+in level 1:
+test test
+nodes in level 1 is 62, less than 100, break!
 0 MLA ||r(i)||/||b|| 1.0000000000000000e+00
 1 MLA ||r(i)||/||b|| 1.0000000000000000e+00
             || b ||_2 = 2.6501139470351753e+00
