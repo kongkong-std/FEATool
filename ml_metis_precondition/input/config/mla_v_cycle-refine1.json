@@ -13,7 +13,7 @@
       "post_smooth_v": 2,
       "mla_max_it": 1,
       "mla_rtol": 1e-10,
-      "mla_level": 1,
+      "mla_level": 10,
       "mla_phase": 2
     }
   }

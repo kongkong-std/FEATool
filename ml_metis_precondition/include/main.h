@@ -222,6 +222,12 @@ typedef struct mla_context
 
 // function prototype
 /*
+ * level k (k > 0), coarse mesh generated
+ */
+void MetisKLevelCoarseLevelGenerator(DataGmsh *coarse_data,
+                                     DataGmsh *fine_data);
+
+/*
  * level 0, fine mesh copied from gmsh data file
  */
 int DeepCopyMetisDataGmsh(DataGmsh *dst, DataGmsh *src);
