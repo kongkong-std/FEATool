@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     PetscBool path_flag;
 
     char path_config[PETSC_MAX_PATH_LEN];
-    PetscInt order_rbm = 0;
+    PetscInt order_rbm = 0, angle_type = 0;
 
     PetscCall(PetscOptionsGetString(NULL, NULL, "-config", path_config, sizeof(path_config), &path_flag));
     if (path_flag)
@@ -34,6 +34,17 @@ int main(int argc, char **argv)
         PetscCall(PetscPrintf(PETSC_COMM_WORLD, "order_rbm = %" PetscInt_FMT "\n", order_rbm));
     }
 
+    PetscCall(PetscOptionsGetInt(NULL, NULL, "-angle_type", &angle_type, &path_flag));
+    if (path_flag)
+    {
+        // parameter angle_type
+        /*
+         * angle_type = 0, rotational angle with axis
+         * angle_type = 1, normal rotational angle with axis
+         */
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "angle_type = %" PetscInt_FMT "\n", angle_type));
+    }
+
     // user-defined precondition
     PetscBool def_pc_mla = PETSC_FALSE;
     PetscCall(PetscOptionsGetBool(NULL, NULL, "-def_pc_mla", &def_pc_mla, NULL));
@@ -43,6 +54,7 @@ int main(int argc, char **argv)
     mla_ctx.setup = 0;
     mla_ctx.path_config = path_config;
     mla_ctx.order_rbm = order_rbm;
+    mla_ctx.angle_type = angle_type;
 
     if (ConfigParse(mla_ctx.path_config, &(mla_ctx.config)) != 0)
     {
@@ -86,7 +98,7 @@ int main(int argc, char **argv)
     assert(mla_ctx.data_gmsh);
     MetisFileProcessGmsh(mla_ctx.config.file_config.file_mesh,
                          mla_ctx.data_gmsh);
-#if 1
+#if 0
     puts("\n==== gmsh data information ====");
     printf("number of nodes: %d\n", mla_ctx.data_gmsh->nn);
     printf("number of elements: %d\n", mla_ctx.data_gmsh->ne);

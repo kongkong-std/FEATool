@@ -214,6 +214,7 @@ typedef struct mla_context
     char *path_config;        // path to config file
     ConfigJSON config;        // json config
     int order_rbm;            // rbm order
+    int angle_type;           // 0: theta (rotationan angle with axis), 1: phi (normal rotational angle with axis)
     MeshGraph *graph;         // initial mesh
     MySolver mysolver;        // mysolver data
     MetisMLAGraph *metis_mla; // metis mla data
