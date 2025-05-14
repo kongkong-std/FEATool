@@ -112,8 +112,128 @@ int DeepCopyMetisDataGmsh(DataGmsh *dst, DataGmsh *src)
     return 0;
 }
 
+int MetisMLANestedProcedurePreSmooth(int level /*current level*/,
+                                     Vec *mla_recur_x /*solution in recursive*/,
+                                     Vec *mla_recur_b /*rhs in recursive*/,
+                                     MLAContext *mla_ctx /*mla context*/)
+{
+    int v_pre_smooth = mla_ctx->config.mla_config.pre_smooth_v;
+
+    if (level == 0)
+    {
+        PetscCall(KSPSetType(mla_ctx->metis_mla[level].ksp_presmooth, KSPRICHARDSON));
+        PetscCall(KSPGetPC(mla_ctx->metis_mla[level].ksp_presmooth,
+                           &(mla_ctx->metis_mla[level].pc_presmooth)));
+        PetscCall(PCSetType(mla_ctx->metis_mla[level].pc_presmooth, PCSOR));
+        PetscCall(PCSORSetOmega(mla_ctx->metis_mla[level].pc_presmooth, 1.)); // gauss-seidel
+        PetscCall(PCSORSetIterations(mla_ctx->metis_mla[level].pc_presmooth, v_pre_smooth, v_pre_smooth));
+        PetscCall(PCSORSetSymmetric(mla_ctx->metis_mla[level].pc_presmooth, SOR_SYMMETRIC_SWEEP));
+        PetscCall(KSPSetNormType(mla_ctx->metis_mla[level].ksp_presmooth, KSP_NORM_UNPRECONDITIONED));
+        PetscCall(KSPSetTolerances(mla_ctx->metis_mla[level].ksp_presmooth, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+        PetscCall(KSPSetInitialGuessNonzero(mla_ctx->metis_mla[level].ksp_presmooth, PETSC_TRUE));
+        PetscCall(KSPSolve(mla_ctx->metis_mla[level].ksp_presmooth, mla_recur_b[level], mla_recur_x[level]));
+    }
+    else
+    {
+        PetscCall(VecDuplicate(mla_recur_b[level], mla_recur_x + level));
+        PetscCall(KSPSetType(mla_ctx->metis_mla[level].ksp_presmooth, KSPRICHARDSON));
+        PetscCall(KSPGetPC(mla_ctx->metis_mla[level].ksp_presmooth,
+                           &(mla_ctx->metis_mla[level].pc_presmooth)));
+        PetscCall(PCSetType(mla_ctx->metis_mla[level].pc_presmooth, PCSOR));
+        PetscCall(PCSORSetOmega(mla_ctx->metis_mla[level].pc_presmooth, 1.)); // gauss-seidel
+        PetscCall(PCSORSetIterations(mla_ctx->metis_mla[level].pc_presmooth, v_pre_smooth, v_pre_smooth));
+        PetscCall(PCSORSetSymmetric(mla_ctx->metis_mla[level].pc_presmooth, SOR_SYMMETRIC_SWEEP));
+        PetscCall(KSPSetNormType(mla_ctx->metis_mla[level].ksp_presmooth, KSP_NORM_UNPRECONDITIONED));
+        PetscCall(KSPSetTolerances(mla_ctx->metis_mla[level].ksp_presmooth, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+        PetscCall(KSPSetInitialGuessNonzero(mla_ctx->metis_mla[level].ksp_presmooth, PETSC_TRUE));
+        PetscCall(KSPSolve(mla_ctx->metis_mla[level].ksp_presmooth, mla_recur_b[level], mla_recur_x[level]));
+    }
+
+    return 0;
+}
+
+int MetisMLANestedProcedure(Vec *mla_recur_x /*solution in recursive*/,
+                            Vec *mla_recur_b /*rhs in recursive*/,
+                            MLAContext *mla_ctx /*mla context*/)
+{
+    int v_post_smooth = mla_ctx->config.mla_config.post_smooth_v;
+    int num_level = mla_ctx->true_num_level;
+    Vec *r_h = NULL, *tmp_e_h = NULL;
+
+    r_h = (Vec *)malloc(num_level * sizeof(Vec));
+    tmp_e_h = (Vec *)malloc(num_level * sizeof(Vec));
+    assert(r_h && tmp_e_h);
+
+    // loop implementation
+    /*
+     * downward sweep, from fine to coarse level
+     */
+    for (int level = 0; level < num_level; ++level)
+    {
+        PetscCall(VecDuplicate(mla_recur_b[level], r_h + level));
+
+        // pre-smooth
+        MetisMLANestedProcedurePreSmooth(level, mla_recur_x, mla_recur_b, mla_ctx);
+
+        PetscCall(MatMult(mla_ctx->metis_mla[level].operator_fine,
+                          mla_recur_x[level],
+                          r_h[level]));
+        PetscCall(VecAXPY(r_h[level], -1., mla_recur_b[level]));
+
+        // restriction
+        PetscInt m_prolongation = 0, n_prolongation = 0;
+        PetscCall(MatGetSize(mla_ctx->metis_mla[level].prolongation,
+                             &m_prolongation,
+                             &n_prolongation));
+        PetscCall(VecCreate(PETSC_COMM_WORLD, mla_recur_b + level + 1));
+        PetscCall(VecSetSizes(mla_recur_b[level + 1], PETSC_DECIDE, n_prolongation));
+        PetscCall(VecSetFromOptions(mla_recur_b[level + 1]));
+        PetscCall(MatMultTranspose(mla_ctx->metis_mla[level].prolongation,
+                                   r_h[level],
+                                   mla_recur_b[level + 1]));
+    }
+
+    /*
+     * coarset level
+     */
+
+    /*
+     * upward sweep, from coarse to fine level
+     */
+    for (int level = num_level - 1; level >= 0; --level)
+    {
+    }
+
+    // free memory
+    free(r_h);
+    free(tmp_e_h);
+
+    return 0;
+}
+
 int MetisMLASolverSolvePhase(MLAContext *mla_ctx)
 {
+    int num_level = mla_ctx->true_num_level;
+    Vec *mla_recur_x, *mla_recur_b;
+
+    mla_recur_x = (Vec *)malloc((num_level + 1) * sizeof(Vec));
+    mla_recur_b = (Vec *)malloc((num_level + 1) * sizeof(Vec));
+    assert(mla_recur_x && mla_recur_b);
+
+    PetscCall(VecDuplicate(mla_ctx->mysolver.solver_x, mla_recur_x));
+    PetscCall(VecDuplicate(mla_ctx->mysolver.solver_b, mla_recur_b));
+    PetscCall(VecCopy(mla_ctx->mysolver.solver_x, mla_recur_x[0]));
+    PetscCall(VecCopy(mla_ctx->mysolver.solver_b, mla_recur_b[0]));
+
+    MetisMLANestedProcedure(mla_recur_x, mla_recur_b, mla_ctx);
+
+    // updating solution
+    PetscCall(VecCopy(mla_recur_x[0], mla_ctx->mysolver.solver_x));
+
+    // free memory
+    free(mla_recur_x);
+    free(mla_recur_b);
+
     return 0;
 }
 
@@ -896,6 +1016,24 @@ int MetisMLASolverSetupPhase(MLAContext *mla_ctx)
                                        &(mla_ctx->metis_mla[index_cnt_level + 1].operator_fine)));
             }
         }
+    }
+
+    for (int level = 0; level < cnt_num_level; ++level)
+    {
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[level].ksp_presmooth)));
+        PetscCall(KSPSetOperators(mla_ctx->metis_mla[level].ksp_presmooth,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine));
+
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[level].ksp_postsmooth)));
+        PetscCall(KSPSetOperators(mla_ctx->metis_mla[level].ksp_postsmooth,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine));
+
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[level].ksp_coarse)));
+        PetscCall(KSPSetOperators(mla_ctx->metis_mla[level].ksp_coarse,
+                                  mla_ctx->metis_mla[level].operator_coarse,
+                                  mla_ctx->metis_mla[level].operator_coarse));
     }
 
     return 0;

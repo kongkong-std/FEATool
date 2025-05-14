@@ -11,7 +11,7 @@
     "mla": {
       "pre_smooth_v": 2,
       "post_smooth_v": 2,
-      "mla_max_it": 1,
+      "mla_max_it": 1000,
       "mla_rtol": 1e-10,
       "mla_level": 10,
       "mla_phase": 2

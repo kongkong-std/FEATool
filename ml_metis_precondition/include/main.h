@@ -223,6 +223,21 @@ typedef struct mla_context
 
 // function prototype
 /*
+ * mla nested procedure - pre-smooth
+ */
+int MetisMLANestedProcedurePreSmooth(int level /*current level*/,
+                                     Vec *mla_recur_x /*solution in recursive*/,
+                                     Vec *mla_recur_b /*rhs in recursive*/,
+                                     MLAContext *mla_ctx /*mla context*/);
+
+/*
+ * mla nested procedure
+ */
+int MetisMLANestedProcedure(Vec *mla_recur_x /*solution in recursive*/,
+                            Vec *mla_recur_b /*rhs in recursive*/,
+                            MLAContext *mla_ctx /*mla context*/);
+
+/*
  * level k (k > 0), coarse mesh generated
  */
 void MetisKLevelCoarseLevelGenerator(DataGmsh *coarse_data,
