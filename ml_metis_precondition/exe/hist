@@ -1,5 +1,5 @@
 Config file: ../input/config/mla_v_cycle-refine3.json
-order_rbm = 1
+order_rbm = 2
 angle_type = 1
 ==== basic information of linear system ====
 matrix Row = 73482, matrix Column = 73482
