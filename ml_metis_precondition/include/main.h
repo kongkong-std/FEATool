@@ -64,6 +64,7 @@ typedef struct config_mla
     double mla_rtol;
     int mla_level;
     int mla_phase;
+    int coarse_restart;
 } ConfigMLA;
 
 typedef struct config_mesh_label
@@ -222,6 +223,22 @@ typedef struct mla_context
 } MLAContext;
 
 // function prototype
+/*
+ * mla nested procedure - coarsest level correction
+ */
+int MetisMLANestedProcedureCoarsestCorrection(int level /*current level*/,
+                                              Vec *mla_recur_x /*solution in recursive*/,
+                                              Vec *mla_recur_b /*rhs in recursive*/,
+                                              MLAContext *mla_ctx /*mla context*/);
+
+/*
+ * mla nested procedure - post-smooth
+ */
+int MetisMLANestedProcedurePostSmooth(int level /*current level*/,
+                                      Vec *mla_recur_x /*solution in recursive*/,
+                                      Vec *mla_recur_b /*rhs in recursive*/,
+                                      MLAContext *mla_ctx /*mla context*/);
+
 /*
  * mla nested procedure - pre-smooth
  */

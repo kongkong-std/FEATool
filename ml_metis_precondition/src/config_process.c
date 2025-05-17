@@ -59,8 +59,15 @@ int ConfigParse(const char *filename, ConfigJSON *config)
         cJSON *mla_rtol = cJSON_GetObjectItem(mla_obj, "mla_rtol");
         cJSON *mla_level = cJSON_GetObjectItem(mla_obj, "mla_level");
         cJSON *mla_phase = cJSON_GetObjectItem(mla_obj, "mla_phase");
+        cJSON *coarse_restart = cJSON_GetObjectItem(mla_obj, "coarse_restart");
 
-        if (pre_smooth_v && post_smooth_v && mla_max_it && mla_rtol && mla_level && mla_phase)
+        if (pre_smooth_v &&
+            post_smooth_v &&
+            mla_max_it &&
+            mla_rtol &&
+            mla_level &&
+            mla_phase &&
+            coarse_restart)
         {
             mla_config->pre_smooth_v = pre_smooth_v->valueint;
             mla_config->post_smooth_v = post_smooth_v->valueint;
@@ -68,6 +75,7 @@ int ConfigParse(const char *filename, ConfigJSON *config)
             mla_config->mla_rtol = mla_rtol->valuedouble;
             mla_config->mla_level = mla_level->valueint;
             mla_config->mla_phase = mla_phase->valueint;
+            mla_config->coarse_restart = coarse_restart->valueint;
         }
     }
 
