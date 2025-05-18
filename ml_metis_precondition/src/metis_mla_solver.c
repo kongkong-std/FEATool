@@ -664,9 +664,9 @@ int MetisMLASolverSetupPhase(MLAContext *mla_ctx)
 
     for (cnt_num_level = 1; cnt_num_level < config_num_level; ++cnt_num_level)
     {
-        if (mla_ctx->metis_mla[cnt_num_level - 1].coarse->nn < 100)
+        if (mla_ctx->metis_mla[cnt_num_level - 1].coarse->nn < 1000)
         {
-            printf("nodes in level %d (coarse) is %d, less than 100, setup done!\n", cnt_num_level - 1,
+            printf("nodes in level %d (coarse) is %d, less than 1000, setup done!\n", cnt_num_level - 1,
                    mla_ctx->metis_mla[cnt_num_level - 1].coarse->nn);
             break;
         }

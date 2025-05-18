@@ -310,11 +310,13 @@ void MetisFileProcessGmsh(const char *path /*path to gmsh file*/,
  * pcshell setup
  */
 extern PetscErrorCode MLAShellPCSetup(PC);
+extern PetscErrorCode MetisMLAShellPCSetup(PC); // metis pcshell setup
 
 /*
  * pcshell apply
  */
 extern PetscErrorCode MLAShellPCApply(PC, Vec, Vec);
+extern PetscErrorCode MetisMLAShellPCApply(PC, Vec, Vec); // metis pcshell apply
 
 /*
  * mla solver coarsest correction phase

@@ -1,22 +1,75 @@
-Config file: ../input/config/mla_v_cycle-refine2.json
+Config file: ../input/config/mla_v_cycle-refine3.json
 order_rbm = 1
 angle_type = 1
 ==== basic information of linear system ====
-matrix Row = 19158, matrix Column = 19158
-matrix nz_allocated = 387515, matrix nz_used = 387515, matrix nz_unneeded = 0
-vector Row = 19158
+matrix Row = 73482, matrix Column = 73482
+matrix nz_allocated = 1513726, matrix nz_used = 1513726, matrix nz_unneeded = 0
+vector Row = 73482
 in level 1:
-in level 2:
-nodes in level 2 (coarse) is 49, less than 100, setup done!
+nodes in level 1 (coarse) is 765, less than 1000, setup done!
+>>>> setup time: 0.79926 (s)
+  0 KSP unpreconditioned resid norm 3.645678991486e-01 true resid norm 3.645678991486e-01 ||r(i)||/||b|| 1.000000000000e+00
 0 MLA ||r(i)||/||b|| 1.0000000000000000e+00
-[0]PETSC ERROR: ------------------------------------------------------------------------
-[0]PETSC ERROR: Caught signal number 11 SEGV: Segmentation Violation, probably memory access out of range
-[0]PETSC ERROR: Try option -start_in_debugger or -on_error_attach_debugger
-[0]PETSC ERROR: or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/
-[0]PETSC ERROR: configure using --with-debugging=yes, recompile, link, and run 
-[0]PETSC ERROR: to get more information on the crash.
-[0]PETSC ERROR: Run with -malloc_debug to check if memory corruption is causing the crash.
-application called MPI_Abort(MPI_COMM_WORLD, 59) - process 0
-[unset]: write_line error; fd=-1 buf=:cmd=abort exitcode=59
-:
-system msg for write_line failure : Bad file descriptor
+1 MLA ||r(i)||/||b|| 2.5309613639263686e+00
+  1 KSP unpreconditioned resid norm 2.234326112495e+01 true resid norm 2.234326112495e+01 ||r(i)||/||b|| 6.128696787930e+01
+0 MLA ||r(i)||/||b|| 1.0390556813894420e+00
+1 MLA ||r(i)||/||b|| 4.0979084338050931e-01
+  2 KSP unpreconditioned resid norm 2.005946346744e+02 true resid norm 2.005946346744e+02 ||r(i)||/||b|| 5.502257196611e+02
+0 MLA ||r(i)||/||b|| 1.0989755738727933e+00
+1 MLA ||r(i)||/||b|| 2.1272439620806763e-01
+  3 KSP unpreconditioned resid norm 6.630158989836e+01 true resid norm 6.630158989836e+01 ||r(i)||/||b|| 1.818634884015e+02
+0 MLA ||r(i)||/||b|| 3.5113989027313446e+00
+1 MLA ||r(i)||/||b|| 4.1290808658647654e-01
+  4 KSP unpreconditioned resid norm 4.341889399515e+01 true resid norm 4.341889399515e+01 ||r(i)||/||b|| 1.190968653481e+02
+0 MLA ||r(i)||/||b|| 2.2686125366211942e+00
+1 MLA ||r(i)||/||b|| 6.0013143064213437e-01
+  5 KSP unpreconditioned resid norm 2.048005270599e+01 true resid norm 2.048005270599e+01 ||r(i)||/||b|| 5.617623700226e+01
+0 MLA ||r(i)||/||b|| 2.4854888748276598e+00
+1 MLA ||r(i)||/||b|| 7.1580532429546107e-01
+  6 KSP unpreconditioned resid norm 1.283542407537e+01 true resid norm 1.283542407537e+01 ||r(i)||/||b|| 3.520722506108e+01
+0 MLA ||r(i)||/||b|| 2.0034571490570863e+00
+1 MLA ||r(i)||/||b|| 7.3553404957566570e-01
+  7 KSP unpreconditioned resid norm 8.962160955824e+00 true resid norm 8.962160955825e+00 ||r(i)||/||b|| 2.458296788267e+01
+0 MLA ||r(i)||/||b|| 1.7532268832160083e+00
+1 MLA ||r(i)||/||b|| 7.0588575018925204e-01
+  8 KSP unpreconditioned resid norm 6.400171946974e+00 true resid norm 6.400171946970e+00 ||r(i)||/||b|| 1.755550053067e+01
+0 MLA ||r(i)||/||b|| 1.7342915700208732e+00
+1 MLA ||r(i)||/||b|| 7.2371491011381484e-01
+  9 KSP unpreconditioned resid norm 5.259312202125e+00 true resid norm 5.259312202129e+00 ||r(i)||/||b|| 1.442615275347e+01
+0 MLA ||r(i)||/||b|| 1.7486638836719488e+00
+1 MLA ||r(i)||/||b|| 7.5805872173931321e-01
+ 10 KSP unpreconditioned resid norm 3.145944151478e+00 true resid norm 3.145944151476e+00 ||r(i)||/||b|| 8.629240695142e+00
+0 MLA ||r(i)||/||b|| 2.1885893757699946e+00
+1 MLA ||r(i)||/||b|| 1.1280531571493839e+00
+ 11 KSP unpreconditioned resid norm 2.010393203934e+00 true resid norm 2.010393203951e+00 ||r(i)||/||b|| 5.514454807035e+00
+0 MLA ||r(i)||/||b|| 2.3764607066702550e+00
+1 MLA ||r(i)||/||b|| 1.5557330082782768e+00
+ 12 KSP unpreconditioned resid norm 1.789709251401e+00 true resid norm 1.789709251393e+00 ||r(i)||/||b|| 4.909124625543e+00
+0 MLA ||r(i)||/||b|| 2.1599634662440135e+00
+1 MLA ||r(i)||/||b|| 1.5231028872779067e+00
+ 13 KSP unpreconditioned resid norm 1.466330625500e+00 true resid norm 1.466330625510e+00 ||r(i)||/||b|| 4.022105700843e+00
+0 MLA ||r(i)||/||b|| 2.2354421087778298e+00
+1 MLA ||r(i)||/||b|| 1.5553771684678968e+00
+ 14 KSP unpreconditioned resid norm 9.741944677480e-01 true resid norm 9.741944677389e-01 ||r(i)||/||b|| 2.672189378203e+00
+0 MLA ||r(i)||/||b|| 2.7433599531435795e+00
+1 MLA ||r(i)||/||b|| 2.0320071324901616e+00
+ 15 KSP unpreconditioned resid norm 8.084432659610e-01 true resid norm 8.084432659691e-01 ||r(i)||/||b|| 2.217538263399e+00
+0 MLA ||r(i)||/||b|| 2.7788614840105881e+00
+1 MLA ||r(i)||/||b|| 2.2365614549185842e+00
+ 16 KSP unpreconditioned resid norm 6.567604173265e-01 true resid norm 6.567604173147e-01 ||r(i)||/||b|| 1.801476265048e+00
+0 MLA ||r(i)||/||b|| 3.0460857774452355e+00
+1 MLA ||r(i)||/||b|| 2.5127685372897060e+00
+ 17 KSP unpreconditioned resid norm 4.983474269263e-01 true resid norm 4.983474269335e-01 ||r(i)||/||b|| 1.366953667883e+00
+0 MLA ||r(i)||/||b|| 3.5464521167156011e+00
+1 MLA ||r(i)||/||b|| 3.0477940182909928e+00
+ 18 KSP unpreconditioned resid norm 4.155428177552e-01 true resid norm 4.155428177495e-01 ||r(i)||/||b|| 1.139822838818e+00
+0 MLA ||r(i)||/||b|| 3.9397311242356765e+00
+1 MLA ||r(i)||/||b|| 3.4075523038920772e+00
+ 19 KSP unpreconditioned resid norm 3.702171979108e-01 true resid norm 3.702171979139e-01 ||r(i)||/||b|| 1.015495875469e+00
+0 MLA ||r(i)||/||b|| 4.0790965327224402e+00
+1 MLA ||r(i)||/||b|| 3.5874583843753287e+00
+ 20 KSP unpreconditioned resid norm 2.490874359732e-01 true resid norm 2.490874359727e-01 ||r(i)||/||b|| 6.832401770819e-01
+0 MLA ||r(i)||/||b|| 5.5861790391848078e+00
+1 MLA ||r(i)||/||b|| 4.9998446719264509e+00
+            || b ||_2 = 3.6456789914864118e-01
+|| r ||_2 / || b ||_2 = 6.8324017708193996e-01

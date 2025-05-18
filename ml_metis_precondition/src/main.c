@@ -47,7 +47,9 @@ int main(int argc, char **argv)
 
     // user-defined precondition
     PetscBool def_pc_mla = PETSC_FALSE;
+    PetscBool def_pc_metis_mla = PETSC_FALSE;
     PetscCall(PetscOptionsGetBool(NULL, NULL, "-def_pc_mla", &def_pc_mla, NULL));
+    PetscCall(PetscOptionsGetBool(NULL, NULL, "-def_pc_metis_mla", &def_pc_metis_mla, NULL));
 
     // mla_ctx
     MLAContext mla_ctx;
@@ -139,7 +141,7 @@ int main(int argc, char **argv)
     /*
      * step 3, calling MetisMLASolver()
      */
-    PetscCall(MetisMLASolver(&mla_ctx, 2));
+    //PetscCall(MetisMLASolver(&mla_ctx, 2));
 
     /*
      * step 2, mesh process
@@ -177,6 +179,14 @@ int main(int argc, char **argv)
         PetscCall(PCShellSetContext(mysolver.pc, &mla_ctx));
         PetscCall(PCShellSetSetUp(mysolver.pc, MLAShellPCSetup));
         PetscCall(PCShellSetApply(mysolver.pc, MLAShellPCApply));
+    }
+
+    if(def_pc_metis_mla)
+    {
+        PetscCall(PCSetType(mysolver.pc, PCSHELL));
+        PetscCall(PCShellSetContext(mysolver.pc, &mla_ctx));
+        PetscCall(PCShellSetSetUp(mysolver.pc, MetisMLAShellPCSetup));
+        PetscCall(PCShellSetApply(mysolver.pc, MetisMLAShellPCApply));
     }
 
     PetscCall(KSPSetFromOptions(mysolver.ksp));
