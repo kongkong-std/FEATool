@@ -141,7 +141,7 @@ int main(int argc, char **argv)
     /*
      * step 3, calling MetisMLASolver()
      */
-    //PetscCall(MetisMLASolver(&mla_ctx, 2));
+    // PetscCall(MetisMLASolver(&mla_ctx, 2));
 
     /*
      * step 2, mesh process
@@ -169,6 +169,13 @@ int main(int argc, char **argv)
     PrintMeshGraph(graph);
 #endif
 
+    MLASolver(mla_ctx.graph,
+              &(mla_ctx.mysolver),
+              &(mla_ctx.config),
+              mla_ctx.order_rbm,
+              &mla_ctx,
+              2);
+
 #if 1
     // pc shell
     PetscCall(KSPSetOperators(mysolver.ksp, mysolver.solver_a, mysolver.solver_a));
@@ -181,7 +188,7 @@ int main(int argc, char **argv)
         PetscCall(PCShellSetApply(mysolver.pc, MLAShellPCApply));
     }
 
-    if(def_pc_metis_mla)
+    if (def_pc_metis_mla)
     {
         PetscCall(PCSetType(mysolver.pc, PCSHELL));
         PetscCall(PCShellSetContext(mysolver.pc, &mla_ctx));

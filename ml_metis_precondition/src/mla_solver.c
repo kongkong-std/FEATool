@@ -1077,7 +1077,7 @@ int MLASolver(const MeshGraph *graph,
 
         while (cnt < config->mla_config.mla_max_it && rela_resid > config->mla_config.mla_rtol)
         {
-#if 0
+#if 1
             PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", cnt, rela_resid));
 #endif // print mla iteration information
             /*
@@ -1093,7 +1093,7 @@ int MLASolver(const MeshGraph *graph,
             MLASolverRelativeResidual(mysolver, &rela_resid);
             ++cnt;
         }
-#if 0
+#if 1
         PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", cnt, rela_resid));
 #endif // print mla iteration information
     }
