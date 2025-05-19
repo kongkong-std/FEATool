@@ -1,11 +1,11 @@
 #include "../include/main.h"
 
 int MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
-                                             int level,
-                                             MLAContext *mla_ctx,
-                                             Vec *mg_recur_x,
-                                             Vec *mg_recur_b,
-                                             int v_pre_smooth)
+                                  int level,
+                                  MLAContext *mla_ctx,
+                                  Vec *mg_recur_x,
+                                  Vec *mg_recur_b,
+                                  int v_pre_smooth)
 {
     // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     if (level != 0)
@@ -41,7 +41,8 @@ int MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
     else
     {
 #if 1
-        double shift = 1e-10;
+        double shift = 1e-10;    // test metis aggregation implementation
+        //double shift = 0.; // test metis aggregation implementation
         PetscCall(MatShift((mla_ctx->mla + level)->operator_fine, shift));
 #endif
         PetscCall(KSPSetOperators(ksp,
@@ -71,11 +72,11 @@ int MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
 }
 
 int MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
-                                              int level,
-                                              MLAContext *mla_ctx,
-                                              Vec *mg_recur_x,
-                                              Vec *mg_recur_b,
-                                              int v_post_smooth)
+                                   int level,
+                                   MLAContext *mla_ctx,
+                                   Vec *mg_recur_x,
+                                   Vec *mg_recur_b,
+                                   int v_post_smooth)
 {
 #if 0
     // KSP ksp_loc;
@@ -104,10 +105,10 @@ int MLAMGNestedProcedurePostSmooth(KSP ksp, PC pc,
 }
 
 int MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
-                                               int level,
-                                               MLAContext *mla_ctx,
-                                               Vec *mg_recur_x,
-                                               Vec *mg_recur_b)
+                                    int level,
+                                    MLAContext *mla_ctx,
+                                    Vec *mg_recur_x,
+                                    Vec *mg_recur_b)
 {
     PetscCall(VecDuplicate(mg_recur_b[level + 1], mg_recur_x + level + 1));
     int gcr_restart = 50;
@@ -153,7 +154,8 @@ int MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
         else
         {
 #if 1
-            double shift = 1e-12;
+            // double shift = 1e-12;     // test metis aggregation implementation
+            double shift = 0.; // test metis aggregation implementation
             PetscCall(MatShift((mla_ctx->mla + level)->operator_coarse, shift));
 #endif
             PetscCall(KSPSetOperators(ksp,
@@ -176,7 +178,8 @@ int MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
     else if (order_rbm == 2)
     {
 #if 1
-        double shift = 1e-12;
+        double shift = 1e-12; // test metis aggregation implementation
+        // double shift = 0.; // test metis aggregation implementation
         PetscCall(MatShift((mla_ctx->mla + level)->operator_coarse, shift));
 #endif
         PetscCall(KSPSetOperators(ksp,
@@ -219,13 +222,13 @@ int MLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
 }
 
 int MLAMGNestedProcedure(int level, int num_level,
-                                    MySolver *mysolver,
-                                    MLAContext *mla_ctx,
-                                    Vec *mg_recur_x,
-                                    Vec *mg_recur_b,
-                                    int v_pre_smooth,
-                                    int v_post_smooth,
-                                    int order_rbm)
+                         MySolver *mysolver,
+                         MLAContext *mla_ctx,
+                         Vec *mg_recur_x,
+                         Vec *mg_recur_b,
+                         int v_pre_smooth,
+                         int v_post_smooth,
+                         int order_rbm)
 {
     Vec *r_h = NULL, *tmp_e_h = NULL;
 
@@ -307,9 +310,9 @@ int MLAMGNestedProcedure(int level, int num_level,
 }
 
 int MLASolverSolvePhase(const ConfigJSON *config,
-                                   MLAContext *mla_ctx,
-                                   int order_rbm,
-                                   MySolver *mysolver)
+                        MLAContext *mla_ctx,
+                        int order_rbm,
+                        MySolver *mysolver)
 {
     // mg recursive implementation
     int v_pre_smooth = config->mla_config.pre_smooth_v;
@@ -354,16 +357,20 @@ int MLASolverSolvePhase(const ConfigJSON *config,
 }
 
 int MLASolverSetupPhase(MySolver *mysolver,
-                                   const MeshGraph *graph,
-                                   int num_level,
-                                   int order_rbm,
-                                   MLAContext *mla_ctx)
+                        const MeshGraph *graph,
+                        int num_level,
+                        int order_rbm,
+                        MLAContext *mla_ctx)
 {
     if (mla_ctx->setup == 1)
     {
         // prolongation operator has been constructed
         PetscFunctionReturn(PETSC_SUCCESS);
     }
+
+#if 1
+    MetisMLASolver(mla_ctx, 0);
+#endif // test metis aggregtion implementation
 
 #if 1
     mla_ctx->mla = (MLAGraph *)malloc(num_level * sizeof(MLAGraph));
@@ -404,13 +411,24 @@ int MLASolverSetupPhase(MySolver *mysolver,
     PrintMeshGraph((mla_ctx->mla + cnt_level)->coarse);
 #endif
 
+#if 0
     PetscCall(MatDuplicate(mysolver->solver_a,
                            MAT_COPY_VALUES,
                            &((mla_ctx->mla + cnt_level)->operator_fine)));
+#endif // test metis aggregtion implementation
+
+#if 1
+    PetscCall(MatDuplicate(mla_ctx->metis_mla[cnt_level].operator_fine,
+                           MAT_COPY_VALUES,
+                           &((mla_ctx->mla + cnt_level)->operator_fine)));
+#endif // test metis aggregation implementation
+
 #if 0
     printf("\n\n==== level %d, neighbouring fine operator:\n", cnt_level);
     PetscCall(MatView((mla_ctx->mla + cnt_level)->operator_fine, PETSC_VIEWER_STDOUT_WORLD));
-#endif                                                                     // print neighbouring fine operator
+#endif // print neighbouring fine operator
+
+#if 0
     int prolongation_block_row = (mla_ctx->mla + cnt_level)->fine->size;   // vertex in fine mesh
     int prolongation_block_col = (mla_ctx->mla + cnt_level)->coarse->size; // vertex in coarse mesh
     int m_prolongation = prolongation_block_row * 6;                       // row of prolongation operator
@@ -634,7 +652,7 @@ int MLASolverSetupPhase(MySolver *mysolver,
                 p_loc[4][8] = p_loc[3][6] / 2.;  // (5, 9) x/2, phi modified
 #endif
 
-#if 1                                                                                                       // null space
+#if 1 // null space
                 p_loc[0][7] = (node_coarse_x - node_aggregation_x) * (node_coarse_y - node_aggregation_y);  // (0, 7) xy
                 p_loc[0][8] = (node_coarse_x - node_aggregation_x) * (node_coarse_z - node_aggregation_z);  // (0, 8) xz
                 p_loc[1][6] = p_loc[0][7];                                                                  // (1, 6) xy
@@ -670,11 +688,21 @@ int MLASolverSetupPhase(MySolver *mysolver,
     PetscCall(MatView((mla_ctx->mla + cnt_level)->prolongation, PETSC_VIEWER_STDOUT_WORLD));
 #endif // neighbouring prolongation operator
 
+#endif // test metis aggregation implementation
+
+#if 1
+    PetscCall(MatDuplicate(mla_ctx->metis_mla[cnt_level].prolongation,
+                           MAT_COPY_VALUES,
+                           &((mla_ctx->mla + cnt_level)->prolongation)));
+    puts("======== adjacency list setup, duplicate prolongation >>>>>>>>");
+#endif // test metis aggregation implementation
+
     PetscCall(MatPtAP((mla_ctx->mla + cnt_level)->operator_fine,
                       (mla_ctx->mla + cnt_level)->prolongation,
                       MAT_INITIAL_MATRIX,
                       PETSC_DETERMINE,
                       &((mla_ctx->mla + cnt_level)->operator_coarse)));
+    puts("======== adjacency list setup, duplicate coarse_operator >>>>>>>>");
 #if 0
     printf("\n\n==== level %d, neighbouring coarse operator:\n", cnt_level);
     PetscCall(MatView((mla_ctx->mla + cnt_level)->operator_coarse, PETSC_VIEWER_STDOUT_WORLD));
@@ -691,9 +719,17 @@ int MLASolverSetupPhase(MySolver *mysolver,
     PetscCall(PCCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->pc_coarse)));
 
     ++cnt_level;
+#if 0
     while (cnt_level < num_level &&
            (mla_ctx->mla + cnt_level - 1)->coarse->size > 50)
+#endif // test metis aggregation implementation
+#if 1
+    printf("==== before setup loop, cnt_level = %d, num_level = %d>>>>!!!!\n", cnt_level, num_level);
+    while (cnt_level < num_level &&
+           (mla_ctx->metis_mla[cnt_level - 1].coarse->nn > 100))
+#endif // test metis aggregation implementation
     {
+        printf("in initial loop, cnt_level = %d\n", cnt_level);
         // next level
         (mla_ctx->mla + cnt_level)->level = cnt_level;
         (mla_ctx->mla + cnt_level)->mesh_tmp = CreateMeshGraph((mla_ctx->mla + cnt_level - 1)->coarse->size);
@@ -726,13 +762,24 @@ int MLASolverSetupPhase(MySolver *mysolver,
     PrintMeshGraph((mla_ctx->mla + cnt_level)->coarse);
 #endif
 
+#if 0
         PetscCall(MatDuplicate((mla_ctx->mla + cnt_level - 1)->operator_coarse,
                                MAT_COPY_VALUES,
                                &((mla_ctx->mla + cnt_level)->operator_fine)));
+#endif // test metis aggregation implementation
+
+#if 1
+        PetscCall(MatDuplicate(mla_ctx->metis_mla[cnt_level].operator_fine,
+                               MAT_COPY_VALUES,
+                               &((mla_ctx->mla + cnt_level)->operator_fine)));
+#endif
+
 #if 0
     printf("\n\n==== level %d, neighbouring fine operator:\n", cnt_level);
     PetscCall(MatView((mla_ctx->mla + cnt_level)->operator_fine, PETSC_VIEWER_STDOUT_WORLD));
-#endif                                                                     // print neighbouring fine operator
+#endif // print neighbouring fine operator
+
+#if 0
         prolongation_block_row = (mla_ctx->mla + cnt_level)->fine->size;   // vertex in fine mesh
         prolongation_block_col = (mla_ctx->mla + cnt_level)->coarse->size; // vertex in coarse mesh
 
@@ -980,6 +1027,14 @@ int MLASolverSetupPhase(MySolver *mysolver,
         PetscCall(MatView((mla_ctx->mla + cnt_level)->prolongation, PETSC_VIEWER_STDOUT_WORLD));
 #endif // neighbouring prolongation operator
 
+#endif // test metis aggregation implementation
+
+#if 1
+        PetscCall(MatDuplicate(mla_ctx->metis_mla[cnt_level].prolongation,
+                               MAT_COPY_VALUES,
+                               &((mla_ctx->mla + cnt_level)->prolongation)));
+#endif // test metis aggregation implementation
+
         PetscCall(MatPtAP((mla_ctx->mla + cnt_level)->operator_fine,
                           (mla_ctx->mla + cnt_level)->prolongation,
                           MAT_INITIAL_MATRIX,
@@ -999,8 +1054,10 @@ int MLASolverSetupPhase(MySolver *mysolver,
         PetscCall(PCCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->pc_coarse)));
 
         ++cnt_level;
+        printf("in while loop, cnt_level = %d\n", cnt_level);
 
-        // memory free
+// memory free
+#if 0
         if (order_rbm == 1)
         {
             for (int index = 0; index < 6; ++index)
@@ -1017,16 +1074,19 @@ int MLASolverSetupPhase(MySolver *mysolver,
             }
             free(p_loc_tmp);
         }
+#endif // test metis aggregation implementation
     }
 
     mla_ctx->num_level = (cnt_level < num_level) ? cnt_level : num_level;
 
-    // free memory
+// free memory
+#if 0
     for (int index = 0; index < 6; ++index)
     {
         free(p_loc[index]);
     }
     free(p_loc);
+#endif // test metis aggregation implementation
 
     return 0;
 }
@@ -1048,11 +1108,11 @@ int MLASolverRelativeResidual(MySolver *mysolver, double *value)
 }
 
 int MLASolver(const MeshGraph *graph,
-                         MySolver *mysolver,
-                         const ConfigJSON *config,
-                         int order_rbm,
-                         MLAContext *mla_ctx,
-                         int mla_phase)
+              MySolver *mysolver,
+              const ConfigJSON *config,
+              int order_rbm,
+              MLAContext *mla_ctx,
+              int mla_phase)
 {
     // int mla_phase = config->mla_config.mla_phase;
     int num_level = config->mla_config.mla_level;
