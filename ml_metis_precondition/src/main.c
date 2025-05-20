@@ -141,7 +141,7 @@ int main(int argc, char **argv)
     /*
      * step 3, calling MetisMLASolver()
      */
-    // PetscCall(MetisMLASolver(&mla_ctx, 2));
+    PetscCall(MetisMLASolver(&mla_ctx, 2));
 
     /*
      * step 2, mesh process
@@ -169,12 +169,14 @@ int main(int argc, char **argv)
     PrintMeshGraph(graph);
 #endif
 
+#if 0
     MLASolver(mla_ctx.graph,
               &(mla_ctx.mysolver),
               &(mla_ctx.config),
               mla_ctx.order_rbm,
               &mla_ctx,
               2);
+#endif // adjacency list implementation
 
 #if 1
     // pc shell
@@ -245,7 +247,8 @@ int main(int argc, char **argv)
     // check, computing residual
     SolverPetscResidualCheck(&mysolver);
 
-    // free memory
+// free memory
+#if 0
     free(mla_ctx.data_gmsh->coordinates);
     free(mla_ctx.data_gmsh->eptr_bd);
     free(mla_ctx.data_gmsh->eind_bd);
@@ -283,6 +286,7 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&mysolver.solver_r));
     PetscCall(KSPDestroy(&mysolver.ksp));
     // PetscCall(PCDestroy(&mysolver.pc));
+#endif // free memory
 
     PetscCall(PetscFinalize());
     MPI_Finalize();

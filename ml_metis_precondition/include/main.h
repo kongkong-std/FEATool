@@ -226,33 +226,43 @@ typedef struct mla_context
 /*
  * mla nested procedure - coarsest level correction
  */
-int MetisMLANestedProcedureCoarsestCorrection(int level /*current level*/,
-                                              Vec *mla_recur_x /*solution in recursive*/,
-                                              Vec *mla_recur_b /*rhs in recursive*/,
-                                              MLAContext *mla_ctx /*mla context*/);
+int MetisMLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
+                                         int level,
+                                         MLAContext *mla_ctx,
+                                         Vec *mg_recur_x,
+                                         Vec *mg_recur_b);
 
 /*
  * mla nested procedure - post-smooth
  */
-int MetisMLANestedProcedurePostSmooth(int level /*current level*/,
-                                      Vec *mla_recur_x /*solution in recursive*/,
-                                      Vec *mla_recur_b /*rhs in recursive*/,
-                                      MLAContext *mla_ctx /*mla context*/);
+int MetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
+                                      int level,
+                                      MLAContext *mla_ctx,
+                                      Vec *mg_recur_x,
+                                      Vec *mg_recur_b,
+                                      int v_post_smooth);
 
 /*
  * mla nested procedure - pre-smooth
  */
-int MetisMLANestedProcedurePreSmooth(int level /*current level*/,
-                                     Vec *mla_recur_x /*solution in recursive*/,
-                                     Vec *mla_recur_b /*rhs in recursive*/,
-                                     MLAContext *mla_ctx /*mla context*/);
+int MetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
+                                     int level,
+                                     MLAContext *mla_ctx,
+                                     Vec *mg_recur_x,
+                                     Vec *mg_recur_b,
+                                     int v_pre_smooth);
 
 /*
  * mla nested procedure
  */
-int MetisMLANestedProcedure(Vec *mla_recur_x /*solution in recursive*/,
-                            Vec *mla_recur_b /*rhs in recursive*/,
-                            MLAContext *mla_ctx /*mla context*/);
+int MetisMLANestedProcedure(int /*level*/, int /*number of levels*/,
+                            MySolver * /*solver data*/,
+                            MLAContext * /*mla context*/,
+                            Vec * /*x*/,
+                            Vec * /*b*/,
+                            int /*pre-smooth times*/,
+                            int /*post-smooth times*/,
+                            int /*rbm order*/);
 
 /*
  * level k (k > 0), coarse mesh generated
@@ -282,7 +292,10 @@ int TestMetisFunctionGmsh(DataGmsh data);
 /*
  * metis aggregation-based multilevel method: solve phase
  */
-int MetisMLASolverSolvePhase(MLAContext *mla_ctx);
+int MetisMLASolverSolvePhase(const ConfigJSON * /*config json*/,
+                             MLAContext * /*mla context*/,
+                             int /*rbm order*/,
+                             MySolver * /*linear system data*/);
 
 /*
  * metis aggregation-based multilevel method: setup phase
