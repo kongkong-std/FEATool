@@ -199,7 +199,12 @@ int main(int argc, char **argv)
     }
 
     PetscCall(KSPSetFromOptions(mysolver.ksp));
+
+    PetscLogDouble time1, time2;
+    PetscCall(PetscTime(&time1));
     PetscCall(KSPSolve(mysolver.ksp, mysolver.solver_b, mysolver.solver_x));
+    PetscCall(PetscTime(&time2));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> ksp solve time: %g (s)\n", time2 - time1));
 #endif // pcshell
 
     /*
@@ -247,7 +252,76 @@ int main(int argc, char **argv)
     // check, computing residual
     SolverPetscResidualCheck(&mysolver);
 
-// free memory
+    // free memory
+    if (def_pc_mla)
+    {
+        for (int index = 0; index < mla_ctx.num_level; ++index)
+        {
+            free(mla_ctx.mla[index].coarse_node);
+            PetscCall(MatDestroy(&(mla_ctx.mla[index].prolongation)));
+            PetscCall(MatDestroy(&(mla_ctx.mla[index].operator_coarse)));
+            PetscCall(MatDestroy(&(mla_ctx.mla[index].operator_fine)));
+            PetscCall(KSPDestroy(&(mla_ctx.mla[index].ksp_coarse)));
+            PetscCall(KSPDestroy(&(mla_ctx.mla[index].ksp_presmooth)));
+            PetscCall(KSPDestroy(&(mla_ctx.mla[index].ksp_postsmooth)));
+            PetscCall(PCDestroy(&(mla_ctx.mla[index].pc_coarse)));
+            PetscCall(PCDestroy(&(mla_ctx.mla[index].pc_presmooth)));
+            PetscCall(PCDestroy(&(mla_ctx.mla[index].pc_postsmooth)));
+            ClearMeshGraph(mla_ctx.mla[index].aggregation);
+            ClearMeshGraph(mla_ctx.mla[index].fine);
+            ClearMeshGraph(mla_ctx.mla[index].coarse);
+            ClearMeshGraph(mla_ctx.mla[index].mesh_tmp);
+        }
+        free(mla_ctx.mla);
+    }
+
+    if (def_pc_metis_mla)
+    {
+        for (int index = 0; index < mla_ctx.num_level; ++index)
+        {
+            free(mla_ctx.metis_mla[index].fine->coordinates);
+            free(mla_ctx.metis_mla[index].fine->eptr_in);
+            free(mla_ctx.metis_mla[index].fine->eind_in);
+            free(mla_ctx.metis_mla[index].fine->npart_in);
+            free(mla_ctx.metis_mla[index].fine);
+
+            free(mla_ctx.metis_mla[index].coarse->coordinates);
+            free(mla_ctx.metis_mla[index].coarse->eptr_in);
+            free(mla_ctx.metis_mla[index].coarse->eind_in);
+            free(mla_ctx.metis_mla[index].coarse->npart_in);
+            free(mla_ctx.metis_mla[index].coarse);
+
+            PetscCall(MatDestroy(&(mla_ctx.metis_mla[index].operator_coarse)));
+            PetscCall(MatDestroy(&(mla_ctx.metis_mla[index].operator_fine)));
+            PetscCall(MatDestroy(&(mla_ctx.metis_mla[index].prolongation)));
+        }
+    }
+
+    ClearList(&data_list_ele_omega);
+    ClearList(&data_list_ele_bound);
+    ClearList(&data_list_node);
+    ClearList(&data_list_phy_tag);
+    ClearMeshGraph(mla_ctx.graph);
+
+    free(mla_ctx.data_gmsh->eptr_bd);
+    free(mla_ctx.data_gmsh->eptr_in);
+    free(mla_ctx.data_gmsh->eind_bd);
+    free(mla_ctx.data_gmsh->eind_in);
+    free(mla_ctx.data_gmsh->epart_in);
+    free(mla_ctx.data_gmsh->npart_in);
+    free(mla_ctx.data_gmsh->coordinates);
+    free(mla_ctx.data_gmsh);
+    free(mla_ctx.metis_mla);
+
+    PetscCall(MatDestroy(&(mla_ctx.mysolver.solver_a)));
+    PetscCall(VecDestroy(&(mla_ctx.mysolver.solver_b)));
+    PetscCall(VecDestroy(&(mla_ctx.mysolver.solver_x)));
+    PetscCall(VecDestroy(&(mla_ctx.mysolver.solver_r)));
+    PetscCall(KSPDestroy(&(mysolver.ksp)));
+    PetscCall(MatDestroy(&(mysolver.solver_a)));
+    PetscCall(VecDestroy(&(mysolver.solver_b)));
+    PetscCall(VecDestroy(&(mysolver.solver_x)));
+    PetscCall(VecDestroy(&(mysolver.solver_r)));
 #if 0
     free(mla_ctx.data_gmsh->coordinates);
     free(mla_ctx.data_gmsh->eptr_bd);

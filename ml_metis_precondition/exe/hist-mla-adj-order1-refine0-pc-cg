@@ -1,0 +1,28 @@
+Config file: ../input/config/mla_v_cycle-refine0.json
+order_rbm = 1
+angle_type = 1
+==== basic information of linear system ====
+matrix Row = 1506, matrix Column = 1506
+matrix nz_allocated = 27747, matrix nz_used = 27747, matrix nz_unneeded = 0
+vector Row = 1506
+initial     || b ||_2 = 2.6501139470351753e+00
+>>>>>>>> setup phase:
+ prolongation_block_row = 251, col = 65
+size of prolongation: m = 1506, n = 390
+======== adjacency list setup, duplicate coarse_operator >>>>>>>>
+in initial loop, cnt_level = 1
+>>>>>>>> setup phase:
+ prolongation_block_row = 65, col = 25
+size of prolongation: m = 390, n = 150
+in while loop, cnt_level = 2
+>>>> setup time: 0.00376701 (s)
+0 MLA ||r(i)||/||b|| 1.0000000000000000e+00
+1 MLA ||r(i)||/||b||                  -nan
+>>>> solve time: 0.000935793 (s)
+>>>> ksp solve time: 0.0048492 (s)
+            || b ||_2 = 2.6501139470351753e+00
+|| r ||_2 / || b ||_2 = 1.0000000000000000e+00
+WARNING! There are options you set that were not used!
+WARNING! could be spelling mistake, etc!
+There is one unused database option. It is:
+Option left: name:-ksp_gmres_restart value: 50 source: command line

@@ -41,8 +41,8 @@ int MLAMGNestedProcedurePreSmooth(KSP ksp, PC pc,
     else
     {
 #if 1
-        double shift = 1e-10;    // test metis aggregation implementation
-        //double shift = 0.; // test metis aggregation implementation
+        double shift = 1e-10; // test metis aggregation implementation
+        // double shift = 0.; // test metis aggregation implementation
         PetscCall(MatShift((mla_ctx->mla + level)->operator_fine, shift));
 #endif
         PetscCall(KSPSetOperators(ksp,
@@ -652,7 +652,7 @@ int MLASolverSetupPhase(MySolver *mysolver,
                 p_loc[4][8] = p_loc[3][6] / 2.;  // (5, 9) x/2, phi modified
 #endif
 
-#if 1 // null space
+#if 1                                                                                                       // null space
                 p_loc[0][7] = (node_coarse_x - node_aggregation_x) * (node_coarse_y - node_aggregation_y);  // (0, 7) xy
                 p_loc[0][8] = (node_coarse_x - node_aggregation_x) * (node_coarse_z - node_aggregation_z);  // (0, 8) xz
                 p_loc[1][6] = p_loc[0][7];                                                                  // (1, 6) xy
@@ -772,7 +772,7 @@ int MLASolverSetupPhase(MySolver *mysolver,
         PetscCall(MatDuplicate(mla_ctx->metis_mla[cnt_level].operator_fine,
                                MAT_COPY_VALUES,
                                &((mla_ctx->mla + cnt_level)->operator_fine)));
-#endif    // test metis aggregation implementation, added
+#endif // test metis aggregation implementation, added
 
 #if 0
     printf("\n\n==== level %d, neighbouring fine operator:\n", cnt_level);
@@ -1116,6 +1116,7 @@ int MLASolver(const MeshGraph *graph,
 {
     // int mla_phase = config->mla_config.mla_phase;
     int num_level = config->mla_config.mla_level;
+    PetscLogDouble time1, time2;
 
     // setup phase
     if (mla_phase == 0 || mla_phase == 2)
@@ -1125,12 +1126,18 @@ int MLASolver(const MeshGraph *graph,
          * finest mesh
          * rbm order (prolongation operator constructor)
          */
+        PetscCall(PetscTime(&time1));
         MLASolverSetupPhase(mysolver, graph, num_level, order_rbm, mla_ctx);
+
+        PetscCall(PetscTime(&time2));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> setup time: %g (s)\n", time2 - time1));
     }
 
     // solve phase
     if (mla_phase == 1 || mla_phase == 2)
     {
+        PetscCall(PetscTime(&time1));
+
         int cnt = 0;
         double rela_resid = 0.;
         MLASolverRelativeResidual(mysolver, &rela_resid);
@@ -1156,6 +1163,9 @@ int MLASolver(const MeshGraph *graph,
 #if 0
         PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", cnt, rela_resid));
 #endif // print mla iteration information
+
+        PetscCall(PetscTime(&time2));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> solve time: %g (s)\n", time2 - time1));
     }
 
 #if 0

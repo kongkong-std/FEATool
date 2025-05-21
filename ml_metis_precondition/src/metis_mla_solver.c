@@ -679,7 +679,7 @@ void GmshCoarseLevelGenerator(DataGmsh *coarse_data /*gmsh coarse level data poi
 
     // assign value to coarse_data->eind_in
     coarse_data->eind_in = (idx_t *)malloc(coarse_data->eptr_in[coarse_data->nn] * sizeof(idx_t));
-    assert(coarse_data);
+    assert(coarse_data->eind_in);
     int pos_tmp = 0;
     for (int index_i = 0; index_i < coarse_data->nn; ++index_i)
     {
@@ -1348,12 +1348,14 @@ int MetisMLASolver(MLAContext *mla_ctx,
         PetscCall(PetscTime(&time1));
         MetisMLASolverSetupPhase(mla_ctx);
         PetscCall(PetscTime(&time2));
-        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> setup time: %g (s)\n", time2 - time1););
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> setup time: %g (s)\n", time2 - time1));
     }
 
     // solve phase
     if (mla_phase == 1 || mla_phase == 2)
     {
+        PetscCall(PetscTime(&time1));
+
         if (mla_ctx->setup == 0)
         {
             PetscCall(PetscPrintf(PETSC_COMM_WORLD, "setup phase has not been done! failed\n"));
@@ -1376,6 +1378,9 @@ int MetisMLASolver(MLAContext *mla_ctx,
             ++iter_cnt;
             // PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
         }
+
+        PetscCall(PetscTime(&time2));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> solve time: %g (s)\n", time2 - time1));
     }
     return 0;
 }

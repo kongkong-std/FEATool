@@ -1,0 +1,404 @@
+Config file: ../input/config/mla_v_cycle-refine2.json
+order_rbm = 1
+angle_type = 1
+==== basic information of linear system ====
+matrix Row = 19158, matrix Column = 19158
+matrix nz_allocated = 387515, matrix nz_used = 387515, matrix nz_unneeded = 0
+vector Row = 19158
+initial     || b ||_2 = 7.2042734251691598e-01
+in level 1:
+in level 2:
+nodes in level 2 (coarse) is 49, less than 100, setup done!
+>>>> setup time: 0.191901 (s)
+  0 KSP unpreconditioned resid norm 7.204273425169e-01 true resid norm 7.204273425169e-01 ||r(i)||/||b|| 1.000000000000e+00
+>>>> solve time: 0.0101404 (s)
+  1 KSP unpreconditioned resid norm 6.090206853087e+01 true resid norm 6.090206853087e+01 ||r(i)||/||b|| 8.453603151444e+01
+>>>> solve time: 0.00693369 (s)
+  2 KSP unpreconditioned resid norm 5.363518286962e+01 true resid norm 5.363518286962e+01 ||r(i)||/||b|| 7.444912165915e+01
+>>>> solve time: 0.00703549 (s)
+  3 KSP unpreconditioned resid norm 3.288186692042e+01 true resid norm 3.288186692041e+01 ||r(i)||/||b|| 4.564216955667e+01
+>>>> solve time: 0.00719357 (s)
+  4 KSP unpreconditioned resid norm 1.731945037101e+01 true resid norm 1.731945037101e+01 ||r(i)||/||b|| 2.404052337950e+01
+>>>> solve time: 0.00679278 (s)
+  5 KSP unpreconditioned resid norm 8.428914730115e+00 true resid norm 8.428914730120e+00 ||r(i)||/||b|| 1.169988176833e+01
+>>>> solve time: 0.00696683 (s)
+  6 KSP unpreconditioned resid norm 4.139316102166e+00 true resid norm 4.139316102160e+00 ||r(i)||/||b|| 5.745639924908e+00
+>>>> solve time: 0.00682425 (s)
+  7 KSP unpreconditioned resid norm 2.374114121392e+00 true resid norm 2.374114121400e+00 ||r(i)||/||b|| 3.295424786496e+00
+>>>> solve time: 0.0070405 (s)
+  8 KSP unpreconditioned resid norm 1.165476339813e+00 true resid norm 1.165476339811e+00 ||r(i)||/||b|| 1.617756949284e+00
+>>>> solve time: 0.00738263 (s)
+  9 KSP unpreconditioned resid norm 6.716392783393e-01 true resid norm 6.716392783439e-01 ||r(i)||/||b|| 9.322789942944e-01
+>>>> solve time: 0.00692511 (s)
+ 10 KSP unpreconditioned resid norm 3.606933423941e-01 true resid norm 3.606933423932e-01 ||r(i)||/||b|| 5.006658147275e-01
+>>>> solve time: 0.00746965 (s)
+ 11 KSP unpreconditioned resid norm 1.906842138578e-01 true resid norm 1.906842138641e-01 ||r(i)||/||b|| 2.646820888251e-01
+>>>> solve time: 0.00706029 (s)
+ 12 KSP unpreconditioned resid norm 1.059434504354e-01 true resid norm 1.059434504300e-01 ||r(i)||/||b|| 1.470563985812e-01
+>>>> solve time: 0.00708246 (s)
+ 13 KSP unpreconditioned resid norm 6.353308389072e-02 true resid norm 6.353308389948e-02 ||r(i)||/||b|| 8.818805193806e-02
+>>>> solve time: 0.00718093 (s)
+ 14 KSP unpreconditioned resid norm 3.789300999528e-02 true resid norm 3.789300999954e-02 ||r(i)||/||b|| 5.259796201954e-02
+>>>> solve time: 0.00710058 (s)
+ 15 KSP unpreconditioned resid norm 2.571515871809e-02 true resid norm 2.571515872422e-02 ||r(i)||/||b|| 3.569431253731e-02
+>>>> solve time: 0.00699544 (s)
+ 16 KSP unpreconditioned resid norm 1.311572590338e-02 true resid norm 1.311572590376e-02 ||r(i)||/||b|| 1.820548045545e-02
+>>>> solve time: 0.0070951 (s)
+ 17 KSP unpreconditioned resid norm 7.647852631869e-03 true resid norm 7.647852633936e-03 ||r(i)||/||b|| 1.061571678723e-02
+>>>> solve time: 0.00711226 (s)
+ 18 KSP unpreconditioned resid norm 4.462769786821e-03 true resid norm 4.462769779450e-03 ||r(i)||/||b|| 6.194614662817e-03
+>>>> solve time: 0.00704503 (s)
+ 19 KSP unpreconditioned resid norm 2.217862385699e-03 true resid norm 2.217862385453e-03 ||r(i)||/||b|| 3.078537216126e-03
+>>>> solve time: 0.0069325 (s)
+ 20 KSP unpreconditioned resid norm 1.359512306400e-03 true resid norm 1.359512299602e-03 ||r(i)||/||b|| 1.887091479416e-03
+>>>> solve time: 0.00699282 (s)
+ 21 KSP unpreconditioned resid norm 7.286845600090e-04 true resid norm 7.286845671712e-04 ||r(i)||/||b|| 1.011461564778e-03
+>>>> solve time: 0.00689626 (s)
+ 22 KSP unpreconditioned resid norm 4.111208972850e-04 true resid norm 4.111208909331e-04 ||r(i)||/||b|| 5.706625313481e-04
+>>>> solve time: 0.00708652 (s)
+ 23 KSP unpreconditioned resid norm 2.264301679923e-04 true resid norm 2.264301804588e-04 ||r(i)||/||b|| 3.142998149789e-04
+>>>> solve time: 0.00713181 (s)
+ 24 KSP unpreconditioned resid norm 1.247296222954e-04 true resid norm 1.247296139959e-04 ||r(i)||/||b|| 1.731328152539e-04
+>>>> solve time: 0.00683475 (s)
+ 25 KSP unpreconditioned resid norm 6.720172390201e-05 true resid norm 6.720173211847e-05 ||r(i)||/||b|| 9.328037423412e-05
+>>>> solve time: 0.00694466 (s)
+ 26 KSP unpreconditioned resid norm 4.024770564786e-05 true resid norm 4.024769004641e-05 ||r(i)||/||b|| 5.586641104680e-05
+>>>> solve time: 0.00715089 (s)
+ 27 KSP unpreconditioned resid norm 2.131171569901e-05 true resid norm 2.131172934966e-05 ||r(i)||/||b|| 2.958206621532e-05
+>>>> solve time: 0.00705218 (s)
+ 28 KSP unpreconditioned resid norm 1.214526416530e-05 true resid norm 1.214524921348e-05 ||r(i)||/||b|| 1.685839570031e-05
+>>>> solve time: 0.00692177 (s)
+ 29 KSP unpreconditioned resid norm 6.421488807374e-06 true resid norm 6.421513680753e-06 ||r(i)||/||b|| 8.913478572758e-06
+>>>> solve time: 0.00688195 (s)
+ 30 KSP unpreconditioned resid norm 4.416354171850e-06 true resid norm 4.416343096729e-06 ||r(i)||/||b|| 6.130171408126e-06
+>>>> solve time: 0.00700784 (s)
+ 31 KSP unpreconditioned resid norm 3.060837887040e-06 true resid norm 3.060850713480e-06 ||r(i)||/||b|| 4.248659834018e-06
+>>>> solve time: 0.00688505 (s)
+ 32 KSP unpreconditioned resid norm 3.060839026978e-06 true resid norm 3.060855156158e-06 ||r(i)||/||b|| 4.248666000744e-06
+>>>> solve time: 0.00684333 (s)
+ 33 KSP unpreconditioned resid norm 3.060838760021e-06 true resid norm 3.060854728145e-06 ||r(i)||/||b|| 4.248665406634e-06
+>>>> solve time: 0.00700068 (s)
+ 34 KSP unpreconditioned resid norm 3.060836032290e-06 true resid norm 3.060852863702e-06 ||r(i)||/||b|| 4.248662818666e-06
+>>>> solve time: 0.00721002 (s)
+ 35 KSP unpreconditioned resid norm 3.060832698040e-06 true resid norm 3.060849266547e-06 ||r(i)||/||b|| 4.248657825581e-06
+>>>> solve time: 0.00695825 (s)
+ 36 KSP unpreconditioned resid norm 3.043724131713e-06 true resid norm 3.043745005455e-06 ||r(i)||/||b|| 4.224915998915e-06
+>>>> solve time: 0.00679588 (s)
+ 37 KSP unpreconditioned resid norm 3.039461861864e-06 true resid norm 3.039480519221e-06 ||r(i)||/||b|| 4.218996614707e-06
+>>>> solve time: 0.00683999 (s)
+ 38 KSP unpreconditioned resid norm 3.037380787260e-06 true resid norm 3.037404047613e-06 ||r(i)||/||b|| 4.216114337084e-06
+>>>> solve time: 0.00699925 (s)
+ 39 KSP unpreconditioned resid norm 3.036344648626e-06 true resid norm 3.036367843920e-06 ||r(i)||/||b|| 4.214676018975e-06
+>>>> solve time: 0.00682831 (s)
+ 40 KSP unpreconditioned resid norm 3.035735921176e-06 true resid norm 3.035759522138e-06 ||r(i)||/||b|| 4.213831628783e-06
+>>>> solve time: 0.00682664 (s)
+ 41 KSP unpreconditioned resid norm 3.035340561977e-06 true resid norm 3.035365606410e-06 ||r(i)||/||b|| 4.213284848136e-06
+>>>> solve time: 0.00682974 (s)
+ 42 KSP unpreconditioned resid norm 3.035066229047e-06 true resid norm 3.035080179141e-06 ||r(i)||/||b|| 4.212888656526e-06
+>>>> solve time: 0.00703549 (s)
+ 43 KSP unpreconditioned resid norm 3.034866676613e-06 true resid norm 3.034881542662e-06 ||r(i)||/||b|| 4.212612936176e-06
+>>>> solve time: 0.00680995 (s)
+ 44 KSP unpreconditioned resid norm 3.034716219456e-06 true resid norm 3.034738599170e-06 ||r(i)||/||b|| 4.212414521314e-06
+>>>> solve time: 0.00685596 (s)
+ 45 KSP unpreconditioned resid norm 3.034599496079e-06 true resid norm 3.034613905002e-06 ||r(i)||/||b|| 4.212241437700e-06
+>>>> solve time: 0.00713348 (s)
+ 46 KSP unpreconditioned resid norm 3.034506796149e-06 true resid norm 3.034528632701e-06 ||r(i)||/||b|| 4.212123074201e-06
+>>>> solve time: 0.00680423 (s)
+ 47 KSP unpreconditioned resid norm 3.034431696895e-06 true resid norm 3.034449080408e-06 ||r(i)||/||b|| 4.212012650445e-06
+>>>> solve time: 0.00681996 (s)
+ 48 KSP unpreconditioned resid norm 3.034369810020e-06 true resid norm 3.034388411223e-06 ||r(i)||/||b|| 4.211928437672e-06
+>>>> solve time: 0.00745964 (s)
+ 49 KSP unpreconditioned resid norm 3.034318039080e-06 true resid norm 3.034343361435e-06 ||r(i)||/||b|| 4.211865905636e-06
+>>>> solve time: 0.00691509 (s)
+ 50 KSP unpreconditioned resid norm 3.034274150158e-06 true resid norm 3.034292031852e-06 ||r(i)||/||b|| 4.211794656836e-06
+>>>> solve time: 0.00701952 (s)
+ 51 KSP unpreconditioned resid norm 3.034236493433e-06 true resid norm 3.034261877108e-06 ||r(i)||/||b|| 4.211752800091e-06
+>>>> solve time: 0.00681829 (s)
+ 52 KSP unpreconditioned resid norm 3.034203826982e-06 true resid norm 3.034237897257e-06 ||r(i)||/||b|| 4.211719514499e-06
+>>>> solve time: 0.00682068 (s)
+ 53 KSP unpreconditioned resid norm 3.034175203576e-06 true resid norm 3.034208657851e-06 ||r(i)||/||b|| 4.211678928302e-06
+>>>> solve time: 0.00683808 (s)
+ 54 KSP unpreconditioned resid norm 3.034149887687e-06 true resid norm 3.034177929817e-06 ||r(i)||/||b|| 4.211636275793e-06
+>>>> solve time: 0.00678968 (s)
+ 55 KSP unpreconditioned resid norm 3.034127302905e-06 true resid norm 3.034162348343e-06 ||r(i)||/||b|| 4.211614647693e-06
+>>>> solve time: 0.00680184 (s)
+ 56 KSP unpreconditioned resid norm 3.034106989093e-06 true resid norm 3.034133892026e-06 ||r(i)||/||b|| 4.211575148475e-06
+>>>> solve time: 0.00684333 (s)
+ 57 KSP unpreconditioned resid norm 3.034088576882e-06 true resid norm 3.034123123738e-06 ||r(i)||/||b|| 4.211560201391e-06
+>>>> solve time: 0.00682282 (s)
+ 58 KSP unpreconditioned resid norm 3.034071766279e-06 true resid norm 3.034089631964e-06 ||r(i)||/||b|| 4.211513712630e-06
+>>>> solve time: 0.00779891 (s)
+ 59 KSP unpreconditioned resid norm 3.034056311158e-06 true resid norm 3.034082208969e-06 ||r(i)||/||b|| 4.211503409031e-06
+>>>> solve time: 0.00739622 (s)
+ 60 KSP unpreconditioned resid norm 3.034042007998e-06 true resid norm 3.034076888476e-06 ||r(i)||/||b|| 4.211496023841e-06
+>>>> solve time: 0.00758982 (s)
+ 61 KSP unpreconditioned resid norm 3.034028687032e-06 true resid norm 3.034048563135e-06 ||r(i)||/||b|| 4.211456706426e-06
+>>>> solve time: 0.00827217 (s)
+ 62 KSP unpreconditioned resid norm 3.034030700187e-06 true resid norm 3.034054341767e-06 ||r(i)||/||b|| 4.211464727542e-06
+>>>> solve time: 0.00718832 (s)
+ 63 KSP unpreconditioned resid norm 3.033822700098e-06 true resid norm 3.033849792537e-06 ||r(i)||/||b|| 4.211180799910e-06
+>>>> solve time: 0.00681829 (s)
+ 64 KSP unpreconditioned resid norm 3.026347541961e-06 true resid norm 3.026373721536e-06 ||r(i)||/||b|| 4.200803527199e-06
+>>>> solve time: 0.00680566 (s)
+ 65 KSP unpreconditioned resid norm 3.020081426534e-06 true resid norm 3.020092946966e-06 ||r(i)||/||b|| 4.192085403665e-06
+>>>> solve time: 0.00679374 (s)
+ 66 KSP unpreconditioned resid norm 3.200724383467e-06 true resid norm 3.200745233330e-06 ||r(i)||/||b|| 4.442842524755e-06
+>>>> solve time: 0.00700355 (s)
+ 67 KSP unpreconditioned resid norm 3.051523100660e-06 true resid norm 3.051552428853e-06 ||r(i)||/||b|| 4.235753210299e-06
+>>>> solve time: 0.00682807 (s)
+ 68 KSP unpreconditioned resid norm 2.973540641332e-06 true resid norm 2.973566462627e-06 ||r(i)||/||b|| 4.127503617837e-06
+>>>> solve time: 0.00682354 (s)
+ 69 KSP unpreconditioned resid norm 2.982214027542e-06 true resid norm 2.982243076564e-06 ||r(i)||/||b|| 4.139547322212e-06
+>>>> solve time: 0.00682235 (s)
+ 70 KSP unpreconditioned resid norm 2.995453235817e-06 true resid norm 2.995473644562e-06 ||r(i)||/||b|| 4.157912210962e-06
+>>>> solve time: 0.00682211 (s)
+ 71 KSP unpreconditioned resid norm 3.002059388956e-06 true resid norm 3.002082035768e-06 ||r(i)||/||b|| 4.167085087692e-06
+>>>> solve time: 0.00679755 (s)
+ 72 KSP unpreconditioned resid norm 3.005574045450e-06 true resid norm 3.005598413589e-06 ||r(i)||/||b|| 4.171966048774e-06
+>>>> solve time: 0.00681734 (s)
+ 73 KSP unpreconditioned resid norm 3.007816230422e-06 true resid norm 3.007846908640e-06 ||r(i)||/||b|| 4.175087106121e-06
+>>>> solve time: 0.00679493 (s)
+ 74 KSP unpreconditioned resid norm 3.009459337916e-06 true resid norm 3.009471496155e-06 ||r(i)||/||b|| 4.177342139238e-06
+>>>> solve time: 0.00678921 (s)
+ 75 KSP unpreconditioned resid norm 3.010783888351e-06 true resid norm 3.010810246201e-06 ||r(i)||/||b|| 4.179200411359e-06
+>>>> solve time: 0.00680423 (s)
+ 76 KSP unpreconditioned resid norm 3.011921838665e-06 true resid norm 3.011947699986e-06 ||r(i)||/||b|| 4.180779271179e-06
+>>>> solve time: 0.00685239 (s)
+ 77 KSP unpreconditioned resid norm 3.012941723599e-06 true resid norm 3.012968593757e-06 ||r(i)||/||b|| 4.182196338122e-06
+>>>> solve time: 0.00682521 (s)
+ 78 KSP unpreconditioned resid norm 3.013882208874e-06 true resid norm 3.013897216611e-06 ||r(i)||/||b|| 4.183485327031e-06
+>>>> solve time: 0.00678658 (s)
+ 79 KSP unpreconditioned resid norm 3.014766741789e-06 true resid norm 3.014791979949e-06 ||r(i)||/||b|| 4.184727316729e-06
+>>>> solve time: 0.00680137 (s)
+ 80 KSP unpreconditioned resid norm 3.015610492602e-06 true resid norm 3.015640300125e-06 ||r(i)||/||b|| 4.185904840298e-06
+>>>> solve time: 0.00679111 (s)
+ 81 KSP unpreconditioned resid norm 3.016423807202e-06 true resid norm 3.016461249231e-06 ||r(i)||/||b|| 4.187044371044e-06
+>>>> solve time: 0.00678635 (s)
+ 82 KSP unpreconditioned resid norm 3.017214098766e-06 true resid norm 3.017248193925e-06 ||r(i)||/||b|| 4.188136701452e-06
+>>>> solve time: 0.00678968 (s)
+ 83 KSP unpreconditioned resid norm 3.017986907154e-06 true resid norm 3.018008103462e-06 ||r(i)||/||b|| 4.189191505306e-06
+>>>> solve time: 0.00677657 (s)
+ 84 KSP unpreconditioned resid norm 3.018746534430e-06 true resid norm 3.018777516515e-06 ||r(i)||/||b|| 4.190259500658e-06
+>>>> solve time: 0.00686431 (s)
+ 85 KSP unpreconditioned resid norm 3.019496430350e-06 true resid norm 3.019529147954e-06 ||r(i)||/||b|| 4.191302813973e-06
+>>>> solve time: 0.00680041 (s)
+ 86 KSP unpreconditioned resid norm 3.020239445182e-06 true resid norm 3.020267976978e-06 ||r(i)||/||b|| 4.192328356704e-06
+>>>> solve time: 0.0068047 (s)
+ 87 KSP unpreconditioned resid norm 3.020977997881e-06 true resid norm 3.021018789027e-06 ||r(i)||/||b|| 4.193370532651e-06
+>>>> solve time: 0.00681019 (s)
+ 88 KSP unpreconditioned resid norm 3.021714184880e-06 true resid norm 3.021745711074e-06 ||r(i)||/||b|| 4.194379547724e-06
+>>>> solve time: 0.00680089 (s)
+ 89 KSP unpreconditioned resid norm 3.022449865715e-06 true resid norm 3.022489511416e-06 ||r(i)||/||b|| 4.195411990967e-06
+>>>> solve time: 0.00684309 (s)
+ 90 KSP unpreconditioned resid norm 3.023186720195e-06 true resid norm 3.023235624793e-06 ||r(i)||/||b|| 4.196447644853e-06
+>>>> solve time: 0.00677752 (s)
+ 91 KSP unpreconditioned resid norm 3.023926288654e-06 true resid norm 3.023972463395e-06 ||r(i)||/||b|| 4.197470424749e-06
+>>>> solve time: 0.00680876 (s)
+ 92 KSP unpreconditioned resid norm 3.023926236268e-06 true resid norm 3.023974041347e-06 ||r(i)||/||b|| 4.197472615048e-06
+>>>> solve time: 0.00674438 (s)
+ 93 KSP unpreconditioned resid norm 3.023975188805e-06 true resid norm 3.024015057085e-06 ||r(i)||/||b|| 4.197529547560e-06
+>>>> solve time: 0.00680733 (s)
+ 94 KSP unpreconditioned resid norm 3.022082217122e-06 true resid norm 3.022123828382e-06 ||r(i)||/||b|| 4.194904399136e-06
+>>>> solve time: 0.00679588 (s)
+ 95 KSP unpreconditioned resid norm 3.162405732393e-06 true resid norm 3.162451216149e-06 ||r(i)||/||b|| 4.389687938690e-06
+>>>> solve time: 0.0067842 (s)
+ 96 KSP unpreconditioned resid norm 3.822377634110e-06 true resid norm 3.822420131224e-06 ||r(i)||/||b|| 5.305767709857e-06
+>>>> solve time: 0.00679946 (s)
+ 97 KSP unpreconditioned resid norm 2.151241168540e-06 true resid norm 2.151285870075e-06 ||r(i)||/||b|| 2.986124683385e-06
+>>>> solve time: 0.00696516 (s)
+ 98 KSP unpreconditioned resid norm 1.944112087057e-06 true resid norm 1.944147731081e-06 ||r(i)||/||b|| 2.698603476499e-06
+>>>> solve time: 0.00687623 (s)
+ 99 KSP unpreconditioned resid norm 1.982611633545e-06 true resid norm 1.982649471321e-06 ||r(i)||/||b|| 2.752046395677e-06
+>>>> solve time: 0.00679326 (s)
+100 KSP unpreconditioned resid norm 1.944060274773e-06 true resid norm 1.944102327757e-06 ||r(i)||/||b|| 2.698540453732e-06
+>>>> solve time: 0.00676799 (s)
+101 KSP unpreconditioned resid norm 1.893445512757e-06 true resid norm 1.893475573443e-06 ||r(i)||/||b|| 2.628267226543e-06
+>>>> solve time: 0.00683641 (s)
+102 KSP unpreconditioned resid norm 2.533745276349e-06 true resid norm 2.533770044689e-06 ||r(i)||/||b|| 3.517037590269e-06
+>>>> solve time: 0.00676656 (s)
+103 KSP unpreconditioned resid norm 2.060342035554e-06 true resid norm 2.060362878819e-06 ||r(i)||/||b|| 2.859917658900e-06
+>>>> solve time: 0.00677991 (s)
+104 KSP unpreconditioned resid norm 2.106242771116e-06 true resid norm 2.106270840863e-06 ||r(i)||/||b|| 2.923640895561e-06
+>>>> solve time: 0.00677729 (s)
+105 KSP unpreconditioned resid norm 2.143246857466e-06 true resid norm 2.143265363140e-06 ||r(i)||/||b|| 2.974991698195e-06
+>>>> solve time: 0.00675058 (s)
+106 KSP unpreconditioned resid norm 2.172030319671e-06 true resid norm 2.172053383928e-06 ||r(i)||/||b|| 3.014951343101e-06
+>>>> solve time: 0.00675702 (s)
+107 KSP unpreconditioned resid norm 2.198202626227e-06 true resid norm 2.198233312198e-06 ||r(i)||/||b|| 3.051290785991e-06
+>>>> solve time: 0.00678134 (s)
+108 KSP unpreconditioned resid norm 2.222505199939e-06 true resid norm 2.222525969793e-06 ||r(i)||/||b|| 3.085010574457e-06
+>>>> solve time: 0.00685406 (s)
+109 KSP unpreconditioned resid norm 2.245240181270e-06 true resid norm 2.245265203802e-06 ||r(i)||/||b|| 3.116574109969e-06
+>>>> solve time: 0.00681567 (s)
+110 KSP unpreconditioned resid norm 2.266620901365e-06 true resid norm 2.266639751127e-06 ||r(i)||/||b|| 3.146243371619e-06
+>>>> solve time: 0.00681067 (s)
+111 KSP unpreconditioned resid norm 2.286811251030e-06 true resid norm 2.286832000479e-06 ||r(i)||/||b|| 3.174271526800e-06
+>>>> solve time: 0.00679111 (s)
+112 KSP unpreconditioned resid norm 2.305940545764e-06 true resid norm 2.305965246896e-06 ||r(i)||/||b|| 3.200829717040e-06
+>>>> solve time: 0.00675535 (s)
+113 KSP unpreconditioned resid norm 2.324112633381e-06 true resid norm 2.324138591783e-06 ||r(i)||/||b|| 3.226055501535e-06
+>>>> solve time: 0.00677896 (s)
+114 KSP unpreconditioned resid norm 2.341412161314e-06 true resid norm 2.341436426219e-06 ||r(i)||/||b|| 3.250066020591e-06
+>>>> solve time: 0.00676799 (s)
+115 KSP unpreconditioned resid norm 2.357909222943e-06 true resid norm 2.357937294826e-06 ||r(i)||/||b|| 3.272970299251e-06
+>>>> solve time: 0.00675964 (s)
+116 KSP unpreconditioned resid norm 2.373661506348e-06 true resid norm 2.373687395197e-06 ||r(i)||/||b|| 3.294832462777e-06
+>>>> solve time: 0.00676441 (s)
+117 KSP unpreconditioned resid norm 2.388718611468e-06 true resid norm 2.388744113030e-06 ||r(i)||/||b|| 3.315732166251e-06
+>>>> solve time: 0.00676894 (s)
+118 KSP unpreconditioned resid norm 2.403122253109e-06 true resid norm 2.403146582066e-06 ||r(i)||/||b|| 3.335723729849e-06
+>>>> solve time: 0.00673461 (s)
+119 KSP unpreconditioned resid norm 2.416908276126e-06 true resid norm 2.416936635905e-06 ||r(i)||/||b|| 3.354865221330e-06
+>>>> solve time: 0.00679541 (s)
+120 KSP unpreconditioned resid norm 2.430107671901e-06 true resid norm 2.430137423977e-06 ||r(i)||/||b|| 3.373188773606e-06
+>>>> solve time: 0.00675821 (s)
+121 KSP unpreconditioned resid norm 2.442747485324e-06 true resid norm 2.442771349206e-06 ||r(i)||/||b|| 3.390725483394e-06
+>>>> solve time: 0.00694466 (s)
+122 KSP unpreconditioned resid norm 2.442721076239e-06 true resid norm 2.442745972079e-06 ||r(i)||/||b|| 3.390690258292e-06
+>>>> solve time: 0.00675225 (s)
+123 KSP unpreconditioned resid norm 2.423519868698e-06 true resid norm 2.423541011443e-06 ||r(i)||/||b|| 3.364032524052e-06
+>>>> solve time: 0.00673461 (s)
+124 KSP unpreconditioned resid norm 1.883206180280e-06 true resid norm 1.883227643908e-06 ||r(i)||/||b|| 2.614042433938e-06
+>>>> solve time: 0.00669909 (s)
+125 KSP unpreconditioned resid norm 1.536456700750e-06 true resid norm 1.536467951757e-06 ||r(i)||/||b|| 2.132717431836e-06
+>>>> solve time: 0.00678301 (s)
+126 KSP unpreconditioned resid norm 1.439090878567e-06 true resid norm 1.439108148223e-06 ||r(i)||/||b|| 1.997575693331e-06
+>>>> solve time: 0.00672483 (s)
+127 KSP unpreconditioned resid norm 1.373116787173e-06 true resid norm 1.373136588393e-06 ||r(i)||/||b|| 1.906002878230e-06
+>>>> solve time: 0.00680876 (s)
+128 KSP unpreconditioned resid norm 1.154069728023e-06 true resid norm 1.154088421057e-06 ||r(i)||/||b|| 1.601949777510e-06
+>>>> solve time: 0.00675297 (s)
+129 KSP unpreconditioned resid norm 1.170847690664e-06 true resid norm 1.170866574411e-06 ||r(i)||/||b|| 1.625238945430e-06
+>>>> solve time: 0.00696468 (s)
+130 KSP unpreconditioned resid norm 6.879902076394e-07 true resid norm 6.879984410890e-07 ||r(i)||/||b|| 9.549865760028e-07
+>>>> solve time: 0.00676656 (s)
+131 KSP unpreconditioned resid norm 6.475529945442e-07 true resid norm 6.475578722630e-07 ||r(i)||/||b|| 8.988524366672e-07
+>>>> solve time: 0.00671744 (s)
+132 KSP unpreconditioned resid norm 4.611559968430e-07 true resid norm 4.611460999415e-07 ||r(i)||/||b|| 6.401007745353e-07
+>>>> solve time: 0.00674677 (s)
+133 KSP unpreconditioned resid norm 5.535596710081e-07 true resid norm 5.535541507643e-07 ||r(i)||/||b|| 7.683691582699e-07
+>>>> solve time: 0.0067513 (s)
+134 KSP unpreconditioned resid norm 4.595426270776e-07 true resid norm 4.595644965430e-07 ||r(i)||/||b|| 6.379054061683e-07
+>>>> solve time: 0.00677371 (s)
+135 KSP unpreconditioned resid norm 3.567791205456e-07 true resid norm 3.567842982958e-07 ||r(i)||/||b|| 4.952398073195e-07
+>>>> solve time: 0.00671101 (s)
+136 KSP unpreconditioned resid norm 3.607436086963e-07 true resid norm 3.607635846442e-07 ||r(i)||/||b|| 5.007633155396e-07
+>>>> solve time: 0.00675488 (s)
+137 KSP unpreconditioned resid norm 3.625807827873e-07 true resid norm 3.626015142337e-07 ||r(i)||/||b|| 5.033144813284e-07
+>>>> solve time: 0.00676179 (s)
+138 KSP unpreconditioned resid norm 3.666549668369e-07 true resid norm 3.666698361536e-07 ||r(i)||/||b|| 5.089615767116e-07
+>>>> solve time: 0.00673938 (s)
+139 KSP unpreconditioned resid norm 3.698429474694e-07 true resid norm 3.698659032980e-07 ||r(i)||/||b|| 5.133979257448e-07
+>>>> solve time: 0.00671291 (s)
+140 KSP unpreconditioned resid norm 3.730850377085e-07 true resid norm 3.731132133509e-07 ||r(i)||/||b|| 5.179054032671e-07
+>>>> solve time: 0.0068779 (s)
+141 KSP unpreconditioned resid norm 3.761623537549e-07 true resid norm 3.761851724376e-07 ||r(i)||/||b|| 5.221694822456e-07
+>>>> solve time: 0.00674415 (s)
+142 KSP unpreconditioned resid norm 3.790827849953e-07 true resid norm 3.791096268732e-07 ||r(i)||/||b|| 5.262288151762e-07
+>>>> solve time: 0.00674152 (s)
+143 KSP unpreconditioned resid norm 3.818252672683e-07 true resid norm 3.818482846628e-07 ||r(i)||/||b|| 5.300302502800e-07
+>>>> solve time: 0.0067699 (s)
+144 KSP unpreconditioned resid norm 3.843858785363e-07 true resid norm 3.844137697887e-07 ||r(i)||/||b|| 5.335913104655e-07
+>>>> solve time: 0.00671029 (s)
+145 KSP unpreconditioned resid norm 3.867679600411e-07 true resid norm 3.867916383953e-07 ||r(i)||/||b|| 5.368919467215e-07
+>>>> solve time: 0.00698352 (s)
+146 KSP unpreconditioned resid norm 3.889799366706e-07 true resid norm 3.890108486660e-07 ||r(i)||/||b|| 5.399723548900e-07
+>>>> solve time: 0.00680852 (s)
+147 KSP unpreconditioned resid norm 3.910328461411e-07 true resid norm 3.910628897487e-07 ||r(i)||/||b|| 5.428207213547e-07
+>>>> solve time: 0.0068562 (s)
+148 KSP unpreconditioned resid norm 3.929387541603e-07 true resid norm 3.929670267491e-07 ||r(i)||/||b|| 5.454637873352e-07
+>>>> solve time: 0.00727558 (s)
+149 KSP unpreconditioned resid norm 3.947097589563e-07 true resid norm 3.947418117093e-07 ||r(i)||/||b|| 5.479273042722e-07
+>>>> solve time: 0.00678706 (s)
+150 KSP unpreconditioned resid norm 3.963574238934e-07 true resid norm 3.963910596757e-07 ||r(i)||/||b|| 5.502165676984e-07
+>>>> solve time: 0.00683427 (s)
+151 KSP unpreconditioned resid norm 3.978924886567e-07 true resid norm 3.979312426565e-07 ||r(i)||/||b|| 5.523544418320e-07
+>>>> solve time: 0.00678277 (s)
+152 KSP unpreconditioned resid norm 3.978226111346e-07 true resid norm 3.978612666136e-07 ||r(i)||/||b|| 5.522573105341e-07
+>>>> solve time: 0.00679016 (s)
+153 KSP unpreconditioned resid norm 3.731709934364e-07 true resid norm 3.732096872071e-07 ||r(i)||/||b|| 5.180393152532e-07
+>>>> solve time: 0.00670719 (s)
+154 KSP unpreconditioned resid norm 2.129868089413e-07 true resid norm 2.130585556135e-07 ||r(i)||/||b|| 2.957391301518e-07
+>>>> solve time: 0.0066855 (s)
+155 KSP unpreconditioned resid norm 3.664793692077e-07 true resid norm 3.665498129874e-07 ||r(i)||/||b|| 5.087949767520e-07
+>>>> solve time: 0.00671244 (s)
+156 KSP unpreconditioned resid norm 2.347236855778e-07 true resid norm 2.347666600137e-07 ||r(i)||/||b|| 3.258713907130e-07
+>>>> solve time: 0.0067277 (s)
+157 KSP unpreconditioned resid norm 1.941197776615e-07 true resid norm 1.942096195442e-07 ||r(i)||/||b|| 2.695755811623e-07
+>>>> solve time: 0.00675607 (s)
+158 KSP unpreconditioned resid norm 1.234468259811e-07 true resid norm 1.235585883584e-07 ||r(i)||/||b|| 1.715073555186e-07
+>>>> solve time: 0.00671816 (s)
+159 KSP unpreconditioned resid norm 8.110894719773e-08 true resid norm 8.131545636318e-08 ||r(i)||/||b|| 1.128711412855e-07
+>>>> solve time: 0.00678968 (s)
+160 KSP unpreconditioned resid norm 6.807513875255e-08 true resid norm 6.823424761161e-08 ||r(i)||/||b|| 9.471357288193e-08
+>>>> solve time: 0.0067246 (s)
+161 KSP unpreconditioned resid norm 4.833692482550e-08 true resid norm 4.863120502905e-08 ||r(i)||/||b|| 6.750327501334e-08
+>>>> solve time: 0.00677752 (s)
+162 KSP unpreconditioned resid norm 3.324220202143e-08 true resid norm 3.364452575805e-08 ||r(i)||/||b|| 4.670078961815e-08
+>>>> solve time: 0.00675201 (s)
+163 KSP unpreconditioned resid norm 4.136112127444e-08 true resid norm 4.169927705136e-08 ||r(i)||/||b|| 5.788130820476e-08
+>>>> solve time: 0.00670457 (s)
+164 KSP unpreconditioned resid norm 3.983344097072e-08 true resid norm 4.013594793119e-08 ||r(i)||/||b|| 5.571130572442e-08
+>>>> solve time: 0.00674868 (s)
+165 KSP unpreconditioned resid norm 4.374164200692e-08 true resid norm 4.404511912870e-08 ||r(i)||/||b|| 6.113748955561e-08
+>>>> solve time: 0.00671721 (s)
+166 KSP unpreconditioned resid norm 4.383948425195e-08 true resid norm 4.411025045975e-08 ||r(i)||/||b|| 6.122789607852e-08
+>>>> solve time: 0.00668383 (s)
+167 KSP unpreconditioned resid norm 4.683176425632e-08 true resid norm 4.712898247963e-08 ||r(i)||/||b|| 6.541809242688e-08
+>>>> solve time: 0.00676274 (s)
+168 KSP unpreconditioned resid norm 3.165230977753e-08 true resid norm 3.201244089945e-08 ||r(i)||/||b|| 4.443534970177e-08
+>>>> solve time: 0.00674772 (s)
+169 KSP unpreconditioned resid norm 2.137396721244e-08 true resid norm 2.193584384613e-08 ||r(i)||/||b|| 3.044837772189e-08
+>>>> solve time: 0.00678205 (s)
+170 KSP unpreconditioned resid norm 2.816010871799e-08 true resid norm 2.854400450322e-08 ||r(i)||/||b|| 3.962093443524e-08
+>>>> solve time: 0.00673056 (s)
+171 KSP unpreconditioned resid norm 1.925006075630e-08 true resid norm 1.986942065787e-08 ||r(i)||/||b|| 2.758004795938e-08
+>>>> solve time: 0.00666928 (s)
+172 KSP unpreconditioned resid norm 1.726142417587e-08 true resid norm 1.793067878262e-08 ||r(i)||/||b|| 2.488894816231e-08
+>>>> solve time: 0.00674748 (s)
+173 KSP unpreconditioned resid norm 1.771448851885e-08 true resid norm 1.841542343894e-08 ||r(i)||/||b|| 2.556180526770e-08
+>>>> solve time: 0.00671482 (s)
+174 KSP unpreconditioned resid norm 1.556738350549e-08 true resid norm 1.635023014094e-08 ||r(i)||/||b|| 2.269518267286e-08
+>>>> solve time: 0.0067389 (s)
+175 KSP unpreconditioned resid norm 1.646199189187e-08 true resid norm 1.721046978572e-08 ||r(i)||/||b|| 2.388925124024e-08
+>>>> solve time: 0.00675273 (s)
+176 KSP unpreconditioned resid norm 1.664812124362e-08 true resid norm 1.740427219926e-08 ||r(i)||/||b|| 2.415826159299e-08
+>>>> solve time: 0.00674629 (s)
+177 KSP unpreconditioned resid norm 1.664789417463e-08 true resid norm 1.740161737429e-08 ||r(i)||/||b|| 2.415457652328e-08
+>>>> solve time: 0.00673294 (s)
+178 KSP unpreconditioned resid norm 1.688720443996e-08 true resid norm 1.761664368623e-08 ||r(i)||/||b|| 2.445304702717e-08
+>>>> solve time: 0.00674152 (s)
+179 KSP unpreconditioned resid norm 1.701215141603e-08 true resid norm 1.775162490292e-08 ||r(i)||/||b|| 2.464040973362e-08
+>>>> solve time: 0.00675225 (s)
+180 KSP unpreconditioned resid norm 1.712028860631e-08 true resid norm 1.785862456240e-08 ||r(i)||/||b|| 2.478893221904e-08
+>>>> solve time: 0.00680184 (s)
+181 KSP unpreconditioned resid norm 1.720980709331e-08 true resid norm 1.795778513247e-08 ||r(i)||/||b|| 2.492657353860e-08
+>>>> solve time: 0.00676227 (s)
+182 KSP unpreconditioned resid norm 1.720981262467e-08 true resid norm 1.795903009958e-08 ||r(i)||/||b|| 2.492830163391e-08
+>>>> solve time: 0.00670791 (s)
+183 KSP unpreconditioned resid norm 1.703159936054e-08 true resid norm 1.778604009441e-08 ||r(i)||/||b|| 2.468818025738e-08
+>>>> solve time: 0.00713468 (s)
+184 KSP unpreconditioned resid norm 1.917181283780e-08 true resid norm 1.982199086703e-08 ||r(i)||/||b|| 2.751421232540e-08
+>>>> solve time: 0.00718069 (s)
+185 KSP unpreconditioned resid norm 1.484565322047e-08 true resid norm 1.571541102487e-08 ||r(i)||/||b|| 2.181401245816e-08
+>>>> solve time: 0.00679541 (s)
+186 KSP unpreconditioned resid norm 1.518985058671e-08 true resid norm 1.604487136681e-08 ||r(i)||/||b|| 2.227132483722e-08
+>>>> solve time: 0.00671673 (s)
+187 KSP unpreconditioned resid norm 1.363818564809e-08 true resid norm 1.458059825372e-08 ||r(i)||/||b|| 2.023881853620e-08
+>>>> solve time: 0.00672936 (s)
+188 KSP unpreconditioned resid norm 1.280317112408e-08 true resid norm 1.380487383544e-08 ||r(i)||/||b|| 1.916206259914e-08
+>>>> solve time: 0.00664926 (s)
+189 KSP unpreconditioned resid norm 1.230337503435e-08 true resid norm 1.333572561482e-08 ||r(i)||/||b|| 1.851085436073e-08
+>>>> solve time: 0.00671268 (s)
+190 KSP unpreconditioned resid norm 1.003393482129e-08 true resid norm 1.130299252467e-08 ||r(i)||/||b|| 1.568928864524e-08
+>>>> solve time: 0.00669789 (s)
+191 KSP unpreconditioned resid norm 1.004732744845e-08 true resid norm 1.131214138764e-08 ||r(i)||/||b|| 1.570198786198e-08
+>>>> solve time: 0.00668812 (s)
+192 KSP unpreconditioned resid norm 3.445062011922e-09 true resid norm 6.191364010948e-09 ||r(i)||/||b|| 8.594015864692e-09
+>>>> ksp solve time: 1.79594 (s)
+            || b ||_2 = 7.2042734251691598e-01
+|| r ||_2 / || b ||_2 = 8.5940158646921405e-09
+WARNING! There are options you set that were not used!
+WARNING! could be spelling mistake, etc!
+There is one unused database option. It is:
+Option left: name:-ksp_gmres_restart value: 50 source: command line
