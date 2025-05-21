@@ -368,9 +368,9 @@ int MLASolverSetupPhase(MySolver *mysolver,
         PetscFunctionReturn(PETSC_SUCCESS);
     }
 
-#if 1
+#if 0
     MetisMLASolver(mla_ctx, 0);
-#endif // test metis aggregtion implementation
+#endif // test metis aggregtion implementation, added
 
 #if 1
     mla_ctx->mla = (MLAGraph *)malloc(num_level * sizeof(MLAGraph));
@@ -411,24 +411,24 @@ int MLASolverSetupPhase(MySolver *mysolver,
     PrintMeshGraph((mla_ctx->mla + cnt_level)->coarse);
 #endif
 
-#if 0
+#if 1
     PetscCall(MatDuplicate(mysolver->solver_a,
                            MAT_COPY_VALUES,
                            &((mla_ctx->mla + cnt_level)->operator_fine)));
 #endif // test metis aggregtion implementation
 
-#if 1
+#if 0
     PetscCall(MatDuplicate(mla_ctx->metis_mla[cnt_level].operator_fine,
                            MAT_COPY_VALUES,
                            &((mla_ctx->mla + cnt_level)->operator_fine)));
-#endif // test metis aggregation implementation
+#endif // test metis aggregation implementation, added
 
 #if 0
     printf("\n\n==== level %d, neighbouring fine operator:\n", cnt_level);
     PetscCall(MatView((mla_ctx->mla + cnt_level)->operator_fine, PETSC_VIEWER_STDOUT_WORLD));
 #endif // print neighbouring fine operator
 
-#if 0
+#if 1
     int prolongation_block_row = (mla_ctx->mla + cnt_level)->fine->size;   // vertex in fine mesh
     int prolongation_block_col = (mla_ctx->mla + cnt_level)->coarse->size; // vertex in coarse mesh
     int m_prolongation = prolongation_block_row * 6;                       // row of prolongation operator
@@ -527,7 +527,7 @@ int MLASolverSetupPhase(MySolver *mysolver,
                 p_loc[2][4] = -p_loc[1][5];                       // (3, 5) -x
 #endif
 #if 1
-                p_loc[0][4] = -(node_coarse_z - node_aggregation_z); // (1, 5) z, phi modified
+                p_loc[0][3] = -(node_coarse_z - node_aggregation_z); // (1, 5) z, phi modified
                 p_loc[0][5] = -(node_aggregation_y - node_coarse_y); // (1, 6) -y, phi modified
                 p_loc[1][4] = p_loc[0][4];                           // (2, 5) z, phi modified
                 p_loc[1][5] = -(node_coarse_x - node_aggregation_x); // (2, 6) x, phi modified
@@ -690,12 +690,12 @@ int MLASolverSetupPhase(MySolver *mysolver,
 
 #endif // test metis aggregation implementation
 
-#if 1
+#if 0
     PetscCall(MatDuplicate(mla_ctx->metis_mla[cnt_level].prolongation,
                            MAT_COPY_VALUES,
                            &((mla_ctx->mla + cnt_level)->prolongation)));
     puts("======== adjacency list setup, duplicate prolongation >>>>>>>>");
-#endif // test metis aggregation implementation
+#endif // test metis aggregation implementation, added
 
     PetscCall(MatPtAP((mla_ctx->mla + cnt_level)->operator_fine,
                       (mla_ctx->mla + cnt_level)->prolongation,
@@ -719,15 +719,15 @@ int MLASolverSetupPhase(MySolver *mysolver,
     PetscCall(PCCreate(PETSC_COMM_WORLD, &((mla_ctx->mla + cnt_level)->pc_coarse)));
 
     ++cnt_level;
-#if 0
+#if 1
     while (cnt_level < num_level &&
            (mla_ctx->mla + cnt_level - 1)->coarse->size > 50)
 #endif // test metis aggregation implementation
-#if 1
+#if 0
     printf("==== before setup loop, cnt_level = %d, num_level = %d>>>>!!!!\n", cnt_level, num_level);
     while (cnt_level < num_level &&
            (mla_ctx->metis_mla[cnt_level - 1].coarse->nn > 100))
-#endif // test metis aggregation implementation
+#endif // test metis aggregation implementation, added
     {
         printf("in initial loop, cnt_level = %d\n", cnt_level);
         // next level
@@ -762,24 +762,24 @@ int MLASolverSetupPhase(MySolver *mysolver,
     PrintMeshGraph((mla_ctx->mla + cnt_level)->coarse);
 #endif
 
-#if 0
+#if 1
         PetscCall(MatDuplicate((mla_ctx->mla + cnt_level - 1)->operator_coarse,
                                MAT_COPY_VALUES,
                                &((mla_ctx->mla + cnt_level)->operator_fine)));
 #endif // test metis aggregation implementation
 
-#if 1
+#if 0
         PetscCall(MatDuplicate(mla_ctx->metis_mla[cnt_level].operator_fine,
                                MAT_COPY_VALUES,
                                &((mla_ctx->mla + cnt_level)->operator_fine)));
-#endif
+#endif    // test metis aggregation implementation, added
 
 #if 0
     printf("\n\n==== level %d, neighbouring fine operator:\n", cnt_level);
     PetscCall(MatView((mla_ctx->mla + cnt_level)->operator_fine, PETSC_VIEWER_STDOUT_WORLD));
 #endif // print neighbouring fine operator
 
-#if 0
+#if 1
         prolongation_block_row = (mla_ctx->mla + cnt_level)->fine->size;   // vertex in fine mesh
         prolongation_block_col = (mla_ctx->mla + cnt_level)->coarse->size; // vertex in coarse mesh
 
@@ -1029,11 +1029,11 @@ int MLASolverSetupPhase(MySolver *mysolver,
 
 #endif // test metis aggregation implementation
 
-#if 1
+#if 0
         PetscCall(MatDuplicate(mla_ctx->metis_mla[cnt_level].prolongation,
                                MAT_COPY_VALUES,
                                &((mla_ctx->mla + cnt_level)->prolongation)));
-#endif // test metis aggregation implementation
+#endif // test metis aggregation implementation, added
 
         PetscCall(MatPtAP((mla_ctx->mla + cnt_level)->operator_fine,
                           (mla_ctx->mla + cnt_level)->prolongation,
@@ -1057,7 +1057,7 @@ int MLASolverSetupPhase(MySolver *mysolver,
         printf("in while loop, cnt_level = %d\n", cnt_level);
 
 // memory free
-#if 0
+#if 1
         if (order_rbm == 1)
         {
             for (int index = 0; index < 6; ++index)
@@ -1080,7 +1080,7 @@ int MLASolverSetupPhase(MySolver *mysolver,
     mla_ctx->num_level = (cnt_level < num_level) ? cnt_level : num_level;
 
 // free memory
-#if 0
+#if 1
     for (int index = 0; index < 6; ++index)
     {
         free(p_loc[index]);
@@ -1137,7 +1137,7 @@ int MLASolver(const MeshGraph *graph,
 
         while (cnt < config->mla_config.mla_max_it && rela_resid > config->mla_config.mla_rtol)
         {
-#if 1
+#if 0
             PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", cnt, rela_resid));
 #endif // print mla iteration information
             /*
@@ -1153,7 +1153,7 @@ int MLASolver(const MeshGraph *graph,
             MLASolverRelativeResidual(mysolver, &rela_resid);
             ++cnt;
         }
-#if 1
+#if 0
         PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", cnt, rela_resid));
 #endif // print mla iteration information
     }

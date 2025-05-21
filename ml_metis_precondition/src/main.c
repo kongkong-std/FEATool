@@ -141,7 +141,7 @@ int main(int argc, char **argv)
     /*
      * step 3, calling MetisMLASolver()
      */
-    PetscCall(MetisMLASolver(&mla_ctx, 2));
+    // PetscCall(MetisMLASolver(&mla_ctx, 2));
 
     /*
      * step 2, mesh process

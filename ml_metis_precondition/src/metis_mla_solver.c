@@ -1177,57 +1177,117 @@ int MetisMLASolverSetupPhase(MLAContext *mla_ctx)
                                       prolongation_m, prolongation_n));
                 PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].prolongation));
 
-                for (int index_fine_node = 0; index_fine_node < mla_ctx->metis_mla[index_cnt_level].fine->nn; ++index_fine_node)
+                if (index_cnt_level == 0)
                 {
-                    double p_loc[6][9] = {0};
-                    for (int index = 0; index < 6; ++index)
+                    for (int index_fine_node = 0; index_fine_node < mla_ctx->metis_mla[index_cnt_level].fine->nn; ++index_fine_node)
                     {
-                        p_loc[index][index] = 1.;
-                    }
-
-                    idx_t index_coarse_node = mla_ctx->metis_mla[index_cnt_level].fine->npart_in[index_fine_node];
-                    double fine_node_x = mla_ctx->metis_mla[index_cnt_level].fine->coordinates[3 * index_fine_node],
-                           fine_node_y = mla_ctx->metis_mla[index_cnt_level].fine->coordinates[3 * index_fine_node + 1],
-                           fine_node_z = mla_ctx->metis_mla[index_cnt_level].fine->coordinates[3 * index_fine_node + 2];
-
-                    double coarse_node_x = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node],
-                           coarse_node_y = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 1],
-                           coarse_node_z = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 2];
-
-                    p_loc[0][3] = fine_node_z - coarse_node_z; // z
-                    p_loc[0][5] = coarse_node_y - fine_node_y; // -y
-                    p_loc[0][6] = (fine_node_z - coarse_node_z) *
-                                  (fine_node_x - coarse_node_x); // zx
-                    p_loc[0][8] = (fine_node_z - coarse_node_z) *
-                                  (fine_node_y - coarse_node_y) / 2.; // zy/2
-                    p_loc[1][4] = fine_node_z - coarse_node_z;        // z
-                    p_loc[1][5] = fine_node_x - coarse_node_x;        // x
-                    p_loc[1][7] = (fine_node_z - coarse_node_z) *
-                                  (fine_node_y - coarse_node_y); // zy
-                    p_loc[1][8] = (fine_node_z - coarse_node_z) *
-                                  (fine_node_x - coarse_node_x) / 2.; // zx/2
-                    p_loc[2][3] = coarse_node_x - fine_node_x;        // -x
-                    p_loc[2][4] = coarse_node_y - fine_node_y;        // -y
-                    p_loc[2][6] = -(fine_node_x - coarse_node_x) *
-                                  (fine_node_x - coarse_node_x) / 2.; // -x^2/2
-                    p_loc[2][7] = -(fine_node_y - coarse_node_y) *
-                                  (fine_node_y - coarse_node_y) / 2.; // -y^2/2
-                    p_loc[2][8] = -(fine_node_x - coarse_node_x) *
-                                  (fine_node_y - coarse_node_y) / 2.; // -xy/2
-                    p_loc[3][6] = fine_node_x - coarse_node_x;        // x
-                    p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
-                    p_loc[4][7] = fine_node_y - coarse_node_y;        // y
-                    p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
-
-                    for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
-                    {
-                        for (int index_tmp_j = 0; index_tmp_j < 9; ++index_tmp_j)
+                        double p_loc[6][9] = {0};
+                        for (int index = 0; index < 6; ++index)
                         {
-                            PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].prolongation,
-                                                  6 * index_fine_node + index_tmp_i,
-                                                  9 * index_coarse_node + index_tmp_j,
-                                                  p_loc[index_tmp_i][index_tmp_j],
-                                                  INSERT_VALUES));
+                            p_loc[index][index] = 1.;
+                        }
+
+                        idx_t index_coarse_node = mla_ctx->metis_mla[index_cnt_level].fine->npart_in[index_fine_node];
+                        double fine_node_x = mla_ctx->metis_mla[index_cnt_level].fine->coordinates[3 * index_fine_node],
+                               fine_node_y = mla_ctx->metis_mla[index_cnt_level].fine->coordinates[3 * index_fine_node + 1],
+                               fine_node_z = mla_ctx->metis_mla[index_cnt_level].fine->coordinates[3 * index_fine_node + 2];
+
+                        double coarse_node_x = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node],
+                               coarse_node_y = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 1],
+                               coarse_node_z = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 2];
+
+                        p_loc[0][3] = fine_node_z - coarse_node_z; // z
+                        p_loc[0][5] = coarse_node_y - fine_node_y; // -y
+                        p_loc[0][6] = (fine_node_z - coarse_node_z) *
+                                      (fine_node_x - coarse_node_x); // zx
+                        p_loc[0][8] = (fine_node_z - coarse_node_z) *
+                                      (fine_node_y - coarse_node_y) / 2.; // zy/2
+                        p_loc[1][4] = fine_node_z - coarse_node_z;        // z
+                        p_loc[1][5] = fine_node_x - coarse_node_x;        // x
+                        p_loc[1][7] = (fine_node_z - coarse_node_z) *
+                                      (fine_node_y - coarse_node_y); // zy
+                        p_loc[1][8] = (fine_node_z - coarse_node_z) *
+                                      (fine_node_x - coarse_node_x) / 2.; // zx/2
+                        p_loc[2][3] = coarse_node_x - fine_node_x;        // -x
+                        p_loc[2][4] = coarse_node_y - fine_node_y;        // -y
+                        p_loc[2][6] = -(fine_node_x - coarse_node_x) *
+                                      (fine_node_x - coarse_node_x) / 2.; // -x^2/2
+                        p_loc[2][7] = -(fine_node_y - coarse_node_y) *
+                                      (fine_node_y - coarse_node_y) / 2.; // -y^2/2
+                        p_loc[2][8] = -(fine_node_x - coarse_node_x) *
+                                      (fine_node_y - coarse_node_y) / 2.; // -xy/2
+                        p_loc[3][6] = fine_node_x - coarse_node_x;        // x
+                        p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
+                        p_loc[4][7] = fine_node_y - coarse_node_y;        // y
+                        p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
+
+                        for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
+                        {
+                            for (int index_tmp_j = 0; index_tmp_j < 9; ++index_tmp_j)
+                            {
+                                PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                                                      6 * index_fine_node + index_tmp_i,
+                                                      9 * index_coarse_node + index_tmp_j,
+                                                      p_loc[index_tmp_i][index_tmp_j],
+                                                      INSERT_VALUES));
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    for (int index_fine_node = 0; index_fine_node < mla_ctx->metis_mla[index_cnt_level].fine->nn; ++index_fine_node)
+                    {
+                        double p_loc[9][9] = {0};
+                        for (int index = 0; index < 9; ++index)
+                        {
+                            p_loc[index][index] = 1.;
+                        }
+
+                        idx_t index_coarse_node = mla_ctx->metis_mla[index_cnt_level].fine->npart_in[index_fine_node];
+                        double fine_node_x = mla_ctx->metis_mla[index_cnt_level].fine->coordinates[3 * index_fine_node],
+                               fine_node_y = mla_ctx->metis_mla[index_cnt_level].fine->coordinates[3 * index_fine_node + 1],
+                               fine_node_z = mla_ctx->metis_mla[index_cnt_level].fine->coordinates[3 * index_fine_node + 2];
+
+                        double coarse_node_x = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node],
+                               coarse_node_y = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 1],
+                               coarse_node_z = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 2];
+
+                        p_loc[0][3] = fine_node_z - coarse_node_z; // z
+                        p_loc[0][5] = coarse_node_y - fine_node_y; // -y
+                        p_loc[0][6] = (fine_node_z - coarse_node_z) *
+                                      (fine_node_x - coarse_node_x); // zx
+                        p_loc[0][8] = (fine_node_z - coarse_node_z) *
+                                      (fine_node_y - coarse_node_y) / 2.; // zy/2
+                        p_loc[1][4] = fine_node_z - coarse_node_z;        // z
+                        p_loc[1][5] = fine_node_x - coarse_node_x;        // x
+                        p_loc[1][7] = (fine_node_z - coarse_node_z) *
+                                      (fine_node_y - coarse_node_y); // zy
+                        p_loc[1][8] = (fine_node_z - coarse_node_z) *
+                                      (fine_node_x - coarse_node_x) / 2.; // zx/2
+                        p_loc[2][3] = coarse_node_x - fine_node_x;        // -x
+                        p_loc[2][4] = coarse_node_y - fine_node_y;        // -y
+                        p_loc[2][6] = -(fine_node_x - coarse_node_x) *
+                                      (fine_node_x - coarse_node_x) / 2.; // -x^2/2
+                        p_loc[2][7] = -(fine_node_y - coarse_node_y) *
+                                      (fine_node_y - coarse_node_y) / 2.; // -y^2/2
+                        p_loc[2][8] = -(fine_node_x - coarse_node_x) *
+                                      (fine_node_y - coarse_node_y) / 2.; // -xy/2
+                        p_loc[3][6] = fine_node_x - coarse_node_x;        // x
+                        p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
+                        p_loc[4][7] = fine_node_y - coarse_node_y;        // y
+                        p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
+
+                        for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
+                        {
+                            for (int index_tmp_j = 0; index_tmp_j < 9; ++index_tmp_j)
+                            {
+                                PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                                                      9 * index_fine_node + index_tmp_i,
+                                                      9 * index_coarse_node + index_tmp_j,
+                                                      p_loc[index_tmp_i][index_tmp_j],
+                                                      INSERT_VALUES));
+                            }
                         }
                     }
                 }
@@ -1303,7 +1363,7 @@ int MetisMLASolver(MLAContext *mla_ctx,
         int iter_cnt = 0;
         double rela_resid = 0.;
         MLASolverRelativeResidual(&(mla_ctx->mysolver), &rela_resid);
-        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
+        // PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
 
         while (iter_cnt < mla_ctx->config.mla_config.mla_max_it &&
                rela_resid > mla_ctx->config.mla_config.mla_rtol)
@@ -1314,7 +1374,7 @@ int MetisMLASolver(MLAContext *mla_ctx,
                                      &(mla_ctx->mysolver));
             MLASolverRelativeResidual(&(mla_ctx->mysolver), &rela_resid);
             ++iter_cnt;
-            PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
+            // PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
         }
     }
     return 0;

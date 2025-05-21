@@ -51,6 +51,10 @@ int SolverPetscInitialize(const char *path_mat, const char *path_rhs, MySolver *
     PetscCall(VecGetSize(mysolver->solver_b, &n_vec));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "vector Row = %" PetscInt_FMT "\n", n_vec));
 
+    PetscReal b_norm_2 = 0.;
+    PetscCall(VecNorm(mysolver->solver_b, NORM_2, &b_norm_2));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "initial     || b ||_2 = %021.16le\n", b_norm_2));
+
 #if 1
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mysolver->ksp)));
     PetscCall(PCCreate(PETSC_COMM_WORLD, &(mysolver->pc)));
