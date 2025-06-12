@@ -1,4 +1,5 @@
-#include "../include/main.h"
+
+int #include "../include/main.h"
 
 int TestMetisFunctionGmsh(DataGmsh data)
 {

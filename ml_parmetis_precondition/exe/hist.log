@@ -1,0 +1,47 @@
+Config file: ../input/config/mla_v_cycle-refine0.json
+order_rbm = 1
+angle_type = 1
+
+==== mla_ctx information ====
+
+in rank 0/4
+setup = 0
+path_config = ../input/config/mla_v_cycle-refine0.json
+order_rbm = 1
+angle_type = 1
+
+--------
+
+
+==== mla_ctx information ====
+
+in rank 1/4
+setup = 0
+path_config = ../input/config/mla_v_cycle-refine0.json
+order_rbm = 1
+angle_type = 1
+
+--------
+
+
+==== mla_ctx information ====
+
+in rank 2/4
+setup = 0
+path_config = ../input/config/mla_v_cycle-refine0.json
+order_rbm = 1
+angle_type = 1
+
+--------
+
+
+==== mla_ctx information ====
+
+in rank 3/4
+setup = 0
+path_config = ../input/config/mla_v_cycle-refine0.json
+order_rbm = 1
+angle_type = 1
+
+--------
+
