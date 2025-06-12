@@ -12,6 +12,21 @@ angle_type = 1
 
 --------
 
+file_mat = ../input/linsys/petsc-bin-mat-refine0
+file_rhs = ../input/linsys/petsc-bin-rhs-refine0
+file_mesh = ../input/mesh/linear-elasticity-2d-22.msh
+pre_smooth_v = 2
+post_smooth_v = 2
+mla_max_it = 1
+mla_rtol = 000000000000001.0e-08
+mla_level = 10
+mla_phase = 2
+coarse_restart = 50
+label_bound = 1
+label_omega = 2
+
+--------
+
 
 ==== mla_ctx information ====
 
@@ -20,6 +35,21 @@ setup = 0
 path_config = ../input/config/mla_v_cycle-refine0.json
 order_rbm = 1
 angle_type = 1
+
+--------
+
+file_mat = ../input/linsys/petsc-bin-mat-refine0
+file_rhs = ../input/linsys/petsc-bin-rhs-refine0
+file_mesh = ../input/mesh/linear-elasticity-2d-22.msh
+pre_smooth_v = 2
+post_smooth_v = 2
+mla_max_it = 1
+mla_rtol = 000000000000001.0e-08
+mla_level = 10
+mla_phase = 2
+coarse_restart = 50
+label_bound = 1
+label_omega = 2
 
 --------
 
@@ -34,6 +64,21 @@ angle_type = 1
 
 --------
 
+file_mat = ../input/linsys/petsc-bin-mat-refine0
+file_rhs = ../input/linsys/petsc-bin-rhs-refine0
+file_mesh = ../input/mesh/linear-elasticity-2d-22.msh
+pre_smooth_v = 2
+post_smooth_v = 2
+mla_max_it = 1
+mla_rtol = 000000000000001.0e-08
+mla_level = 10
+mla_phase = 2
+coarse_restart = 50
+label_bound = 1
+label_omega = 2
+
+--------
+
 
 ==== mla_ctx information ====
 
@@ -42,6 +87,21 @@ setup = 0
 path_config = ../input/config/mla_v_cycle-refine0.json
 order_rbm = 1
 angle_type = 1
+
+--------
+
+file_mat = ../input/linsys/petsc-bin-mat-refine0
+file_rhs = ../input/linsys/petsc-bin-rhs-refine0
+file_mesh = ../input/mesh/linear-elasticity-2d-22.msh
+pre_smooth_v = 2
+post_smooth_v = 2
+mla_max_it = 1
+mla_rtol = 000000000000001.0e-08
+mla_level = 10
+mla_phase = 2
+coarse_restart = 50
+label_bound = 1
+label_omega = 2
 
 --------
 

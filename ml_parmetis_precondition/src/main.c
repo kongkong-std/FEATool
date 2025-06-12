@@ -74,6 +74,21 @@ int main(int argc, char **argv)
             printf("angle_type = %d\n", mla_ctx.angle_type);
 
             puts("\n--------\n");
+
+            printf("file_mat = %s\n", mla_ctx.config.file_config.file_mat);
+            printf("file_rhs = %s\n", mla_ctx.config.file_config.file_rhs);
+            printf("file_mesh = %s\n", mla_ctx.config.file_config.file_mesh);
+            printf("pre_smooth_v = %d\n", mla_ctx.config.mla_config.pre_smooth_v);
+            printf("post_smooth_v = %d\n", mla_ctx.config.mla_config.post_smooth_v);
+            printf("mla_max_it = %d\n", mla_ctx.config.mla_config.mla_max_it);
+            printf("mla_rtol = %021.1le\n", mla_ctx.config.mla_config.mla_rtol);
+            printf("mla_level = %d\n", mla_ctx.config.mla_config.mla_level);
+            printf("mla_phase = %d\n", mla_ctx.config.mla_config.mla_phase);
+            printf("coarse_restart = %d\n", mla_ctx.config.mla_config.coarse_restart);
+            printf("label_bound = %d\n", mla_ctx.config.mesh_label_config.label_bound);
+            printf("label_omega = %d\n", mla_ctx.config.mesh_label_config.label_omega);
+
+            puts("\n--------\n");
         }
     }
 #endif // mla_ctx data information

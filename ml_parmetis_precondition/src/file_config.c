@@ -12,6 +12,9 @@ int ConfigParse(MPI_Comm comm /*communicator*/,
     MPI_Comm_rank(comm, &my_rank);
     MPI_Comm_size(comm, &nprocs);
 
+    char *json_data = NULL;
+    cJSON *root = NULL;
+
     if (my_rank == 0)
     {
         // root rank, file process
@@ -22,14 +25,14 @@ int ConfigParse(MPI_Comm comm /*communicator*/,
         long file_size = ftell(fp);
         fseek(fp, 0, SEEK_SET);
 
-        char *json_data = (char *)malloc(file_size + 1);
+        json_data = (char *)malloc(file_size + 1);
         fread(json_data, 1, file_size, fp);
         json_data[file_size] = '\0';
 
         fclose(fp);
 
         // json data
-        cJSON *root = cJSON_Parse(json_data);
+        root = cJSON_Parse(json_data);
         assert(root);
 
         // json file
@@ -92,6 +95,31 @@ int ConfigParse(MPI_Comm comm /*communicator*/,
             }
         }
     }
+
+    // broadcast data
+    /*
+     * config_file
+     */
+    (void)MPI_Bcast(config->file_config.file_mat, PETSC_MAX_PATH_LEN, MPI_CHAR, 0, comm);
+    (void)MPI_Bcast(config->file_config.file_rhs, PETSC_MAX_PATH_LEN, MPI_CHAR, 0, comm);
+    (void)MPI_Bcast(config->file_config.file_mesh, PETSC_MAX_PATH_LEN, MPI_CHAR, 0, comm);
+
+    /*
+     * config_mla
+     */
+    (void)MPI_Bcast(&config->mla_config.pre_smooth_v, 1, MPI_INT, 0, comm);
+    (void)MPI_Bcast(&config->mla_config.post_smooth_v, 1, MPI_INT, 0, comm);
+    (void)MPI_Bcast(&config->mla_config.mla_max_it, 1, MPI_INT, 0, comm);
+    (void)MPI_Bcast(&config->mla_config.mla_rtol, 1, MPI_DOUBLE, 0, comm);
+    (void)MPI_Bcast(&config->mla_config.mla_level, 1, MPI_INT, 0, comm);
+    (void)MPI_Bcast(&config->mla_config.mla_phase, 1, MPI_INT, 0, comm);
+    (void)MPI_Bcast(&config->mla_config.coarse_restart, 1, MPI_INT, 0, comm);
+
+    /*
+     * config_mesh_label
+     */
+    (void)MPI_Bcast(&config->mesh_label_config.label_bound, 1, MPI_INT, 0, comm);
+    (void)MPI_Bcast(&config->mesh_label_config.label_omega, 1, MPI_INT, 0, comm);
 
     // free memory
     if (my_rank == 0)
