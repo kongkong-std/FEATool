@@ -17,22 +17,38 @@
 #define BUF_MAX_SIZE PETSC_MAX_PATH_LEN
 
 // data struct
-/*
- * gmsh struct
- */
 typedef struct
 {
     /* data */
-    int nn, ne;               // number of nodes, elements
-    int ne_bd, ne_in;         // number of elements of boundary, inner, ne = ne_bd + ne_in
-    int nne_bd, nne_in;       // number of nodes in each element of boudary, inner
-    idx_t nparts;             // number of partitions
-    double *coordinates;      // coordinates of nodes [x1, y1, z1, x2, y2, z2, ...]
-    idx_t *eptr_bd, *eind_bd; // csr mesh connectivity of boundary element
-    idx_t *eptr_in, *eind_in; // csr mesh connectivity of inner element
-    idx_t *npart_in;          // nodes partition of inner element
-    idx_t *epart_in;          // elements partition of inner element
-} DataGmsh;
+    int ele_type;
+    int num_ele_node; // number of nodes in current element
+    int *ele_node;    // nodes list
+} DataMeshEle;
+
+typedef struct
+{
+    /* data */
+    int nn, ne;                      // number of elements, nodes
+    int dim;                         // dimension of coordinates, (1, 2 or 3)
+    double *coordinates;             // coordinates of nodes
+    int ne_solid, ne_shell, ne_beam; // number of solid, shell, beam element
+    DataMeshEle *ele_solid;          // solid element data
+    DataMeshEle *ele_shell;          // shell element data
+    DataMeshEle *ele_beam;           // beam element data
+} DataMesh;
+
+typedef struct
+{
+    /* data */
+    int nn;              // number of nodes
+    int dim;             // dimensions
+    double *coordinates; // coordinates of nodes
+    idx_t *vtxdist;      // parmetis vtxdist parameter, global node indicies
+    idx_t *xadj;         // csr row pointer
+    idx_t *adjncy;       // adjacency nodes list
+    idx_t nparts;        // number of super nodes (partitions)
+    idx_t *part;         // partition value
+} AdjDataMesh;
 
 /*
  * mesh data block flag
@@ -45,6 +61,8 @@ typedef enum
     NODES,          // 3
     ELEMENTS        // 4
 } Flag_Data_Block;
+
+typedef Flag_Data_Block FlagDataBlockGmsh;
 
 /*
  * json data struct
@@ -98,8 +116,8 @@ typedef struct my_solver
 typedef struct metis_mla_graph
 {
     /* data */
-    DataGmsh *fine;      // fine mesh
-    DataGmsh *coarse;    // coarse mesh
+    AdjDataMesh *fine;   // fine mesh
+    AdjDataMesh *coarse; // coarse mesh
     Mat prolongation;    // prolongation operator
     Mat operator_coarse; // coarse operator
     Mat operator_fine;   // fine operator
@@ -124,10 +142,41 @@ typedef struct mla_context
     int angle_type;           // 0: theta (rotationan angle with axis), 1: phi (normal rotational angle with axis)
     MySolver mysolver;        // mysolver data
     MetisMLAGraph *metis_mla; // metis mla data
-    DataGmsh *data_gmsh;      // gmsh file data
+    AdjDataMesh *data_mesh;   // gmsh file data
 } MLAContext;
 
 // function prototype
+/*
+ * csr graph data generator
+ *     mesh_data (I) mesh data
+ *     graph_data (O) csr type graph data
+ */
+int GlobalGraphCSRAdjGenerator(const DataMesh *mesh_data /*mesh data*/,
+                               AdjDataMesh **graph_data /*csr graph data*/);
+
+/*
+ * mesh data file
+ *     1. gmsh file
+ *     2. comsol mesh file
+ */
+int FileProcessMesh(const char *path /*path to mesh file*/, DataMesh *mesh_data /*mesh data*/);
+
+/*
+ * computing residual
+ *     mysolver (I) linear solver data
+ */
+int SolverPetscResidualCheck(MySolver *mysolver /*solver data*/);
+
+/*
+ * assembling petsc linear system
+ *     path_mat (I) path to petsc binary matrix file
+ *     path_rhs (I) path to petsc binary rhs file
+ *     mysolver (I) linear solver data
+ */
+int SolverPetscInitialize(const char *path_mat /*path to matrix file*/,
+                          const char *path_rhs /*path to rhs file*/,
+                          MySolver *mysolver /*solver data*/);
+
 /*
  * json config parse
  *     path (I) path to json file

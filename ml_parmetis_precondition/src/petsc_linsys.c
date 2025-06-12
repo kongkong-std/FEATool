@@ -41,7 +41,8 @@ int SolverPetscInitialize(const char *path_mat, const char *path_rhs, MySolver *
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "==== basic information of linear system ====\n"));
     PetscInt m_mat = 0, n_mat = 0; // nnz_mat = 0;
     PetscCall(MatGetSize(mysolver->solver_a, &m_mat, &n_mat));
-    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "matrix Row = %" PetscInt_FMT ", matrix Column = %" PetscInt_FMT "\n", m_mat, n_mat));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "matrix Row = %" PetscInt_FMT 
+    ", matrix Column = %" PetscInt_FMT "\n", m_mat, n_mat));
     MatInfo info_mat;
     PetscCall(MatGetInfo(mysolver->solver_a, MAT_GLOBAL_SUM, &info_mat));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "matrix nz_allocated = %ld, matrix nz_used = %ld, matrix nz_unneeded = %ld\n",

@@ -60,7 +60,7 @@ int main(int argc, char **argv)
     {
         exit(EXIT_FAILURE);
     }
-#if 1
+#if 0
     for (int index_p = 0; index_p < nprocs; ++index_p)
     {
         MPI_Barrier(comm);
@@ -93,6 +93,98 @@ int main(int argc, char **argv)
     }
 #endif // mla_ctx data information
 
+    /*
+     * step 1, linear system assembling
+     */
+    SolverPetscInitialize(mla_ctx.config.file_config.file_mat,
+                          mla_ctx.config.file_config.file_rhs,
+                          &mla_ctx.mysolver);
+
+    SolverPetscResidualCheck(&mla_ctx.mysolver);
+
+    /*
+     * step 2, mesh file process
+     */
+    DataMesh mesh_data;
+
+    if (my_rank == 0)
+    {
+        FileProcessMesh(mla_ctx.config.file_config.file_mesh, &mesh_data);
+#if 0
+        puts("\n>>>> information of mesh >>>>\n");
+        printf("nn of mesh: %d\n", mesh_data.nn);
+        for (int index = 0; index < mesh_data.nn; ++index)
+        {
+            printf("node %d:\t", index);
+            for (int index_i = 0; index_i < mesh_data.dim; ++index_i)
+            {
+                printf("%021.16le\t", mesh_data.coordinates[mesh_data.dim * index + index_i]);
+            }
+            putchar('\n');
+        }
+
+        printf("\nne of shell: %d\n", mesh_data.ne_shell);
+        for (int index = 0; index < mesh_data.ne_shell; ++index)
+        {
+            printf("element %d:\t", index);
+            for (int index_i = 0; index_i < mesh_data.ele_shell[index].num_ele_node; ++index_i)
+            {
+                printf("%d\t", mesh_data.ele_shell[index].ele_node[index_i]);
+            }
+            putchar('\n');
+        }
+
+        puts("\n>>>>>>>>\n\n");
+#endif // mesh data
+
+        // csr format graph
+        GlobalGraphCSRAdjGenerator(&mesh_data, &mla_ctx.data_mesh);
+#if 1
+        puts("\n>>>> information of graph >>>>\n");
+        for (int index = 0; index < mla_ctx.data_mesh->nn; ++index)
+        {
+            printf("node %d:\t", index);
+            for (int index_i = 0; index_i < mla_ctx.data_mesh->dim; ++index_i)
+            {
+                printf("%021.16le\t",
+                       mla_ctx.data_mesh->coordinates[mla_ctx.data_mesh->dim * index + index_i]);
+            }
+            putchar('\n');
+        }
+
+        puts("\n\ngraph_data xadj value:");
+        for (int index = 0; index < mla_ctx.data_mesh->nn + 1; ++index)
+        {
+            printf("%" PRIDX "\t", mla_ctx.data_mesh->xadj[index]);
+        }
+        putchar('\n');
+
+        puts("\n\ngraph_data adjncy value:");
+        for (int index = 0; index < mla_ctx.data_mesh->xadj[mla_ctx.data_mesh->nn]; ++index)
+        {
+            printf("%" PRIDX "\t", mla_ctx.data_mesh->adjncy[index]);
+        }
+        putchar('\n');
+
+        puts("\n>>>>>>>>\n\n");
+#endif // graph csr data
+    }
+
+    // free memory
+    if (my_rank == 0)
+    {
+        // graph data
+        free(mla_ctx.data_mesh);
+
+        // mesh data
+        free(mesh_data.coordinates);
+        for (int index = 0; index < mesh_data.ne_shell; ++index)
+        {
+            free(mesh_data.ele_shell[index].ele_node);
+        }
+        free(mesh_data.ele_shell);
+    }
+
     PetscCall(PetscFinalize());
     MPI_Finalize();
     return 0;
@@ -103,37 +195,6 @@ int DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src);
 
 int main(int argc, char **argv)
 {
-    mla_ctx.metis_mla = (MetisMLAGraph *)malloc(mla_ctx.config.mla_config.mla_level *
-                                                sizeof(MetisMLAGraph));
-    assert(mla_ctx.metis_mla);
-#if 0
-    printf("File Config:\n");
-    printf("file_mat: %s\n", config.file_config.file_mat);
-    printf("file_rhs: %s\n", config.file_config.file_rhs);
-    printf("file_mesh: %s\n", config.file_config.file_mesh);
-
-    printf("MLA Config:\n");
-    printf("pre_smooth_v: %d\n", config.mla_config.pre_smooth_v);
-    printf("post_smooth_v: %d\n", config.mla_config.post_smooth_v);
-    printf("mla_max_it: %d\n", config.mla_config.mla_max_it);
-    printf("mla_rtol: %021.16le\n", config.mla_config.mla_rtol);
-    printf("mla_level: %d\n", config.mla_config.mla_level);
-    printf("mla_phase: %d\n", config.mla_config.mla_phase);
-#endif // print config json
-
-    /*
-     * step 1, linear system assembling
-     */
-    MySolver mysolver;
-    SolverPetscInitialize(mla_ctx.config.file_config.file_mat,
-                          mla_ctx.config.file_config.file_rhs,
-                          &mysolver);
-
-    // deep copy
-    PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mla_ctx.mysolver.ksp)));
-    PetscCall(PCCreate(PETSC_COMM_WORLD, &(mla_ctx.mysolver.pc)));
-    PetscCall(DeepCopyMLAContextMySolver(&(mla_ctx.mysolver), &mysolver));
-
     /*
      * step 2, gmsh data process
      */
