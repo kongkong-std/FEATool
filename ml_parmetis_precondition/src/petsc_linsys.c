@@ -57,7 +57,6 @@ int SolverPetscInitialize(const char *path_mat, const char *path_rhs, MySolver *
 
 #if 1
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mysolver->ksp)));
-    PetscCall(PCCreate(PETSC_COMM_WORLD, &(mysolver->pc)));
 #endif
 
     return 0;

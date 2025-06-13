@@ -7,6 +7,7 @@ mpirun -np 4 ./app_petsc_exe \
 -ksp_rtol 1e-8 \
 -ksp_norm_type unpreconditioned \
 -ksp_monitor_true_residual \
-2>&1 | tee hist.log
+-def_pc_parmetis_mla \
+2>&1 | tee hist-pcshell.log
 
 #-def_pc_parmetis_mla \
