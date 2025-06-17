@@ -106,6 +106,14 @@ int main(int argc, char **argv)
                           mla_ctx.config.file_config.file_rhs,
                           &mysolver);
 
+    PetscInt local_vec_size = 0;
+    PetscCall(VecGetLocalSize(mysolver.solver_b, &local_vec_size));
+    printf(">>>>local_vec_size = %d\n", local_vec_size);
+
+    PetscInt local_mat_m = 0, local_mat_n = 0;
+    PetscCall(MatGetLocalSize(mysolver.solver_a, &local_mat_m, &local_mat_n));
+    printf(">>>>~~~~ local_mat_m = %d, local_mat_n = %d\n", local_mat_m, local_mat_n);
+
     PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mla_ctx.mysolver.ksp)));
     PetscCall(DeepCopyMLAContextMySolver(&(mla_ctx.mysolver), &mysolver));
 

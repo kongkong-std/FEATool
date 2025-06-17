@@ -48,6 +48,9 @@ typedef struct
     idx_t *adjncy;       // adjacency nodes list
     idx_t nparts;        // number of super nodes (partitions)
     idx_t *part;         // partition value
+    idx_t *local_xadj;   // local xadj
+    idx_t *local_adjncy; // local adjncy
+    idx_t *local_part;   // local part
 } AdjDataMesh;
 
 /*
@@ -146,6 +149,30 @@ typedef struct
 } MLAContext;
 
 // function prototype
+/*
+ * copy current level coarse graph to next level fine graph
+ *     coarse_graph (I) current level coarse graph
+ *     fine_graph (O) next level fine graph
+ */
+int DeepCopyCoarse2NextLevelFine(const AdjDataMesh *coarse_graph /*coarse level graph*/,
+                                 AdjDataMesh *fine_graph /*next level fine graph*/);
+
+/*
+ * level k coarse mesh partition, from level k fine mesh
+ *     fine_graph (I) level k fine graph
+ *     coarse_graph (O) level k coarse graph
+ */
+int LevelKCoarsePartition(const AdjDataMesh *fine_graph /*level k fine data mesh*/,
+                          AdjDataMesh *coarse_graph /*level k coarse data mesh*/);
+
+/*
+ * level 0 fine mesh partition, from initial mesh data
+ *     data_mesh (I) initial data mesh
+ *     fine_graph (O) level 0 fine graph data
+ */
+int Level0FinePartition(const AdjDataMesh *data_mesh /*initial data mesh*/,
+                        AdjDataMesh *fine_graph /*level 0 fine graph data*/);
+
 /*
  * coarse level graph data generated from fine level graph data
  *     fine_graph_data (I) fine level graph data

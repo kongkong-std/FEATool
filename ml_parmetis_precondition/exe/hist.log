@@ -1,90 +1,45 @@
 Config file: ../input/config/mla_v_cycle-refine0.json
 order_rbm = 1
-angle_type = 1
+angle_type = 0
 ==== basic information of linear system ====
 matrix Row = 1506, matrix Column = 1506
 matrix nz_allocated = 27747, matrix nz_used = 27747, matrix nz_unneeded = 0
 vector Row = 1506
 initial     || b ||_2 = 2.6501139470351749e+00
+>>>>local_vec_size = 377
+>>>>~~~~ local_mat_m = 377, local_mat_n = 377
+>>>>local_vec_size = 377
+>>>>~~~~ local_mat_m = 377, local_mat_n = 377
+>>>>local_vec_size = 376
+>>>>~~~~ local_mat_m = 376, local_mat_n = 376
+>>>>local_vec_size = 376
+>>>>~~~~ local_mat_m = 376, local_mat_n = 376
             || b ||_2 = 2.6501139470351749e+00
 || r ||_2 / || b ||_2 = 1.0000000000000000e+00
 Partitioning a graph of size 251 serially
-      Setup: Max:   0.000, Sum:   0.000, Balance:   1.003
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.023
       Remap: Max:   0.000, Sum:   0.000, Balance:   4.000
-      Total: Max:   0.012, Sum:   0.048, Balance:   1.000
-       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.000
+      Total: Max:   0.007, Sum:   0.029, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.015
 Final  62-way Cut:    360 	Balance: 1.235 
 Partitioning a graph of size 62 serially
-      Setup: Max:   0.000, Sum:   0.000, Balance:   1.021
-      Total: Max:   0.003, Sum:   0.010, Balance:   1.000
-       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.029
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.157
+      Remap: Max:   0.000, Sum:   0.000, Balance:   4.000
+      Total: Max:   0.002, Sum:   0.007, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.395
 Final  15-way Cut:    115 	Balance: 1.210 
+nodes in level 0 is 62, less than 100, setup DONE!
+prolongation operator done!!
 
-coarse global partition value:
-part[0] = 8
-part[1] = 8
-part[2] = 8
-part[3] = 7
-part[4] = 8
-part[5] = 9
-part[6] = 8
-part[7] = 10
-part[8] = 10
-part[9] = 9
-part[10] = 9
-part[11] = 13
-part[12] = 10
-part[13] = 13
-part[14] = 10
-part[15] = 14
-part[16] = 14
-part[17] = 14
-part[18] = 14
-part[19] = 13
-part[20] = 13
-part[21] = 14
-part[22] = 13
-part[23] = 11
-part[24] = 12
-part[25] = 11
-part[26] = 12
-part[27] = 11
-part[28] = 12
-part[29] = 11
-part[30] = 11
-part[31] = 7
-part[32] = 7
-part[33] = 1
-part[34] = 1
-part[35] = 1
-part[36] = 7
-part[37] = 7
-part[38] = 0
-part[39] = 2
-part[40] = 2
-part[41] = 2
-part[42] = 0
-part[43] = 0
-part[44] = 0
-part[45] = 0
-part[46] = 6
-part[47] = 6
-part[48] = 6
-part[49] = 5
-part[50] = 5
-part[51] = 5
-part[52] = 5
-part[53] = 5
-part[54] = 3
-part[55] = 4
-part[56] = 3
-part[57] = 3
-part[58] = 4
-part[59] = 3
-part[60] = 3
-part[61] = 4
 
-========
+different layout, cannot call matptapprolongation operator done!!
+
+
+prolongation operator done!!
+
+
+prolongation operator done!!
+
 
   0 KSP unpreconditioned resid norm 2.650113947035e+00 true resid norm 2.650113947035e+00 ||r(i)||/||b|| 1.000000000000e+00
   1 KSP unpreconditioned resid norm 8.279814221598e+00 true resid norm 8.279814221598e+00 ||r(i)||/||b|| 3.124323854399e+00
@@ -107,6 +62,6 @@ part[61] = 4
  18 KSP unpreconditioned resid norm 3.182511820421e+01 true resid norm 3.182511820421e+01 ||r(i)||/||b|| 1.200896219569e+01
  19 KSP unpreconditioned resid norm 3.163800504145e+01 true resid norm 3.163800504145e+01 ||r(i)||/||b|| 1.193835649099e+01
  20 KSP unpreconditioned resid norm 3.308535176761e+01 true resid norm 3.308535176761e+01 ||r(i)||/||b|| 1.248450158327e+01
->>>> ksp solve time: 0.00148034 (s)
+>>>> ksp solve time: 0.00112915 (s)
             || b ||_2 = 2.6501139470351749e+00
 || r ||_2 / || b ||_2 = 1.2484501583270553e+01
