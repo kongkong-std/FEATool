@@ -1,0 +1,52 @@
+Config file: ../input/config/mla_v_cycle-refine0.json
+order_rbm = 1
+angle_type = 0
+in rank 0/4
+0	63	126	189	251	
+
+========
+
+
+in rank 1/4
+0	63	126	189	251	
+
+========
+
+
+in rank 2/4
+0	63	126	189	251	
+
+========
+
+
+in rank 3/4
+0	63	126	189	251	
+
+========
+
+
+[0]PETSC ERROR: --------------------- Error Message --------------------------------------------------------------
+[0]PETSC ERROR: Unexpected data in file
+[0]PETSC ERROR: Not a matrix object in file
+[0]PETSC ERROR: WARNING! There are unused option(s) set! Could be the program crashed before usage or a spelling mistake, etc!
+[0]PETSC ERROR:   Option left: name:-ksp_max_it value: 20 source: command line
+[0]PETSC ERROR:   Option left: name:-ksp_monitor_true_residual (no value) source: command line
+[0]PETSC ERROR:   Option left: name:-ksp_norm_type value: unpreconditioned source: command line
+[0]PETSC ERROR:   Option left: name:-ksp_rtol value: 1e-8 source: command line
+[0]PETSC ERROR:   Option left: name:-ksp_type value: cg source: command line
+[0]PETSC ERROR: See https://petsc.org/release/faq/ for trouble shooting.
+[0]PETSC ERROR: Petsc Release Version 3.21.4, Jul 30, 2024 
+[0]PETSC ERROR: ./app_petsc_exe on a  named localhost.localdomain by kongkong Wed Jun 18 08:54:49 2025
+[0]PETSC ERROR: Configure options --prefix=/home/kongkong/software/petsc/3.21.4/real/gklib-metis --with-clanguage=C --with-debugging=0 --with-precision=double --with-scalar-type=real --with-shared-libraries=0 --COPTFLAGS="-O3 -march=native -mtune=native" --CXXOPTFLAGS="-O3 -march=native -mtune=native" --FOPTFLAGS="-O3 -march=native -mtune=native" --with-mpi=1 --with-mpi-dir=/opt/apps/mpich/3.2.1/gcc-10.3.0 --with-hypre=1 --download-hypre=/home/kongkong/tarball/hypre-2.31.0.tar.gz --with-mumps=1 --download-mumps=/home/kongkong/tarball/MUMPS_5.7.3.tar.gz --with-openblas=1 --download-openblas=/home/kongkong/tarball/OpenBLAS-0.3.28.tar.gz --with-scalapack=1 --download-scalapack=/home/kongkong/tarball/scalapack-2.2.0.tar.gz --with-metis=1 --with-metis-include=/opt/apps/metis/include --with-metis-lib="/opt/apps/metis/lib/libmetis.a /opt/apps/gklib/lib/libGKlib.a" --with-parmetis=1 --with-parmetis-include=/opt/apps/parmetis/include --with-parmetis-lib="/opt/apps/parmetis/lib/libparmetis.a /opt/apps/metis/lib/libmetis.a /opt/apps/gklib/lib/libGKlib.a"
+[0]PETSC ERROR: #1 MatLoad_MPIAIJ_Binary() at /home/kongkong/temporary/petsc-3.21.4/src/mat/impls/aij/mpi/mpiaij.c:3057
+[0]PETSC ERROR: #2 MatLoad_MPIAIJ() at /home/kongkong/temporary/petsc-3.21.4/src/mat/impls/aij/mpi/mpiaij.c:3033
+[0]PETSC ERROR: #3 MatLoad() at /home/kongkong/temporary/petsc-3.21.4/src/mat/interface/matrix.c:1344
+[0]PETSC ERROR: #4 SolverPetscInitialize() at ../src/petsc_linsys.c:27
+[0]PETSC ERROR: ------------------------------------------------------------------------
+[0]PETSC ERROR: Caught signal number 11 SEGV: Segmentation Violation, probably memory access out of range
+[0]PETSC ERROR: Try option -start_in_debugger or -on_error_attach_debugger
+[0]PETSC ERROR: or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/
+[0]PETSC ERROR: configure using --with-debugging=yes, recompile, link, and run 
+[0]PETSC ERROR: to get more information on the crash.
+[0]PETSC ERROR: Run with -malloc_debug to check if memory corruption is causing the crash.
+application called MPI_Abort(MPI_COMM_WORLD, 59) - process 0
