@@ -182,6 +182,26 @@ typedef struct
 
 // function prototype
 /*
+ * mla solver relative residual computing
+ *     mysolver (I) linear system
+ *     value (O) relative residual norm_2
+ */
+int MLASolverRelativeResidual(MySolver *mysolver /*linear system data*/,
+                              double *value /*relative residual*/);
+
+/*
+ * parmetis aggregation-based multilevel method: solve phase
+ *     config (I) mla solver configuration
+ *     mla_ctx (I) mla solver context
+ *     order_rbm (I) order of prolongation operator
+ *     mysolver (O) solution
+ */
+int ParMetisMLASolverSolvePhase(const ConfigJSON *config /*config json*/,
+                                MLAContext *mla_ctx /*mla context*/,
+                                int order_rbm /*rbm order*/,
+                                MySolver *mysolver /*linear system data*/);
+
+/*
  * copy current level coarse graph to next level fine graph
  *     coarse_graph (I) current level coarse graph
  *     fine_graph (O) next level fine graph

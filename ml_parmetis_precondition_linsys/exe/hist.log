@@ -27,35 +27,35 @@ nvtxs:      12247, cut:    20792, balance: 1.200
 	[2 0], [0.0003], [0 0 0]
 	[2 1], [0.0003], [0 0 0]
 		cut: 20783
-      Setup: Max:   0.001, Sum:   0.003, Balance:   1.002
-   InitPart: Max:   0.134, Sum:   0.537, Balance:   1.000
- Initialize: Max:   0.001, Sum:   0.002, Balance:   1.005
+      Setup: Max:   0.001, Sum:   0.003, Balance:   1.000
+   InitPart: Max:   0.133, Sum:   0.534, Balance:   1.000
+ Initialize: Max:   0.001, Sum:   0.003, Balance:   1.001
       K-way: Max:   0.001, Sum:   0.006, Balance:   1.000
       Remap: Max:   0.000, Sum:   0.000, Balance:   4.000
-      Total: Max:   0.137, Sum:   0.549, Balance:   1.000
-       Aux1: Max:   0.001, Sum:   0.002, Balance:   1.000
+      Total: Max:   0.137, Sum:   0.546, Balance:   1.000
+       Aux1: Max:   0.001, Sum:   0.002, Balance:   1.001
 Final 3061-way Cut:  20783 	Balance: 1.250 
 Partitioning a graph of size 3061 serially
-      Setup: Max:   0.000, Sum:   0.000, Balance:   1.007
-      Remap: Max:   0.000, Sum:   0.000, Balance:   2.000
-      Total: Max:   0.142, Sum:   0.567, Balance:   1.000
-       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.038
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.002
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.000
+      Total: Max:   0.141, Sum:   0.565, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.109
 Final 765-way Cut:   8902 	Balance: 1.250 
 Partitioning a graph of size 765 serially
-      Setup: Max:   0.000, Sum:   0.000, Balance:   1.007
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.017
       Remap: Max:   0.000, Sum:   0.000, Balance:   1.333
-      Total: Max:   0.049, Sum:   0.195, Balance:   1.000
-       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.020
+      Total: Max:   0.048, Sum:   0.192, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.075
 Final 191-way Cut:   3994 	Balance: 1.248 
 Partitioning a graph of size 191 serially
       Setup: Max:   0.000, Sum:   0.000, Balance:   1.000
       Remap: Max:   0.000, Sum:   0.000, Balance:   2.000
-      Total: Max:   0.011, Sum:   0.042, Balance:   1.000
-       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.026
+      Total: Max:   0.011, Sum:   0.043, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.099
 Final  47-way Cut:   1373 	Balance: 1.230 
 Partitioning a graph of size 47 serially
       Setup: Max:   0.000, Sum:   0.000, Balance:   1.011
-      Remap: Max:   0.000, Sum:   0.000, Balance:   4.000
+      Remap: Max:   0.000, Sum:   0.000, Balance:   2.000
       Total: Max:   0.002, Sum:   0.008, Balance:   1.000
        Aux1: Max:   0.000, Sum:   0.000, Balance:   1.000
 Final  11-way Cut:    244 	Balance: 1.170 
@@ -64,6 +64,8 @@ Final  11-way Cut:    244 	Balance: 1.170
 >>>>nodes in level 3 is 47, less than 100, setup DONE!>>>>
 
 
+>>>> setup time: 0.746876 (s)
+>>>> solve time: 0.00602913 (s)
   0 KSP unpreconditioned resid norm 3.645678991486e-01 true resid norm 3.645678991486e-01 ||r(i)||/||b|| 1.000000000000e+00
   1 KSP unpreconditioned resid norm 1.139452530254e+00 true resid norm 1.139452530254e+00 ||r(i)||/||b|| 3.125487825217e+00
   2 KSP unpreconditioned resid norm 4.361983538476e+00 true resid norm 4.361983538476e+00 ||r(i)||/||b|| 1.196480422073e+01
@@ -85,6 +87,6 @@ Final  11-way Cut:    244 	Balance: 1.170
  18 KSP unpreconditioned resid norm 9.507425573925e+00 true resid norm 9.507425573925e+00 ||r(i)||/||b|| 2.607861415151e+01
  19 KSP unpreconditioned resid norm 1.003806016212e+01 true resid norm 1.003806016212e+01 ||r(i)||/||b|| 2.753413063948e+01
  20 KSP unpreconditioned resid norm 9.557783050935e+00 true resid norm 9.557783050935e+00 ||r(i)||/||b|| 2.621674336456e+01
->>>> ksp solve time: 0.114251 (s)
+>>>> ksp solve time: 0.112622 (s)
             || b ||_2 = 3.6456789914864107e-01
 || r ||_2 / || b ||_2 = 2.6216743364555541e+01

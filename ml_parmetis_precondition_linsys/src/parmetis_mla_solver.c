@@ -1314,18 +1314,74 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
     return 0;
 }
 
+int MLASolverRelativeResidual(MySolver *mysolver, double *value)
+{
+    PetscReal b_norm_2 = 0.;
+    PetscReal r_norm_2 = 0.;
+
+    PetscCall(VecNorm(mysolver->solver_b, NORM_2, &b_norm_2));
+
+    PetscCall(MatMult(mysolver->solver_a, mysolver->solver_x, mysolver->solver_r));
+    PetscCall(VecAXPY(mysolver->solver_r, -1., mysolver->solver_b));
+    PetscCall(VecNorm(mysolver->solver_r, NORM_2, &r_norm_2));
+
+    *value = r_norm_2 / b_norm_2;
+
+    return 0;
+}
+
+int ParMetisMLASolverSolvePhase(const ConfigJSON *config,
+                                MLAContext *mla_ctx,
+                                int order_rbm,
+                                MySolver *mysolver)
+{
+    return 0;
+}
+
 int ParMetisMLASolver(MLAContext *mla_ctx /*mla context data*/,
                       int mla_phase /*multilevel phase*/)
 {
+    PetscLogDouble time1, time2;
+
     // setup phase
     if (mla_phase == 0 || mla_phase == 2)
     {
+        PetscCall(PetscTime(&time1));
         ParMetisMLASolverSetupPhase(mla_ctx);
+        PetscCall(PetscTime(&time2));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> setup time: %g (s)\n", time2 - time1));
     }
 
     // solve phase
     if (mla_phase == 1 || mla_phase == 2)
     {
+        PetscCall(PetscTime(&time1));
+
+        if (mla_ctx->setup == 0)
+        {
+            PetscCall(PetscPrintf(PETSC_COMM_WORLD, "setup phase has not been done! failed\n"));
+            exit(EXIT_FAILURE);
+        }
+
+        int iter_cnt = 0;
+        double rela_resid = 0.;
+        MLASolverRelativeResidual(&(mla_ctx->mysolver), &rela_resid);
+        // PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
+
+        while (iter_cnt < mla_ctx->config.mla_config.mla_max_it &&
+               rela_resid > mla_ctx->config.mla_config.mla_rtol)
+        {
+            ParMetisMLASolverSolvePhase(&(mla_ctx->config),
+                                        mla_ctx,
+                                        mla_ctx->order_rbm,
+                                        &(mla_ctx->mysolver));
+            MLASolverRelativeResidual(&(mla_ctx->mysolver), &rela_resid);
+            ++iter_cnt;
+            // PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
+        }
+
+        PetscCall(PetscTime(&time2));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> solve time: %g (s)\n", time2 - time1));
     }
 
     return 0;
