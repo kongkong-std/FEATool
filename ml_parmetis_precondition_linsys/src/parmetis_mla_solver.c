@@ -1366,7 +1366,7 @@ int ParMetisMLASolver(MLAContext *mla_ctx /*mla context data*/,
         int iter_cnt = 0;
         double rela_resid = 0.;
         MLASolverRelativeResidual(&(mla_ctx->mysolver), &rela_resid);
-        // PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
 
         while (iter_cnt < mla_ctx->config.mla_config.mla_max_it &&
                rela_resid > mla_ctx->config.mla_config.mla_rtol)
@@ -1377,7 +1377,7 @@ int ParMetisMLASolver(MLAContext *mla_ctx /*mla context data*/,
                                         &(mla_ctx->mysolver));
             MLASolverRelativeResidual(&(mla_ctx->mysolver), &rela_resid);
             ++iter_cnt;
-            // PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
+            PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
         }
 
         PetscCall(PetscTime(&time2));
