@@ -271,7 +271,7 @@ int SolverPetscResidualCheck(MySolver *mysolver /*solver data*/);
  */
 int SolverPetscInitialize(const char *path_mat /*path to matrix file*/,
                           const char *path_rhs /*path to rhs file*/,
-                          const int *node_vtxdist /*distribution of nodes*/
+                          const int *node_vtxdist /*distribution of nodes*/,
                           MySolver *mysolver /*solver data*/);
 
 /*
