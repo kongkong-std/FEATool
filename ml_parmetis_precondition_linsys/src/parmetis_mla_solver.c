@@ -1380,14 +1380,21 @@ int ParMetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
                                   mla_ctx->metis_mla[level].operator_fine));
         PetscCall(KSPSetType(ksp, KSPRICHARDSON));
         PetscCall(KSPGetPC(ksp, &pc));
+#if 0
         PetscCall(PCSetType(pc, PCSOR));
         PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
         PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
         PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
+#endif // sor
+
+        PetscCall(PCSetType(pc, PCASM));
+        PetscCall(PCASMSetOverlap(pc, 2));
+
         PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
         // PetscCall(KSPSetFromOptions(ksp));
 
-        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+        // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, v_pre_smooth));
 
         PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
         PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
@@ -1404,14 +1411,21 @@ int ParMetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
                                   mla_ctx->metis_mla[level].operator_fine)); // add shift to diagonal
         PetscCall(KSPSetType(ksp, KSPRICHARDSON));
         PetscCall(KSPGetPC(ksp, &pc));
+#if 0
         PetscCall(PCSetType(pc, PCSOR));
         PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
         PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
         PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
+#endif // sor
+
+        PetscCall(PCSetType(pc, PCASM));
+        PetscCall(PCASMSetOverlap(pc, 2));
+
         PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
         // PetscCall(KSPSetFromOptions(ksp));
 
-        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+        // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, v_pre_smooth));
 
         PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
         PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
@@ -1560,14 +1574,21 @@ int ParMetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
                               mla_ctx->metis_mla[level].operator_fine));
     PetscCall(KSPSetType(ksp, KSPRICHARDSON));
     PetscCall(KSPGetPC(ksp, &pc));
+#if 0
     PetscCall(PCSetType(pc, PCSOR));
     PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
     PetscCall(PCSORSetIterations(pc, v_post_smooth, v_post_smooth));
     PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
+#endif // sor
+
+    PetscCall(PCSetType(pc, PCASM));
+    PetscCall(PCASMSetOverlap(pc, 2));
+
     PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
     // PetscCall(KSPSetFromOptions(ksp));
 
-    PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+    // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));    // sor
+    PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, v_post_smooth));
 
     PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
     PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
