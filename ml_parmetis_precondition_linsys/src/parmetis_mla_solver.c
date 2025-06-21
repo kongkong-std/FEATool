@@ -1311,6 +1311,30 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
     }
 #endif // mla_ctx data information
 
+    for (int level = 0; level < cnt_num_level; ++level)
+    {
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[level].ksp_presmooth)));
+#if 0
+        PetscCall(KSPSetOperators(mla_ctx->metis_mla[level].ksp_presmooth,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine));
+#endif
+
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[level].ksp_postsmooth)));
+#if 0
+        PetscCall(KSPSetOperators(mla_ctx->metis_mla[level].ksp_postsmooth,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine));
+#endif
+
+        PetscCall(KSPCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[level].ksp_coarse)));
+#if 0
+        PetscCall(KSPSetOperators(mla_ctx->metis_mla[level].ksp_coarse,
+                                  mla_ctx->metis_mla[level].operator_coarse,
+                                  mla_ctx->metis_mla[level].operator_coarse));
+#endif
+    }
+
     return 0;
 }
 
@@ -1330,11 +1354,362 @@ int MLASolverRelativeResidual(MySolver *mysolver, double *value)
     return 0;
 }
 
+int ParMetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
+                                        int level,
+                                        MLAContext *mla_ctx,
+                                        Vec *mg_recur_x,
+                                        Vec *mg_recur_b,
+                                        int v_pre_smooth)
+{
+    // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
+    if (level != 0)
+    {
+        PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
+    }
+
+    if (level == 0)
+    {
+#if 0
+    // KSP ksp_loc;
+    // PC pc_loc;
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
+    PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
+#endif
+        PetscCall(KSPSetOperators(ksp,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine));
+        PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+        PetscCall(KSPGetPC(ksp, &pc));
+        PetscCall(PCSetType(pc, PCSOR));
+        PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
+        PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
+        PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+        // PetscCall(KSPSetFromOptions(ksp));
+
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+
+        PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+        PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+    }
+    else
+    {
+#if 1
+        double shift = 1e-12; // test metis aggregation implementation
+        // double shift = 0.; // test metis aggregation implementation
+        PetscCall(MatShift(mla_ctx->metis_mla[level].operator_fine, shift));
+#endif
+        PetscCall(KSPSetOperators(ksp,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine)); // add shift to diagonal
+        PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+        PetscCall(KSPGetPC(ksp, &pc));
+        PetscCall(PCSetType(pc, PCSOR));
+        PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
+        PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
+        PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+        // PetscCall(KSPSetFromOptions(ksp));
+
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+
+        PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+        PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+    }
+
+#if 0
+    PetscCall(KSPDestroy(&ksp_loc));
+    PetscCall(PCDestroy(&pc_loc));
+#endif
+
+    return 0;
+}
+
+int ParMetisMLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
+                                            int level,
+                                            MLAContext *mla_ctx,
+                                            Vec *mg_recur_x,
+                                            Vec *mg_recur_b)
+{
+    PetscCall(VecDuplicate(mg_recur_b[level + 1], mg_recur_x + level + 1));
+    int gcr_restart = mla_ctx->config.mla_config.coarse_restart;
+
+#if 0
+    PetscCall(VecView(mg_recur_b[level + 1], PETSC_VIEWER_STDOUT_WORLD));
+#endif // residual information
+
+#if 0
+    printf(">>>> in coarset level, level = %d\n", level);
+    int vec_size = 0, m_a_H = 0, n_a_H = 0;
+    PetscCall(MatGetSize((mla_ctx->mla + level)->operator_coarse, &m_a_H, &n_a_H));
+    PetscCall(VecGetSize(mg_recur_b[level + 1], &vec_size));
+    printf("coarsest matrix size: m = %d, n = %d\n", m_a_H, n_a_H);
+    printf("coarsest vector size: m = %d\n", vec_size);
+#endif // size information
+
+#if 0
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
+    PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
+#endif
+
+#if 1
+    if (order_rbm == 1)
+    {
+        if (level == 0)
+        {
+            // rbm order 1
+            PetscCall(KSPSetOperators(ksp,
+                                      mla_ctx->metis_mla[level].operator_coarse,
+                                      mla_ctx->metis_mla[level].operator_coarse));
+            PetscCall(KSPSetType(ksp, KSPGCR));
+            // PetscCall(KSPGetPC(ksp_H, &pc));
+            // PetscCall(PCSetType(pc, PCLU));
+            PetscCall(KSPGCRSetRestart(ksp, gcr_restart));
+            PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+            // PetscCall(KSPSetFromOptions(ksp));
+            PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
+            // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 10));
+
+            PetscCall(KSPSolve(ksp, mg_recur_b[level + 1], mg_recur_x[level + 1]));
+        }
+        else
+        {
+#if 1
+            // double shift = 1e-12; // test metis aggregation implementation
+            double shift = 0.; // test metis aggregation implementation
+            PetscCall(MatShift(mla_ctx->metis_mla[level].operator_coarse, shift));
+#endif
+            PetscCall(KSPSetOperators(ksp,
+                                      mla_ctx->metis_mla[level].operator_coarse,
+                                      mla_ctx->metis_mla[level].operator_coarse)); // add shift to diagonal
+            PetscCall(KSPSetType(ksp, KSPGCR));
+#if 0
+        PetscCall(KSPGetPC(ksp, pc));
+        PetscCall(PCSetType(pc, PCSVD));
+#endif
+            PetscCall(KSPGCRSetRestart(ksp, gcr_restart));
+            PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+            // PetscCall(KSPSetFromOptions(ksp));
+            PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
+            // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 10));
+
+            PetscCall(KSPSolve(ksp, mg_recur_b[level + 1], mg_recur_x[level + 1]));
+        }
+    }
+    else if (order_rbm == 2)
+    {
+#if 1
+        // double shift = 1e-12; // test metis aggregation implementation
+        double shift = 0.; // test metis aggregation implementation
+        PetscCall(MatShift(mla_ctx->metis_mla[level].operator_coarse, shift));
+#endif
+        PetscCall(KSPSetOperators(ksp,
+                                  mla_ctx->metis_mla[level].operator_coarse,
+                                  mla_ctx->metis_mla[level].operator_coarse)); // add shift to diagonal
+        PetscCall(KSPSetType(ksp, KSPGCR));
+#if 0
+        PetscCall(KSPGetPC(ksp, pc));
+        PetscCall(PCSetType(pc, PCSVD));
+#endif
+        PetscCall(KSPGCRSetRestart(ksp, gcr_restart));
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+        // PetscCall(KSPSetFromOptions(ksp));
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1000));
+        // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 10));
+
+        PetscCall(KSPSolve(ksp, mg_recur_b[level + 1], mg_recur_x[level + 1]));
+    }
+#endif
+
+#if 0
+    double norm_r_H = 0.;
+    PetscCall(VecNorm(mg_recur_b[level + 1], NORM_2, &norm_r_H));
+    Vec tmp_r_H;
+    PetscCall(VecDuplicate(mg_recur_b[level + 1], &tmp_r_H));
+    PetscCall(MatMult((mla_ctx->mla + level)->operator_coarse, mg_recur_x[level + 1], tmp_r_H));
+    PetscCall(VecAXPY(tmp_r_H, -1., mg_recur_b[level + 1]));
+    double norm_tmp_r_H = 0.;
+    PetscCall(VecNorm(tmp_r_H, NORM_2, &norm_tmp_r_H));
+
+    double norm_e_H = 0.;
+    PetscCall(VecNorm(mg_recur_x[level + 1], NORM_2, &norm_e_H));
+
+    printf(">>>>>>>> coarse correction: norm_r_H = %021.16le\n", norm_r_H);
+    printf(">>>>>>>> coarse correction: norm_e_H = %021.16le\n", norm_e_H);
+    printf(">>>>>>>> coarse correction: relative = %021.16le\n\n", norm_tmp_r_H / norm_r_H);
+#endif // print coarse level correction information
+
+    return 0;
+}
+
+int ParMetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
+                                         int level,
+                                         MLAContext *mla_ctx,
+                                         Vec *mg_recur_x,
+                                         Vec *mg_recur_b,
+                                         int v_post_smooth)
+{
+#if 0
+    // KSP ksp_loc;
+    // PC pc_loc;
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
+    PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
+#endif
+    PetscCall(KSPSetOperators(ksp,
+                              mla_ctx->metis_mla[level].operator_fine,
+                              mla_ctx->metis_mla[level].operator_fine));
+    PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+    PetscCall(KSPGetPC(ksp, &pc));
+    PetscCall(PCSetType(pc, PCSOR));
+    PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
+    PetscCall(PCSORSetIterations(pc, v_post_smooth, v_post_smooth));
+    PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
+    PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+    // PetscCall(KSPSetFromOptions(ksp));
+
+    PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+
+    PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+    PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+
+    return 0;
+}
+
+int ParMetisMLANestedProcedure(int level /*level*/,
+                               int num_level /*number of levels*/,
+                               MySolver *mysolver /*solver data*/,
+                               MLAContext *mla_ctx /*mla context*/,
+                               Vec *mg_recur_x /*x*/,
+                               Vec *mg_recur_b /*b*/,
+                               int v_pre_smooth /*pre-smooth times*/,
+                               int v_post_smooth /*post-smooth times*/,
+                               int order_rbm /*rbm order*/)
+{
+    Vec *r_h = NULL, *tmp_e_h = NULL;
+
+    r_h = (Vec *)malloc(num_level * sizeof(Vec));
+    tmp_e_h = (Vec *)malloc(num_level * sizeof(Vec));
+    assert(r_h && tmp_e_h);
+
+    // loop implementation
+    /*
+     * v-cycle downward direction, from fine mesh to coarse mesh
+     */
+    for (level = 0; level < num_level; ++level)
+    {
+        PetscCall(VecDuplicate(mg_recur_b[level], r_h + level));
+
+        // pre-smooth procedure
+        ParMetisMLANestedProcedurePreSmooth(mla_ctx->metis_mla[level].ksp_presmooth,
+                                            mla_ctx->metis_mla[level].pc_presmooth,
+                                            level,
+                                            mla_ctx,
+                                            mg_recur_x,
+                                            mg_recur_b,
+                                            v_pre_smooth);
+        PetscCall(MatMult(mla_ctx->metis_mla[level].operator_fine,
+                          mg_recur_x[level],
+                          r_h[level]));
+        PetscCall(VecAYPX(r_h[level], -1., mg_recur_b[level]));
+
+        // restriction
+        PetscInt m_prolongation = 0, n_prolongation = 0; // size of prolongation operator
+        PetscCall(MatGetSize(mla_ctx->metis_mla[level].prolongation,
+                             &m_prolongation,
+                             &n_prolongation));
+        PetscInt local_n_prolongation = 0;
+        PetscCall(MatGetLocalSize(mla_ctx->metis_mla[level].prolongation, NULL, &local_n_prolongation));
+        PetscCall(VecCreate(PETSC_COMM_WORLD, mg_recur_b + level + 1));
+        PetscCall(VecSetSizes(mg_recur_b[level + 1], local_n_prolongation, n_prolongation));
+        PetscCall(VecSetFromOptions(mg_recur_b[level + 1]));
+        PetscCall(MatMultTranspose(mla_ctx->metis_mla[level].prolongation, r_h[level], mg_recur_b[level + 1]));
+    }
+
+    // coarsest level
+    ParMetisMLASolverCoarsetCorrectionPhase(order_rbm,
+                                            mla_ctx->metis_mla[level - 1].ksp_coarse,
+                                            mla_ctx->metis_mla[level - 1].pc_coarse,
+                                            level - 1,
+                                            mla_ctx,
+                                            mg_recur_x,
+                                            mg_recur_b);
+
+    /*
+     * v-cycle upward direction, from coarse mesh to fine mesh
+     */
+    for (level = num_level - 1; level >= 0; --level)
+    {
+        PetscCall(VecDuplicate(mg_recur_x[level], tmp_e_h + level));
+
+        PetscCall(MatMult(mla_ctx->metis_mla[level].prolongation, mg_recur_x[level + 1], tmp_e_h[level]));
+        PetscCall(VecAXPY(mg_recur_x[level], 1., tmp_e_h[level]));
+
+        // post-smooth procedure
+        ParMetisMLANestedProcedurePostSmooth(mla_ctx->metis_mla[level].ksp_postsmooth,
+                                             mla_ctx->metis_mla[level].pc_postsmooth,
+                                             level,
+                                             mla_ctx,
+                                             mg_recur_x,
+                                             mg_recur_b,
+                                             v_post_smooth);
+    }
+
+    // free memory
+    for (int index = 0; index < num_level; ++index)
+    {
+        PetscCall(VecDestroy(r_h + index));
+        PetscCall(VecDestroy(tmp_e_h + index));
+    }
+    free(r_h);
+    free(tmp_e_h);
+
+    return 0;
+}
+
 int ParMetisMLASolverSolvePhase(const ConfigJSON *config,
                                 MLAContext *mla_ctx,
                                 int order_rbm,
                                 MySolver *mysolver)
 {
+    // mg recursive implementation
+    int v_pre_smooth = config->mla_config.pre_smooth_v;
+    int v_post_smooth = config->mla_config.post_smooth_v;
+    int num_level = mla_ctx->num_level;
+    Vec *mg_recur_x, *mg_recur_b;
+
+#if 1
+    mg_recur_x = (Vec *)malloc((num_level + 1) * sizeof(Vec));
+    mg_recur_b = (Vec *)malloc((num_level + 1) * sizeof(Vec));
+    assert(mg_recur_x && mg_recur_b);
+#endif
+
+    PetscCall(VecDuplicate(mysolver->solver_x, &mg_recur_x[0]));
+    PetscCall(VecDuplicate(mysolver->solver_b, &mg_recur_b[0]));
+    PetscCall(VecCopy(mysolver->solver_b, mg_recur_b[0]));
+    PetscCall(VecCopy(mysolver->solver_x, mg_recur_x[0]));
+
+    ParMetisMLANestedProcedure(0, num_level,
+                               mysolver,
+                               mla_ctx,
+                               mg_recur_x, mg_recur_b,
+                               v_pre_smooth, v_post_smooth,
+                               order_rbm);
+
+    // updating solution after nested mg procedure
+    PetscCall(VecCopy(mg_recur_x[0], mysolver->solver_x));
+
+// free memeory
+#if 1
+    for (int index = 0; index < num_level + 1; ++index)
+    // for (int index = 0; index < num_level; ++index)
+    {
+        PetscCall(VecDestroy(mg_recur_x + index));
+        PetscCall(VecDestroy(mg_recur_b + index));
+    }
+#endif
+    free(mg_recur_x);
+    free(mg_recur_b);
+
     return 0;
 }
 
@@ -1349,7 +1724,7 @@ int ParMetisMLASolver(MLAContext *mla_ctx /*mla context data*/,
         PetscCall(PetscTime(&time1));
         ParMetisMLASolverSetupPhase(mla_ctx);
         PetscCall(PetscTime(&time2));
-        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> setup time: %g (s)\n", time2 - time1));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> mla setup time: %g (s)\n", time2 - time1));
     }
 
     // solve phase
@@ -1381,7 +1756,7 @@ int ParMetisMLASolver(MLAContext *mla_ctx /*mla context data*/,
         }
 
         PetscCall(PetscTime(&time2));
-        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> solve time: %g (s)\n", time2 - time1));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> mla solve time: %g (s)\n", time2 - time1));
     }
 
     return 0;

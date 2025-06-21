@@ -182,6 +182,77 @@ typedef struct
 
 // function prototype
 /*
+ * mla nested procedure - post-smooth
+ *     ksp (I) linear system solver
+ *     pc (I) linear system preconditioner
+ *     level (I) current level
+ *     mla_ctx (I) mla context data
+ *     mg_recur_x (O) recursive solution of postsmooth
+ *     mg_recur_b (I) rhs of linear system
+ *     v_post_smooth (I) postsmooth of V-cycle
+ */
+int ParMetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
+                                         int level,
+                                         MLAContext *mla_ctx,
+                                         Vec *mg_recur_x,
+                                         Vec *mg_recur_b,
+                                         int v_post_smooth);
+
+/*
+ * mla nested procedure - coarsest correction
+ *     order_rbm (I) order of prolongation operator
+ *     ksp (I) linear system solver
+ *     pc (I) linear system preconditioner
+ *     level (I) current level
+ *     mla_ctx (I) mla context data
+ *     mg_recur_x (O) recursive solution of coarsest correction
+ *     mg_recur_b (I) rhs of linear system
+ */
+int ParMetisMLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
+                                            int level,
+                                            MLAContext *mla_ctx,
+                                            Vec *mg_recur_x,
+                                            Vec *mg_recur_b);
+
+/*
+ * mla nested procedure - pre-smooth
+ *     ksp (I) linear system solver
+ *     pc (I) linear system preconditioner
+ *     mla_ctx (I) mla context data
+ *     mg_recur_x (O) recursive solution of presmooth
+ *     mg_recur_b (I) rhs of linear system
+ *     v_pre_smooth (I) presmooth of V-cycle
+ */
+int ParMetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
+                                        int level,
+                                        MLAContext *mla_ctx,
+                                        Vec *mg_recur_x,
+                                        Vec *mg_recur_b,
+                                        int v_pre_smooth);
+
+/*
+ * multilevel v-cycle procedure
+ *     level (I) current level
+ *     num_level (I) total number of levels
+ *     mysolver (I) solver data
+ *     mla_ctx (I) mla context data
+ *     mg_recur_x (O) recursive solution
+ *     mg_recur_b (I) rhs of linear system
+ *     v_pre_smooth (I) presmooth of V-cycle
+ *     v_post_smooth (I) postsmooth of V-cycle
+ *     order_rbm (I) order of prolongation operatorn
+ */
+int ParMetisMLANestedProcedure(int level /*level*/,
+                               int num_level /*number of levels*/,
+                               MySolver *mysolver /*solver data*/,
+                               MLAContext *mla_ctx /*mla context*/,
+                               Vec *mg_recur_x /*x*/,
+                               Vec *mg_recur_b /*b*/,
+                               int v_pre_smooth /*pre-smooth times*/,
+                               int v_post_smooth /*post-smooth times*/,
+                               int order_rbm /*rbm order*/);
+
+/*
  * mla solver relative residual computing
  *     mysolver (I) linear system
  *     value (O) relative residual norm_2
