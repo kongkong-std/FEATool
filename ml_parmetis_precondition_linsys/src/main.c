@@ -1,7 +1,5 @@
 #include "../include/main.h"
 
-int DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src);
-
 int main(int argc, char **argv)
 {
     int my_rank, nprocs;
@@ -378,19 +376,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-int DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src)
-{
-    PetscCall(VecDuplicate(src->solver_b, &(dst->solver_b)));
-    PetscCall(VecCopy(src->solver_b, dst->solver_b));
-    PetscCall(VecDuplicate(src->solver_x, &(dst->solver_x)));
-    PetscCall(VecCopy(src->solver_x, dst->solver_x));
-    PetscCall(VecDuplicate(src->solver_r, &(dst->solver_r)));
-    PetscCall(VecCopy(src->solver_r, dst->solver_r));
 
-    PetscCall(MatDuplicate(src->solver_a, MAT_COPY_VALUES, &(dst->solver_a)));
-
-    return 0;
-}
 
 #if 0
 int DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src);

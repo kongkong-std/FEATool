@@ -1,6 +1,6 @@
 #include "../include/main.h"
 
-static int CountTrueMatAdj(const bool *a, int n)
+int CountTrueMatAdj(const bool *a, int n)
 {
     int value = 0;
 
@@ -105,7 +105,7 @@ int GlobalGraphCSRAdjGenerator(const DataMesh *mesh_data /*mesh data*/,
     return 0;
 }
 
-static int NumNodeEleTypeMap(int ele_type /*element type*/)
+int NumNodeEleTypeMap(int ele_type /*element type*/)
 {
     int value = 0;
 

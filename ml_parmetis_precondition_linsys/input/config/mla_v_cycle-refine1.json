@@ -1,8 +1,8 @@
 {
     "file": {
-      "file_mat": "../input/linsys/refine1/mat.txt",
-      "file_rhs": "../input/linsys/refine1/rhs.txt",
-      "file_mesh": "../input/mesh/linear-elasticity-2d-22-refine1.msh"
+      "file_mat": "/home/kongkong/Documents/DocFEMTool/FEATool/ml_parmetis_precondition_linsys/input/linsys/refine1/mat.txt",
+      "file_rhs": "/home/kongkong/Documents/DocFEMTool/FEATool/ml_parmetis_precondition_linsys/input/linsys/refine1/rhs.txt",
+      "file_mesh": "/home/kongkong/Documents/DocFEMTool/FEATool/ml_parmetis_precondition_linsys/input/mesh/linear-elasticity-2d-22-refine1.msh"
     },
     "mesh_label":{
       "label_bound": 1,

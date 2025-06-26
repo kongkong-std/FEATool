@@ -1,5 +1,19 @@
 #include "../include/main.h"
 
+int DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src)
+{
+    PetscCall(VecDuplicate(src->solver_b, &(dst->solver_b)));
+    PetscCall(VecCopy(src->solver_b, dst->solver_b));
+    PetscCall(VecDuplicate(src->solver_x, &(dst->solver_x)));
+    PetscCall(VecCopy(src->solver_x, dst->solver_x));
+    PetscCall(VecDuplicate(src->solver_r, &(dst->solver_r)));
+    PetscCall(VecCopy(src->solver_r, dst->solver_r));
+
+    PetscCall(MatDuplicate(src->solver_a, MAT_COPY_VALUES, &(dst->solver_a)));
+
+    return 0;
+}
+
 int SolverPetscResidualCheck(MySolver *mysolver)
 {
     PetscReal b_norm_2 = 0.;
@@ -17,7 +31,7 @@ int SolverPetscResidualCheck(MySolver *mysolver)
     return 0;
 }
 
-static int FileProcessCSRMatrix(const char *path, CSRMatrix *mat_data)
+int FileProcessCSRMatrix(const char *path, CSRMatrix *mat_data)
 {
     FILE *fp = fopen(path, "rb");
     assert(fp);
@@ -50,7 +64,7 @@ static int FileProcessCSRMatrix(const char *path, CSRMatrix *mat_data)
     return 0;
 }
 
-static int FileProcessCSRVector(const char *path, CSRVector *vec_data)
+int FileProcessCSRVector(const char *path, CSRVector *vec_data)
 {
     FILE *fp = fopen(path, "rb");
     assert(fp);

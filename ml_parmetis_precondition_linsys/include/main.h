@@ -182,6 +182,37 @@ typedef struct
 
 // function prototype
 /*
+ * deep copy mla context to mysolver
+ */
+int DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src);
+
+/*
+ * distributed csr vector
+ */
+int FileProcessCSRVector(const char *path, CSRVector *vec_data);
+
+/*
+ * distributed csr matrix
+ */
+int FileProcessCSRMatrix(const char *path, CSRMatrix *mat_data);
+
+/*
+ * deep copy from raw mesh to 0-level fine mesh
+ */
+int DeepCopyDataMesh2Level0Fine(const AdjDataMesh *data_mesh /*mesh data*/,
+                                AdjDataMesh *data_fine_level /*level 0 fine*/);
+
+/*
+ * mapping of element type to numebr of nodes
+ */
+int NumNodeEleTypeMap(int ele_type /*element type*/);
+
+/*
+ * adjacency matrix
+ */
+int CountTrueMatAdj(const bool *a, int n);
+
+/*
  * mla nested procedure - post-smooth
  *     ksp (I) linear system solver
  *     pc (I) linear system preconditioner

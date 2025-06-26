@@ -113,7 +113,7 @@ int CoarseLevelGenerator(const AdjDataMesh *fine_graph_data /*fine level graph d
     return 0;
 }
 
-static int DeepCopyDataMesh2Level0Fine(const AdjDataMesh *data_mesh /*mesh data*/,
+int DeepCopyDataMesh2Level0Fine(const AdjDataMesh *data_mesh /*mesh data*/,
                                        AdjDataMesh *data_fine_level /*level 0 fine*/)
 {
     data_fine_level->nn = data_mesh->nn;
@@ -694,6 +694,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                 PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].prolongation,
                                       6 * local_prolongation_m, 6 * local_prolongation_n,
                                       prolongation_m, prolongation_n));
+                PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].prolongation, MATAIJ)); // prolongation set type- mataij
                 PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].prolongation));
 
                 for (int index_fine_node = local_index_start; index_fine_node < local_index_end; ++index_fine_node)
@@ -809,6 +810,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                           local_prolongation_m * 9, local_prolongation_n * 9,
                                           prolongation_m, prolongation_n));
                 }
+                PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].prolongation, MATAIJ)); // prolongation set type- mataij
                 PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].prolongation));
 
                 if (index_cnt_level == 0)
@@ -984,6 +986,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                 PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].prolongation,
                                       6 * local_prolongation_m, 6 * local_prolongation_n,
                                       prolongation_m, prolongation_n));
+                PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].prolongation, MATAIJ)); // prolongation set type- mataij
                 PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].prolongation));
 
                 for (int index_fine_node = local_index_start; index_fine_node < local_index_end; ++index_fine_node)
@@ -1099,6 +1102,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                           local_prolongation_m * 9, local_prolongation_n * 9,
                                           prolongation_m, prolongation_n));
                 }
+                PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].prolongation, MATAIJ)); // prolongation set type- mataij
                 PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].prolongation));
 
                 if (index_cnt_level == 0)
@@ -1369,72 +1373,93 @@ int ParMetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
 
     if (level == 0)
     {
-#if 0
-    // KSP ksp_loc;
-    // PC pc_loc;
-    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
-    PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
-#endif
         PetscCall(KSPSetOperators(ksp,
                                   mla_ctx->metis_mla[level].operator_fine,
                                   mla_ctx->metis_mla[level].operator_fine));
         PetscCall(KSPSetType(ksp, KSPRICHARDSON));
         PetscCall(KSPGetPC(ksp, &pc));
-#if 0
-        PetscCall(PCSetType(pc, PCSOR));
-        PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
-        PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
-        PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
-#endif // sor
 
+        // Configure ASM
         PetscCall(PCSetType(pc, PCASM));
         PetscCall(PCASMSetOverlap(pc, 2));
 
+        // Set up the preconditioner first
+        PetscCall(PCSetUp(pc));
+
+        // Get subdomain KSP contexts
+        KSP *subksp;
+        PetscInt nlocal, first;
+        PetscCall(PCASMGetSubKSP(pc, &nlocal, &first, &subksp));
+
+        // Configure SOR on each subdomain
+        for (PetscInt i = 0; i < nlocal; i++)
+        {
+            PC subpc;
+            PetscCall(KSPGetPC(subksp[i], &subpc));
+            PetscCall(PCSetType(subpc, PCSOR));
+            PetscCall(PCSORSetOmega(subpc, 1.0)); // Gauss-Seidel
+            PetscCall(PCSORSetIterations(subpc, v_pre_smooth, v_pre_smooth));
+            PetscCall(PCSORSetSymmetric(subpc, SOR_SYMMETRIC_SWEEP));
+
+            // Set subdomain KSP parameters
+            PetscCall(KSPSetType(subksp[i], KSPRICHARDSON));
+            PetscCall(KSPSetTolerances(subksp[i], 1e-10, 1e-10, PETSC_DEFAULT, 1));
+            PetscCall(KSPSetInitialGuessNonzero(subksp[i], PETSC_TRUE));
+            PetscCall(KSPSetNormType(subksp[i], KSP_NORM_UNPRECONDITIONED));
+        }
+
+        // Set main KSP parameters
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
         PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
-        // PetscCall(KSPSetFromOptions(ksp));
-
-        // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
-        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, v_pre_smooth));
-
         PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
         PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
     }
     else
     {
-#if 1
         double shift = 1e-12; // test metis aggregation implementation
-        // double shift = 0.; // test metis aggregation implementation
         PetscCall(MatShift(mla_ctx->metis_mla[level].operator_fine, shift));
-#endif
+
         PetscCall(KSPSetOperators(ksp,
                                   mla_ctx->metis_mla[level].operator_fine,
-                                  mla_ctx->metis_mla[level].operator_fine)); // add shift to diagonal
+                                  mla_ctx->metis_mla[level].operator_fine));
         PetscCall(KSPSetType(ksp, KSPRICHARDSON));
         PetscCall(KSPGetPC(ksp, &pc));
-#if 0
-        PetscCall(PCSetType(pc, PCSOR));
-        PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
-        PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
-        PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
-#endif // sor
 
+        // Configure ASM
         PetscCall(PCSetType(pc, PCASM));
         PetscCall(PCASMSetOverlap(pc, 2));
 
+        // Set up the preconditioner first
+        PetscCall(PCSetUp(pc));
+
+        // Get subdomain KSP contexts
+        KSP *subksp;
+        PetscInt nlocal, first;
+        PetscCall(PCASMGetSubKSP(pc, &nlocal, &first, &subksp));
+
+        // Configure SOR on each subdomain
+        for (PetscInt i = 0; i < nlocal; i++)
+        {
+            PC subpc;
+            PetscCall(KSPGetPC(subksp[i], &subpc));
+            PetscCall(PCSetType(subpc, PCSOR));
+            PetscCall(PCSORSetOmega(subpc, 1.0)); // Gauss-Seidel
+            PetscCall(PCSORSetIterations(subpc, v_pre_smooth, v_pre_smooth));
+            PetscCall(PCSORSetSymmetric(subpc, SOR_SYMMETRIC_SWEEP));
+
+            // Set subdomain KSP parameters
+            PetscCall(KSPSetType(subksp[i], KSPRICHARDSON));
+            PetscCall(KSPSetTolerances(subksp[i], 1e-10, 1e-10, PETSC_DEFAULT, 1));
+            PetscCall(KSPSetInitialGuessNonzero(subksp[i], PETSC_TRUE));
+            PetscCall(KSPSetNormType(subksp[i], KSP_NORM_UNPRECONDITIONED));
+        }
+
+        // Set main KSP parameters
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
         PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
-        // PetscCall(KSPSetFromOptions(ksp));
-
-        // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
-        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, v_pre_smooth));
-
         PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
         PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
     }
-
-#if 0
-    PetscCall(KSPDestroy(&ksp_loc));
-    PetscCall(PCDestroy(&pc_loc));
-#endif
 
     return 0;
 }
@@ -1563,33 +1588,44 @@ int ParMetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
                                          Vec *mg_recur_b,
                                          int v_post_smooth)
 {
-#if 0
-    // KSP ksp_loc;
-    // PC pc_loc;
-    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
-    PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
-#endif
     PetscCall(KSPSetOperators(ksp,
                               mla_ctx->metis_mla[level].operator_fine,
                               mla_ctx->metis_mla[level].operator_fine));
     PetscCall(KSPSetType(ksp, KSPRICHARDSON));
     PetscCall(KSPGetPC(ksp, &pc));
-#if 0
-    PetscCall(PCSetType(pc, PCSOR));
-    PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
-    PetscCall(PCSORSetIterations(pc, v_post_smooth, v_post_smooth));
-    PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
-#endif // sor
 
+    // Configure ASM
     PetscCall(PCSetType(pc, PCASM));
     PetscCall(PCASMSetOverlap(pc, 2));
 
+    // Set up the preconditioner first
+    PetscCall(PCSetUp(pc));
+
+    // Get subdomain KSP contexts
+    KSP *subksp;
+    PetscInt nlocal, first;
+    PetscCall(PCASMGetSubKSP(pc, &nlocal, &first, &subksp));
+
+    // Configure SOR on each subdomain
+    for (PetscInt i = 0; i < nlocal; i++)
+    {
+        PC subpc;
+        PetscCall(KSPGetPC(subksp[i], &subpc));
+        PetscCall(PCSetType(subpc, PCSOR));
+        PetscCall(PCSORSetOmega(subpc, 1.0)); // Gauss-Seidel
+        PetscCall(PCSORSetIterations(subpc, v_post_smooth, v_post_smooth));
+        PetscCall(PCSORSetSymmetric(subpc, SOR_SYMMETRIC_SWEEP));
+
+        // Set subdomain KSP parameters
+        PetscCall(KSPSetType(subksp[i], KSPRICHARDSON));
+        PetscCall(KSPSetTolerances(subksp[i], 1e-10, 1e-10, PETSC_DEFAULT, 1));
+        PetscCall(KSPSetInitialGuessNonzero(subksp[i], PETSC_TRUE));
+        PetscCall(KSPSetNormType(subksp[i], KSP_NORM_UNPRECONDITIONED));
+    }
+
+    // Set main KSP parameters
+    PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
     PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
-    // PetscCall(KSPSetFromOptions(ksp));
-
-    // PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));    // sor
-    PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, v_post_smooth));
-
     PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
     PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
 
