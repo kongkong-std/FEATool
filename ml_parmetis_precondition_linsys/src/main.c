@@ -312,11 +312,13 @@ int main(int argc, char **argv)
     fclose(fp);
 #endif // linsys file IO, serial version
 
+#if 0
     /*
      * test
      * calling ParMetisMLASolver
      */
     PetscCall(ParMetisMLASolver(&mla_ctx, 2));
+#endif // mla solver test
 
     /*
      * linear system solver
@@ -375,8 +377,6 @@ int main(int argc, char **argv)
     MPI_Finalize();
     return 0;
 }
-
-
 
 #if 0
 int DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src);

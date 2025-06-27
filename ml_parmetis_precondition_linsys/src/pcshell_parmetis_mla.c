@@ -25,8 +25,8 @@ PetscErrorCode ParMetisMLAShellPCApply(PC pc, Vec x_in, Vec x_out)
     int mla_phase = 1;
     ParMetisMLASolver(mla_ctx, mla_phase);
 
-    //PetscCall(VecCopy(mla_ctx->mysolver.solver_x, x_out));
-    PetscCall(VecCopy(x_in, x_out));
+    PetscCall(VecCopy(mla_ctx->mysolver.solver_x, x_out));
+    //PetscCall(VecCopy(x_in, x_out));
 
     PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -119,6 +119,7 @@ int MetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
                                      Vec *mg_recur_b,
                                      int v_pre_smooth)
 {
+#if 0
     // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     if (level != 0)
     {
@@ -181,6 +182,107 @@ int MetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
 #endif
 
     return 0;
+#endif // smoother-sor
+
+#if 1
+    // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
+    if (level != 0)
+    {
+        PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
+    }
+
+    if (level == 0)
+    {
+        PetscCall(KSPSetOperators(ksp,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine));
+        PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+        PetscCall(KSPGetPC(ksp, &pc));
+
+        // Configure ASM
+        PetscCall(PCSetType(pc, PCASM));
+        PetscCall(PCASMSetOverlap(pc, 2));
+
+        // Set up the preconditioner first
+        PetscCall(PCSetUp(pc));
+
+        // Get subdomain KSP contexts
+        KSP *subksp;
+        PetscInt nlocal, first;
+        PetscCall(PCASMGetSubKSP(pc, &nlocal, &first, &subksp));
+
+        // Configure SOR on each subdomain
+        for (PetscInt i = 0; i < nlocal; i++)
+        {
+            PC subpc;
+            PetscCall(KSPGetPC(subksp[i], &subpc));
+            PetscCall(PCSetType(subpc, PCSOR));
+            PetscCall(PCSORSetOmega(subpc, 1.0)); // Gauss-Seidel
+            PetscCall(PCSORSetIterations(subpc, v_pre_smooth, v_pre_smooth));
+            PetscCall(PCSORSetSymmetric(subpc, SOR_SYMMETRIC_SWEEP));
+
+            // Set subdomain KSP parameters
+            PetscCall(KSPSetType(subksp[i], KSPRICHARDSON));
+            PetscCall(KSPSetTolerances(subksp[i], 1e-10, 1e-10, PETSC_DEFAULT, 1));
+            PetscCall(KSPSetInitialGuessNonzero(subksp[i], PETSC_TRUE));
+            PetscCall(KSPSetNormType(subksp[i], KSP_NORM_UNPRECONDITIONED));
+        }
+
+        // Set main KSP parameters
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+        PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+        PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+    }
+    else
+    {
+        double shift = 1e-12; // test metis aggregation implementation
+        PetscCall(MatShift(mla_ctx->metis_mla[level].operator_fine, shift));
+
+        PetscCall(KSPSetOperators(ksp,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine));
+        PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+        PetscCall(KSPGetPC(ksp, &pc));
+
+        // Configure ASM
+        PetscCall(PCSetType(pc, PCASM));
+        PetscCall(PCASMSetOverlap(pc, 2));
+
+        // Set up the preconditioner first
+        PetscCall(PCSetUp(pc));
+
+        // Get subdomain KSP contexts
+        KSP *subksp;
+        PetscInt nlocal, first;
+        PetscCall(PCASMGetSubKSP(pc, &nlocal, &first, &subksp));
+
+        // Configure SOR on each subdomain
+        for (PetscInt i = 0; i < nlocal; i++)
+        {
+            PC subpc;
+            PetscCall(KSPGetPC(subksp[i], &subpc));
+            PetscCall(PCSetType(subpc, PCSOR));
+            PetscCall(PCSORSetOmega(subpc, 1.0)); // Gauss-Seidel
+            PetscCall(PCSORSetIterations(subpc, v_pre_smooth, v_pre_smooth));
+            PetscCall(PCSORSetSymmetric(subpc, SOR_SYMMETRIC_SWEEP));
+
+            // Set subdomain KSP parameters
+            PetscCall(KSPSetType(subksp[i], KSPRICHARDSON));
+            PetscCall(KSPSetTolerances(subksp[i], 1e-10, 1e-10, PETSC_DEFAULT, 1));
+            PetscCall(KSPSetInitialGuessNonzero(subksp[i], PETSC_TRUE));
+            PetscCall(KSPSetNormType(subksp[i], KSP_NORM_UNPRECONDITIONED));
+        }
+
+        // Set main KSP parameters
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+        PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+        PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+    }
+
+    return 0;
+#endif // smoother-asm
 }
 
 int MetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
@@ -190,6 +292,7 @@ int MetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
                                       Vec *mg_recur_b,
                                       int v_post_smooth)
 {
+#if 0
 #if 0
     // KSP ksp_loc;
     // PC pc_loc;
@@ -214,6 +317,52 @@ int MetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
     PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
 
     return 0;
+#endif // smoother-sor
+
+#if 1
+    PetscCall(KSPSetOperators(ksp,
+                              mla_ctx->metis_mla[level].operator_fine,
+                              mla_ctx->metis_mla[level].operator_fine));
+    PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+    PetscCall(KSPGetPC(ksp, &pc));
+
+    // Configure ASM
+    PetscCall(PCSetType(pc, PCASM));
+    PetscCall(PCASMSetOverlap(pc, 2));
+
+    // Set up the preconditioner first
+    PetscCall(PCSetUp(pc));
+
+    // Get subdomain KSP contexts
+    KSP *subksp;
+    PetscInt nlocal, first;
+    PetscCall(PCASMGetSubKSP(pc, &nlocal, &first, &subksp));
+
+    // Configure SOR on each subdomain
+    for (PetscInt i = 0; i < nlocal; i++)
+    {
+        PC subpc;
+        PetscCall(KSPGetPC(subksp[i], &subpc));
+        PetscCall(PCSetType(subpc, PCSOR));
+        PetscCall(PCSORSetOmega(subpc, 1.0)); // Gauss-Seidel
+        PetscCall(PCSORSetIterations(subpc, v_post_smooth, v_post_smooth));
+        PetscCall(PCSORSetSymmetric(subpc, SOR_SYMMETRIC_SWEEP));
+
+        // Set subdomain KSP parameters
+        PetscCall(KSPSetType(subksp[i], KSPRICHARDSON));
+        PetscCall(KSPSetTolerances(subksp[i], 1e-10, 1e-10, PETSC_DEFAULT, 1));
+        PetscCall(KSPSetInitialGuessNonzero(subksp[i], PETSC_TRUE));
+        PetscCall(KSPSetNormType(subksp[i], KSP_NORM_UNPRECONDITIONED));
+    }
+
+    // Set main KSP parameters
+    PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+    PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+    PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+    PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+
+    return 0;
+#endif // smoother-asm
 }
 
 int MetisMLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
@@ -1497,7 +1646,7 @@ int MetisMLASolver(MLAContext *mla_ctx,
         }
 
         PetscCall(PetscTime(&time2));
-        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> solve time: %g (s)\n", time2 - time1));
+        // PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> solve time: %g (s)\n", time2 - time1));
     }
     return 0;
 }

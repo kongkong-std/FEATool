@@ -138,10 +138,12 @@ int main(int argc, char **argv)
     TestMetisFunctionGmsh(*(mla_ctx.data_gmsh));
 #endif // test metis function
 
+#if 0
     /*
      * step 3, calling MetisMLASolver()
      */
-    // PetscCall(MetisMLASolver(&mla_ctx, 2));
+    PetscCall(MetisMLASolver(&mla_ctx, 2));
+#endif // metis mla solver
 
     /*
      * step 2, mesh process

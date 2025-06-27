@@ -13,29 +13,36 @@ int CoarseLevelGenerator(const AdjDataMesh *fine_graph_data /*fine level graph d
     int *cnt_node_partition = (int *)calloc(coarse_graph_data->nn, sizeof(int));
     assert(cnt_node_partition);
 
+    // Calculate average coordinates for each coarse node (super node)
     for (int index = 0; index < fine_graph_data->nn; ++index)
     {
         idx_t id_part = fine_graph_data->part[index];
         for (int index_i = 0; index_i < coarse_graph_data->dim; ++index_i)
         {
-            coarse_graph_data->coordinates[coarse_graph_data->dim * id_part + index_i] += fine_graph_data->coordinates[fine_graph_data->dim * index + index_i];
+            coarse_graph_data->coordinates[coarse_graph_data->dim * id_part + index_i] +=
+                fine_graph_data->coordinates[fine_graph_data->dim * index + index_i];
         }
         ++(cnt_node_partition[id_part]);
     }
 
+    // Average the coordinates
     for (int index = 0; index < coarse_graph_data->nn; ++index)
     {
-        for (int index_i = 0; index_i < coarse_graph_data->dim; ++index_i)
+        if (cnt_node_partition[index] > 0) // Check to avoid division by zero
         {
-            coarse_graph_data->coordinates[coarse_graph_data->dim * index + index_i] /= cnt_node_partition[index];
+            for (int index_i = 0; index_i < coarse_graph_data->dim; ++index_i)
+            {
+                coarse_graph_data->coordinates[coarse_graph_data->dim * index + index_i] /= cnt_node_partition[index];
+            }
         }
     }
 
-    // adjacency list generator
+    // Initialize adjacency list generator
     coarse_graph_data->xadj = (idx_t *)calloc(coarse_graph_data->nn + 1, sizeof(idx_t));
+    assert(coarse_graph_data->xadj);
 
-    bool **mat_adj = NULL; // adjacency matrix, coarse.nn x coarse.nn
-    mat_adj = (bool **)malloc(coarse_graph_data->nn * sizeof(bool *));
+    // Create adjacency matrix for coarse graph
+    bool **mat_adj = (bool **)malloc(coarse_graph_data->nn * sizeof(bool *));
     assert(mat_adj);
 
     for (int index = 0; index < coarse_graph_data->nn; ++index)
@@ -44,32 +51,35 @@ int CoarseLevelGenerator(const AdjDataMesh *fine_graph_data /*fine level graph d
         assert(mat_adj[index]);
     }
 
+    // Build adjacency matrix based on fine graph connections
     for (int index = 0; index < fine_graph_data->nn; ++index)
     {
+        idx_t current_coarse_node = fine_graph_data->part[index];
         idx_t index_start = fine_graph_data->xadj[index];
         idx_t index_end = fine_graph_data->xadj[index + 1];
+
+        // Check all neighbors of current fine node
         for (idx_t index_i = index_start; index_i < index_end; ++index_i)
         {
-            idx_t fine_node_i = fine_graph_data->adjncy[index_i];
-            idx_t coarse_node_i = fine_graph_data->part[fine_node_i];
-            for (idx_t index_j = index_i + 1; index_j < index_end; ++index_j)
-            {
-                idx_t fine_node_j = fine_graph_data->adjncy[index_j];
-                idx_t coarse_node_j = fine_graph_data->part[fine_node_j];
+            idx_t neighbor_fine_node = fine_graph_data->adjncy[index_i];
+            idx_t neighbor_coarse_node = fine_graph_data->part[neighbor_fine_node];
 
-                mat_adj[coarse_node_i][coarse_node_j] = true;
-                mat_adj[coarse_node_j][coarse_node_i] = true;
+            // If fine nodes belong to different coarse nodes, create edge between coarse nodes
+            if (current_coarse_node != neighbor_coarse_node)
+            {
+                mat_adj[current_coarse_node][neighbor_coarse_node] = true;
+                mat_adj[neighbor_coarse_node][current_coarse_node] = true;
             }
         }
     }
 
-    // set mat_adj diagonal to 0
+    // Ensure diagonal is false (no self-loops)
     for (int index = 0; index < coarse_graph_data->nn; ++index)
     {
         mat_adj[index][index] = false;
     }
 
-    // assign coarse xadj
+    // Build xadj array (cumulative adjacency counts)
     for (int index_i = 0; index_i < coarse_graph_data->nn; ++index_i)
     {
         int cnt_tmp = 0;
@@ -83,9 +93,10 @@ int CoarseLevelGenerator(const AdjDataMesh *fine_graph_data /*fine level graph d
         coarse_graph_data->xadj[index_i + 1] = coarse_graph_data->xadj[index_i] + cnt_tmp;
     }
 
-    // assign coarse adjncy
+    // Build adjncy array (actual adjacency list)
     coarse_graph_data->adjncy = (idx_t *)malloc(coarse_graph_data->xadj[coarse_graph_data->nn] * sizeof(idx_t));
     assert(coarse_graph_data->adjncy);
+
     int pos_tmp = 0;
     for (int index_i = 0; index_i < coarse_graph_data->nn; ++index_i)
     {
@@ -99,10 +110,11 @@ int CoarseLevelGenerator(const AdjDataMesh *fine_graph_data /*fine level graph d
         }
     }
 
+    // Initialize partition array for coarse graph
     coarse_graph_data->part = (idx_t *)malloc(coarse_graph_data->nn * sizeof(idx_t));
     assert(coarse_graph_data->part);
 
-    // free memeory
+    // Free memory
     for (int index = 0; index < coarse_graph_data->nn; ++index)
     {
         free(mat_adj[index]);
@@ -114,7 +126,7 @@ int CoarseLevelGenerator(const AdjDataMesh *fine_graph_data /*fine level graph d
 }
 
 int DeepCopyDataMesh2Level0Fine(const AdjDataMesh *data_mesh /*mesh data*/,
-                                       AdjDataMesh *data_fine_level /*level 0 fine*/)
+                                AdjDataMesh *data_fine_level /*level 0 fine*/)
 {
     data_fine_level->nn = data_mesh->nn;
     data_fine_level->dim = data_mesh->dim;
@@ -1365,6 +1377,127 @@ int ParMetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
                                         Vec *mg_recur_b,
                                         int v_pre_smooth)
 {
+#if 0
+    // Duplicate vector if not at finest level
+    if (level != 0)
+    {
+        PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
+    }
+
+    // Reset KSP to clear previous configurations
+    // PetscCall(KSPReset(ksp));
+
+    if (level == 0)
+    {
+        // Finest level - use ParaSails smoother
+        PetscCall(KSPSetOperators(ksp,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine));
+
+        PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+        PetscCall(KSPGetPC(ksp, &pc));
+        PetscCall(PCSetType(pc, PCHYPRE));
+        PetscCall(PCHYPRESetType(pc, "parasails"));
+
+        PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT, v_pre_smooth));
+        PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+
+        PetscCall(KSPSetUp(ksp));
+        PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+    }
+    else
+    {
+        // Coarser levels - use ParaSails with matrix shift
+        double shift = 1e-12; // regularization for stability
+        PetscCall(MatShift(mla_ctx->metis_mla[level].operator_fine, shift));
+
+        PetscCall(KSPSetOperators(ksp,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine));
+
+        PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+        PetscCall(KSPGetPC(ksp, &pc));
+        PetscCall(PCSetType(pc, PCHYPRE));
+        PetscCall(PCHYPRESetType(pc, "parasails"));
+
+        PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT, v_pre_smooth));
+        PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+
+        PetscCall(KSPSetUp(ksp));
+        PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+    }
+
+    return 0;
+#endif // smoother-hypre
+
+#if 1
+    // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
+    if (level != 0)
+    {
+        PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
+    }
+
+    if (level == 0)
+    {
+#if 0
+    // KSP ksp_loc;
+    // PC pc_loc;
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
+    PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
+#endif
+        PetscCall(KSPSetOperators(ksp,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine));
+        PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+        PetscCall(KSPGetPC(ksp, &pc));
+        PetscCall(PCSetType(pc, PCSOR));
+        PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
+        PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
+        PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+        // PetscCall(KSPSetFromOptions(ksp));
+
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+
+        PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+        PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+    }
+    else
+    {
+#if 1
+        double shift = 1e-12; // test metis aggregation implementation
+        // double shift = 0.; // test metis aggregation implementation
+        PetscCall(MatShift(mla_ctx->metis_mla[level].operator_fine, shift));
+#endif
+        PetscCall(KSPSetOperators(ksp,
+                                  mla_ctx->metis_mla[level].operator_fine,
+                                  mla_ctx->metis_mla[level].operator_fine)); // add shift to diagonal
+        PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+        PetscCall(KSPGetPC(ksp, &pc));
+        PetscCall(PCSetType(pc, PCSOR));
+        PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
+        PetscCall(PCSORSetIterations(pc, v_pre_smooth, v_pre_smooth));
+        PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
+        PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+        // PetscCall(KSPSetFromOptions(ksp));
+
+        PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+
+        PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+        PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+    }
+
+#if 0
+    PetscCall(KSPDestroy(&ksp_loc));
+    PetscCall(PCDestroy(&pc_loc));
+#endif
+
+    return 0;
+#endif // smoother-sor
+
+#if 0
     // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     if (level != 0)
     {
@@ -1462,6 +1595,7 @@ int ParMetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
     }
 
     return 0;
+#endif // smoother-asm
 }
 
 int ParMetisMLASolverCoarsetCorrectionPhase(int order_rbm, KSP ksp, PC pc,
@@ -1588,6 +1722,54 @@ int ParMetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
                                          Vec *mg_recur_b,
                                          int v_post_smooth)
 {
+#if 0
+    // Alternative 1: Use HYPRE Jacobi smoother (simpler)
+    // PetscCall(KSPReset(ksp));
+    PetscCall(KSPSetOperators(ksp,
+                              mla_ctx->metis_mla[level].operator_fine,
+                              mla_ctx->metis_mla[level].operator_fine));
+
+    PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+    PetscCall(KSPGetPC(ksp, &pc));
+    PetscCall(PCSetType(pc, PCHYPRE));
+    PetscCall(PCHYPRESetType(pc, "pilut")); // or "pilut"
+
+    PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT, v_post_smooth));
+    PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+    PetscCall(KSPSetUp(ksp));
+    PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+
+    return 0;
+#endif // smoother-hypre
+
+#if 1
+#if 0
+    // KSP ksp_loc;
+    // PC pc_loc;
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
+    PetscCall(PCCreate(PETSC_COMM_WORLD, &pc));
+#endif
+    PetscCall(KSPSetOperators(ksp,
+                              mla_ctx->metis_mla[level].operator_fine,
+                              mla_ctx->metis_mla[level].operator_fine));
+    PetscCall(KSPSetType(ksp, KSPRICHARDSON));
+    PetscCall(KSPGetPC(ksp, &pc));
+    PetscCall(PCSetType(pc, PCSOR));
+    PetscCall(PCSORSetOmega(pc, 1.)); // gauss-seidel
+    PetscCall(PCSORSetIterations(pc, v_post_smooth, v_post_smooth));
+    PetscCall(PCSORSetSymmetric(pc, SOR_SYMMETRIC_SWEEP));
+    PetscCall(KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED));
+    // PetscCall(KSPSetFromOptions(ksp));
+
+    PetscCall(KSPSetTolerances(ksp, 1e-10, 1e-10, PETSC_DEFAULT, 1));
+
+    PetscCall(KSPSetInitialGuessNonzero(ksp, PETSC_TRUE));
+    PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
+
+    return 0;
+#endif // smoother-sor
+
+#if 0
     PetscCall(KSPSetOperators(ksp,
                               mla_ctx->metis_mla[level].operator_fine,
                               mla_ctx->metis_mla[level].operator_fine));
@@ -1630,6 +1812,7 @@ int ParMetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
     PetscCall(KSPSolve(ksp, mg_recur_b[level], mg_recur_x[level]));
 
     return 0;
+#endif // smoother-asm
 }
 
 int ParMetisMLANestedProcedure(int level /*level*/,
@@ -1798,7 +1981,7 @@ int ParMetisMLASolver(MLAContext *mla_ctx /*mla context data*/,
         int iter_cnt = 0;
         double rela_resid = 0.;
         MLASolverRelativeResidual(&(mla_ctx->mysolver), &rela_resid);
-        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
+        // PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
 
         while (iter_cnt < mla_ctx->config.mla_config.mla_max_it &&
                rela_resid > mla_ctx->config.mla_config.mla_rtol)
@@ -1809,11 +1992,11 @@ int ParMetisMLASolver(MLAContext *mla_ctx /*mla context data*/,
                                         &(mla_ctx->mysolver));
             MLASolverRelativeResidual(&(mla_ctx->mysolver), &rela_resid);
             ++iter_cnt;
-            PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
+            // PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%d MLA ||r(i)||/||b|| %021.16le\n", iter_cnt, rela_resid));
         }
 
         PetscCall(PetscTime(&time2));
-        PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> mla solve time: %g (s)\n", time2 - time1));
+        // PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> mla solve time: %g (s)\n", time2 - time1));
     }
 
     return 0;
