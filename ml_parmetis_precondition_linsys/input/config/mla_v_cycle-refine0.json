@@ -9,8 +9,8 @@
       "label_omega": 2
     },
     "mla": {
-      "pre_smooth_v": 2,
-      "post_smooth_v": 2,
+      "pre_smooth_v": 5,
+      "post_smooth_v": 5,
       "mla_max_it": 1,
       "mla_rtol": 1e-8,
       "mla_level": 10,

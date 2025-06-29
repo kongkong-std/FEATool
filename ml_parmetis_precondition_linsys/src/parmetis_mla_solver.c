@@ -1432,7 +1432,7 @@ int ParMetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
     return 0;
 #endif // smoother-hypre
 
-#if 1
+#if 0
     // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     if (level != 0)
     {
@@ -1497,7 +1497,7 @@ int ParMetisMLANestedProcedurePreSmooth(KSP ksp, PC pc,
     return 0;
 #endif // smoother-sor
 
-#if 0
+#if 1
     // PetscCall(VecDuplicate(mg_recur_b[level], mg_recur_x + level));
     if (level != 0)
     {
@@ -1742,7 +1742,7 @@ int ParMetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
     return 0;
 #endif // smoother-hypre
 
-#if 1
+#if 0
 #if 0
     // KSP ksp_loc;
     // PC pc_loc;
@@ -1769,7 +1769,7 @@ int ParMetisMLANestedProcedurePostSmooth(KSP ksp, PC pc,
     return 0;
 #endif // smoother-sor
 
-#if 0
+#if 1
     PetscCall(KSPSetOperators(ksp,
                               mla_ctx->metis_mla[level].operator_fine,
                               mla_ctx->metis_mla[level].operator_fine));

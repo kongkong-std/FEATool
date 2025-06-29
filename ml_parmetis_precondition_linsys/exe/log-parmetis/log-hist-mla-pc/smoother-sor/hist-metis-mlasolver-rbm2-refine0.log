@@ -1,0 +1,35 @@
+Config file: ../input/config/mla_v_cycle-refine0.json
+order_rbm = 2
+angle_type = 1
+==== basic information of linear system ====
+matrix Row = 1506, matrix Column = 1506
+matrix nz_allocated = 27747, matrix nz_used = 27747, matrix nz_unneeded = 0
+vector Row = 1506
+initial     || b ||_2 = 2.6501139470351753e+00
+>>>>local_vec_size = 1506
+>>>>~~~~ local_mat_m = 1506, local_mat_n = 1506
+            || b ||_2 = 2.6501139470351753e+00
+|| r ||_2 / || b ||_2 = 1.0000000000000000e+00
+
+
+>>>>nodes in level 0 is 62, less than 100, setup DONE!>>>>
+
+
+>>>> mla setup time: 0.0120673 (s)
+  0 KSP unpreconditioned resid norm 2.650113947035e+00 true resid norm 2.650113947035e+00 ||r(i)||/||b|| 1.000000000000e+00
+  1 KSP unpreconditioned resid norm 5.239047137352e+00 true resid norm 5.239047137368e+00 ||r(i)||/||b|| 1.976913914675e+00
+  2 KSP unpreconditioned resid norm 1.947665416127e-01 true resid norm 1.947665416120e-01 ||r(i)||/||b|| 7.349364801083e-02
+  3 KSP unpreconditioned resid norm 1.822713173399e-02 true resid norm 1.822713174068e-02 ||r(i)||/||b|| 6.877867180417e-03
+  4 KSP unpreconditioned resid norm 9.300755218127e-03 true resid norm 9.300755214980e-03 ||r(i)||/||b|| 3.509568041550e-03
+  5 KSP unpreconditioned resid norm 3.300392193089e-03 true resid norm 3.300392199516e-03 ||r(i)||/||b|| 1.245377468847e-03
+  6 KSP unpreconditioned resid norm 5.054871827873e-04 true resid norm 5.054871795442e-04 ||r(i)||/||b|| 1.907416773945e-04
+  7 KSP unpreconditioned resid norm 1.201239539318e-04 true resid norm 1.201239520432e-04 ||r(i)||/||b|| 4.532784417725e-05
+  8 KSP unpreconditioned resid norm 3.581595528569e-05 true resid norm 3.581594335469e-05 ||r(i)||/||b|| 1.351486919827e-05
+  9 KSP unpreconditioned resid norm 1.106013484658e-05 true resid norm 1.106013327028e-05 ||r(i)||/||b|| 4.173455742404e-06
+ 10 KSP unpreconditioned resid norm 2.234745716539e-06 true resid norm 2.234740364809e-06 ||r(i)||/||b|| 8.432619915491e-07
+ 11 KSP unpreconditioned resid norm 4.735599908820e-07 true resid norm 4.735654641898e-07 ||r(i)||/||b|| 1.786962650114e-07
+ 12 KSP unpreconditioned resid norm 8.561627951632e-08 true resid norm 8.562559182070e-08 ||r(i)||/||b|| 3.231015478278e-08
+ 13 KSP unpreconditioned resid norm 1.890748938284e-08 true resid norm 1.889199242363e-08 ||r(i)||/||b|| 7.128747216612e-09
+>>>> ksp solve time: 0.211258 (s)
+            || b ||_2 = 2.6501139470351753e+00
+|| r ||_2 / || b ||_2 = 7.1287472166116894e-09
