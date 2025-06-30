@@ -1,0 +1,20 @@
+{
+    "file": {
+      "file_mat": "/home/kongkong/Documents/DocFEMTool/FEATool/ml_parmetis_precondition_linsys/input/linsys/refine0/mat.txt",
+      "file_rhs": "/home/kongkong/Documents/DocFEMTool/FEATool/ml_parmetis_precondition_linsys/input/linsys/refine0/rhs.txt",
+      "file_mesh": "/home/kongkong/Documents/DocFEMTool/FEATool/ml_parmetis_precondition_linsys/input/mesh/linear-elasticity-2d-22.msh"
+    },
+    "mesh_label":{
+      "label_bound": 1,
+      "label_omega": 2
+    },
+    "mla": {
+      "pre_smooth_v": 5,
+      "post_smooth_v": 5,
+      "mla_max_it": 1,
+      "mla_rtol": 1e-8,
+      "mla_level": 10,
+      "mla_phase": 2,
+      "coarse_restart": 50
+    }
+  }
