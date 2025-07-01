@@ -172,6 +172,7 @@ int Level0FinePartition(const AdjDataMesh *data_mesh /*initial data mesh*/,
 
     idx_t options[METIS_NOPTIONS];
     METIS_SetDefaultOptions(options);
+    options[METIS_OPTION_SEED] = 42; // for any integer
 
     idx_t local_index_start, local_index_end;
 
@@ -346,6 +347,7 @@ int LevelKCoarsePartition(const AdjDataMesh *fine_graph /*level k fine data mesh
 
     idx_t options[METIS_NOPTIONS];
     METIS_SetDefaultOptions(options);
+    options[METIS_OPTION_SEED] = 42; // for any integer
 
     coarse_graph->vtxdist = (idx_t *)calloc(nprocs + 1, sizeof(idx_t));
     assert(coarse_graph->vtxdist);
@@ -864,10 +866,12 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                       (fine_node_y - coarse_node_y) / 2.; // -y^2/2
                         p_loc[2][8] = -(fine_node_x - coarse_node_x) *
                                       (fine_node_y - coarse_node_y) / 2.; // -xy/2
+#if 0
                         p_loc[3][7] = coarse_node_y - fine_node_y;        // -y
                         p_loc[3][8] = (coarse_node_x - fine_node_x) / 2.; // -x/2
                         p_loc[4][6] = fine_node_x - coarse_node_x;        // x
                         p_loc[4][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
+#endif // suppose 0 in right-bottom
 
                         for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
                         {
@@ -921,10 +925,12 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                       (fine_node_y - coarse_node_y) / 2.; // -y^2/2
                         p_loc[2][8] = -(fine_node_x - coarse_node_x) *
                                       (fine_node_y - coarse_node_y) / 2.; // -xy/2
+#if 0
                         p_loc[3][7] = coarse_node_y - fine_node_y;        // -y
                         p_loc[3][8] = (coarse_node_x - fine_node_x) / 2.; // -x/2
                         p_loc[4][6] = fine_node_x - coarse_node_x;        // x
                         p_loc[4][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
+#endif // suppose 0 in right-bottom
 
                         for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
                         {
@@ -1135,7 +1141,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                         double coarse_node_x = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node],
                                coarse_node_y = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 1],
                                coarse_node_z = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 2];
-
+#if 1
                         p_loc[0][3] = fine_node_z - coarse_node_z; // z
                         p_loc[0][5] = coarse_node_y - fine_node_y; // -y
                         p_loc[0][6] = (fine_node_z - coarse_node_z) *
@@ -1156,10 +1162,40 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                       (fine_node_y - coarse_node_y) / 2.; // -y^2/2
                         p_loc[2][8] = -(fine_node_x - coarse_node_x) *
                                       (fine_node_y - coarse_node_y) / 2.; // -xy/2
+#if 0
                         p_loc[3][6] = fine_node_x - coarse_node_x;        // x
                         p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
                         p_loc[4][7] = fine_node_y - coarse_node_y;        // y
                         p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
+#endif // suppose 0 in right-bottom
+#endif    // kirchhoff-love
+
+#if 0
+                        p_loc[0][3] = fine_node_z - coarse_node_z; // z
+                        p_loc[0][5] = coarse_node_y - fine_node_y; // -y
+                        p_loc[0][7] = (fine_node_x - coarse_node_x) *
+                                      (fine_node_y - coarse_node_y); // xy
+                        p_loc[0][8] = (fine_node_x - coarse_node_x) *
+                                      (fine_node_z - coarse_node_z); // xz
+                        p_loc[1][4] = fine_node_z - coarse_node_z;        // z
+                        p_loc[1][5] = fine_node_x - coarse_node_x;        // x
+                        p_loc[1][6] = (fine_node_x - coarse_node_x) *
+                                      (fine_node_y - coarse_node_y); // xy
+                        p_loc[1][8] = -(fine_node_y - coarse_node_y) *
+                                      (fine_node_z - coarse_node_z); // -yz
+                        p_loc[2][3] = coarse_node_x - fine_node_x;        // -x
+                        p_loc[2][4] = coarse_node_y - fine_node_y;        // -y
+                        p_loc[2][6] = (fine_node_x - coarse_node_x) *
+                                      (fine_node_z - coarse_node_z); // xz
+                        p_loc[2][7] = -(fine_node_y - coarse_node_y) *
+                                      (fine_node_z - coarse_node_z); // -yz
+#if 0
+                        p_loc[3][6] = fine_node_x - coarse_node_x;        // x
+                        p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
+                        p_loc[4][7] = fine_node_y - coarse_node_y;        // y
+                        p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
+#endif // suppose 0 in right-bottom
+#endif    // nullspace
 
                         for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
                         {
@@ -1193,6 +1229,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                coarse_node_y = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 1],
                                coarse_node_z = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 2];
 
+#if 1
                         p_loc[0][3] = fine_node_z - coarse_node_z; // z
                         p_loc[0][5] = coarse_node_y - fine_node_y; // -y
                         p_loc[0][6] = (fine_node_z - coarse_node_z) *
@@ -1213,10 +1250,40 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                       (fine_node_y - coarse_node_y) / 2.; // -y^2/2
                         p_loc[2][8] = -(fine_node_x - coarse_node_x) *
                                       (fine_node_y - coarse_node_y) / 2.; // -xy/2
+#if 0
                         p_loc[3][6] = fine_node_x - coarse_node_x;        // x
                         p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
                         p_loc[4][7] = fine_node_y - coarse_node_y;        // y
                         p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
+#endif // suppose 0 in right-bottom
+#endif    // krichhoff
+
+#if 0
+                        p_loc[0][3] = fine_node_z - coarse_node_z; // z
+                        p_loc[0][5] = coarse_node_y - fine_node_y; // -y
+                        p_loc[0][7] = (fine_node_x - coarse_node_x) *
+                                      (fine_node_y - coarse_node_y); // xy
+                        p_loc[0][8] = (fine_node_x - coarse_node_x) *
+                                      (fine_node_z - coarse_node_z); // xz
+                        p_loc[1][4] = fine_node_z - coarse_node_z;        // z
+                        p_loc[1][5] = fine_node_x - coarse_node_x;        // x
+                        p_loc[1][6] = (fine_node_x - coarse_node_x) *
+                                      (fine_node_y - coarse_node_y); // xy
+                        p_loc[1][8] = -(fine_node_y - coarse_node_y) *
+                                      (fine_node_z - coarse_node_z); // -yz
+                        p_loc[2][3] = coarse_node_x - fine_node_x;        // -x
+                        p_loc[2][4] = coarse_node_y - fine_node_y;        // -y
+                        p_loc[2][6] = (fine_node_x - coarse_node_x) *
+                                      (fine_node_z - coarse_node_z); // xz
+                        p_loc[2][7] = -(fine_node_y - coarse_node_y) *
+                                      (fine_node_z - coarse_node_z); // -yz
+#if 0
+                        p_loc[3][6] = fine_node_x - coarse_node_x;        // x
+                        p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
+                        p_loc[4][7] = fine_node_y - coarse_node_y;        // y
+                        p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
+#endif // suppose 0 in right-bottom
+#endif    // nullspace
 
                         for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
                         {

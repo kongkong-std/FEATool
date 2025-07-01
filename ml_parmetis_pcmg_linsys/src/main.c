@@ -3,14 +3,18 @@
 int main(int argc, char **argv)
 {
     int my_rank, nprocs;
-    MPI_Init(&argc, &argv);
-    MPI_Comm comm = MPI_COMM_WORLD;
-    MPI_Comm_rank(comm, &my_rank);
-    MPI_Comm_size(comm, &nprocs);
+    MPI_Comm comm;
+    // MPI_Init(&argc, &argv);
 
     PetscFunctionBeginUser;
 
     PetscCall(PetscInitialize(&argc, &argv, (char *)0, NULL));
+
+    // MPI_Comm comm = MPI_COMM_WORLD;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
     PetscBool path_flag;
 
     char path_config[PETSC_MAX_PATH_LEN];
@@ -320,6 +324,9 @@ int main(int argc, char **argv)
     PetscCall(ParMetisMLASolver(&mla_ctx, 2));
 #endif // mla solver test
 
+    // calling ParMetisMLASolver setup phase
+    PetscCall(ParMetisMLASolver(&mla_ctx, 0));
+
     /*
      * linear system solver
      */
@@ -332,6 +339,71 @@ int main(int argc, char **argv)
         PetscCall(PCShellSetSetUp(mysolver.pc, ParMetisMLAShellPCSetup));
         PetscCall(PCShellSetApply(mysolver.pc, ParMetisMLAShellPCApply));
     }
+
+    // pcmg framework
+    /*
+     * PCSetType() -> pcmg
+     * PCMGSetLevels() -> mla_ctx.num_level
+     * PCMGSetType() -> PC_MG_MULTIPLICATIVE
+     * PCMGSetCycleType() -> PC_MG_CYCLE_V
+     * PCMGSetInterpolation() -> mla_ctx.metis_mla[level].prolongation
+     * PCMGGetSmoother() and KSPGetPC() and PCSetType() -> set smoother
+     * PCMGSetNumberSmooth() -> mla_ctx.config.mla_config.pre_smooth_v
+     * PCMGSetOperators() -> mla_ctx.metis_mla[level].operator_fine
+     */
+    PetscCall(PCMGSetupFromMLA(&mla_ctx, &mysolver));
+#if 0
+    PetscCall(PCSetType(mysolver.pc, PCMG));
+    // PetscCall(PCMGSetLevels(mysolver.pc, mla_ctx.num_level + 1, &comm));
+    PetscCall(PCMGSetLevels(mysolver.pc, mla_ctx.num_level + 1, NULL));
+    PetscCall(PCMGSetType(mysolver.pc, PC_MG_MULTIPLICATIVE));
+    PetscCall(PCMGSetCycleType(mysolver.pc, PC_MG_CYCLE_V));
+
+    // prolongation oprator
+    for (int level = 1; level < mla_ctx.num_level + 1; ++level)
+    {
+        PetscCall(PCMGSetInterpolation(mysolver.pc, level, mla_ctx.metis_mla[mla_ctx.num_level - level].prolongation));
+    }
+
+    // level operator
+    for (int level = 1; level < mla_ctx.num_level + 1; ++level)
+    {
+#if 1
+        double shift = 1e-12;
+        PetscCall(MatShift(mla_ctx.metis_mla[mla_ctx.num_level - level].operator_fine, shift));
+#endif // diagonal shift
+
+        PetscCall(PCMGSetOperators(mysolver.pc, level,
+                                   mla_ctx.metis_mla[mla_ctx.num_level - level].operator_fine,
+                                   mla_ctx.metis_mla[mla_ctx.num_level - level].operator_fine));
+    }
+#if 1
+    double shift = 1e-12;
+    PetscCall(MatShift(mla_ctx.metis_mla[mla_ctx.num_level - 1].operator_coarse, shift));
+#endif // diagonal shift
+    PetscCall(PCMGSetOperators(mysolver.pc, 0,
+                               mla_ctx.metis_mla[mla_ctx.num_level - 1].operator_coarse,
+                               mla_ctx.metis_mla[mla_ctx.num_level - 1].operator_coarse)); // coarest level
+
+    PetscCall(PCMGSetNumberSmooth(mysolver.pc, mla_ctx.config.mla_config.pre_smooth_v));
+
+    // smoother
+    for(int level = 0; level < mla_ctx.num_level + 1; ++level)
+    {
+        KSP smoother;
+        PetscCall(PCMGGetSmoother(mysolver.pc, level, &smoother));
+        PetscCall(KSPView(smoother, PETSC_VIEWER_STDOUT_WORLD));
+    }
+
+    // coarsest level solver
+    KSP coarse_ksp;
+    PC coarse_pc;
+
+    PetscCall(PCMGGetCoarseSolve(mysolver.pc, &coarse_ksp));
+    PetscCall(KSPGetPC(coarse_ksp, &coarse_pc));
+    PetscCall(PCSetType(coarse_pc, PCLU)); // Direct solver for coarse grid
+    PetscCall(KSPSetType(coarse_ksp, KSPPREONLY));
+#endif
 
     PetscCall(KSPSetFromOptions(mysolver.ksp));
 
@@ -374,7 +446,7 @@ int main(int argc, char **argv)
     PetscCall(VecDestroy(&(mysolver.solver_r)));
 
     PetscCall(PetscFinalize());
-    MPI_Finalize();
+    // MPI_Finalize();
     return 0;
 }
 

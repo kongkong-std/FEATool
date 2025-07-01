@@ -182,6 +182,14 @@ typedef struct
 
 // function prototype
 /*
+ * pcmg setup, mla_ctx aggregation setup data to pcmg framework
+ *     mla_ctx (I) mla context data
+ *     mysolver (O) setup data to pc
+ */
+int PCMGSetupFromMLA(const MLAContext *mla_ctx /*mla context data*/,
+                     MySolver *mysolver /*solver data*/);
+
+/*
  * deep copy mla context to mysolver
  */
 int DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src);
