@@ -866,7 +866,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                       (fine_node_y - coarse_node_y) / 2.; // -y^2/2
                         p_loc[2][8] = -(fine_node_x - coarse_node_x) *
                                       (fine_node_y - coarse_node_y) / 2.; // -xy/2
-#if 0
+#if 1
                         p_loc[3][7] = coarse_node_y - fine_node_y;        // -y
                         p_loc[3][8] = (coarse_node_x - fine_node_x) / 2.; // -x/2
                         p_loc[4][6] = fine_node_x - coarse_node_x;        // x
@@ -925,7 +925,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                       (fine_node_y - coarse_node_y) / 2.; // -y^2/2
                         p_loc[2][8] = -(fine_node_x - coarse_node_x) *
                                       (fine_node_y - coarse_node_y) / 2.; // -xy/2
-#if 0
+#if 1
                         p_loc[3][7] = coarse_node_y - fine_node_y;        // -y
                         p_loc[3][8] = (coarse_node_x - fine_node_x) / 2.; // -x/2
                         p_loc[4][6] = fine_node_x - coarse_node_x;        // x
@@ -1162,7 +1162,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                       (fine_node_y - coarse_node_y) / 2.; // -y^2/2
                         p_loc[2][8] = -(fine_node_x - coarse_node_x) *
                                       (fine_node_y - coarse_node_y) / 2.; // -xy/2
-#if 0
+#if 1
                         p_loc[3][6] = fine_node_x - coarse_node_x;        // x
                         p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
                         p_loc[4][7] = fine_node_y - coarse_node_y;        // y
@@ -1250,7 +1250,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                       (fine_node_y - coarse_node_y) / 2.; // -y^2/2
                         p_loc[2][8] = -(fine_node_x - coarse_node_x) *
                                       (fine_node_y - coarse_node_y) / 2.; // -xy/2
-#if 0
+#if 1
                         p_loc[3][6] = fine_node_x - coarse_node_x;        // x
                         p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
                         p_loc[4][7] = fine_node_y - coarse_node_y;        // y
