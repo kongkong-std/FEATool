@@ -324,3 +324,108 @@ int FileProcessMesh(const char *path /*path to mesh file*/, DataMesh *mesh_data 
 
     return 0;
 }
+
+int FileProcessComsolMesh(const char *path /*path to mesh file*/,
+                          DataMesh *mesh_data /*mesh data*/)
+{
+    FILE *fp = fopen(path, "rb");
+    assert(fp);
+
+    char buffer[BUF_MAX_SIZE];
+    FlagDataBlockComsolMesh current_status = COMSOL_NONE;
+
+    int num_tri_ele = 0, num_tetra_ele = 0;
+
+    DataMeshEle *ele_tmp = NULL;
+
+    while (fgets(buffer, BUF_MAX_SIZE, fp))
+    {
+        if (strstr(buffer, "# number of mesh vertices"))
+        {
+            sscanf(buffer, "%d", &mesh_data->nn);
+            mesh_data->dim = 3;
+            mesh_data->coordinates = (double *)malloc(mesh_data->dim *
+                                                      mesh_data->nn * sizeof(double));
+            assert(mesh_data->coordinates);
+        }
+
+        if (strstr(buffer, "# Mesh vertex coordinates"))
+        {
+            for (int index = 0; index < mesh_data->nn; ++index)
+            {
+                fscanf(fp, " %lf %lf %lf ", mesh_data->coordinates + 3 * index,
+                       mesh_data->coordinates + 3 * index + 1,
+                       mesh_data->coordinates + 3 * index + 2);
+            }
+        }
+
+        if (strstr(buffer, "tri # type name"))
+        {
+            current_status = COMSOL_TRI_ELEMENTS;
+            continue;
+        }
+
+        switch (current_status)
+        {
+        case COMSOL_TRI_ELEMENTS:
+            if (strstr(buffer, "# number of elements"))
+            {
+                sscanf(buffer, "%d", &num_tri_ele);
+                ele_tmp = (DataMeshEle *)malloc(num_tri_ele * sizeof(DataMeshEle));
+                assert(ele_tmp);
+
+                for (int index = 0; index < num_tri_ele; ++index)
+                {
+                    ele_tmp[index].ele_type = 3;
+                    ele_tmp[index].num_ele_node = NumNodeEleTypeMap(ele_tmp[index].ele_type);
+                    ele_tmp[index].ele_node = (int *)malloc(ele_tmp[index].num_ele_node * sizeof(int));
+                    assert(ele_tmp[index].ele_node);
+                }
+            }
+
+            if (strstr(buffer, "# Elements"))
+            {
+                for (int index = 0; index < num_tri_ele; ++index)
+                {
+                    fscanf(fp, " %d %d %d ", ele_tmp[index].ele_node,
+                           ele_tmp[index].ele_node + 1,
+                           ele_tmp[index].ele_node + 2);
+                }
+            }
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    fclose(fp);
+
+    mesh_data->ne_shell = num_tri_ele;
+    mesh_data->ele_shell = (DataMeshEle *)malloc(mesh_data->ne_shell * sizeof(DataMeshEle));
+    assert(mesh_data->ele_shell);
+
+    mesh_data->ne = mesh_data->ne_shell;
+
+    for (int index = 0; index < mesh_data->ne_shell; ++index)
+    {
+        mesh_data->ele_shell[index].ele_type = ele_tmp[index].ele_type;
+        mesh_data->ele_shell[index].num_ele_node = ele_tmp[index].num_ele_node;
+
+        mesh_data->ele_shell[index].ele_node = (int *)malloc(mesh_data->ele_shell[index].num_ele_node * sizeof(int));
+        assert(mesh_data->ele_shell[index].ele_node);
+
+        memcpy(mesh_data->ele_shell[index].ele_node,
+               ele_tmp[index].ele_node,
+               mesh_data->ele_shell[index].num_ele_node * sizeof(int));
+    }
+
+    // free memory
+    for (int index = 0; index < num_tri_ele; ++index)
+    {
+        free(ele_tmp[index].ele_node);
+    }
+    free(ele_tmp);
+
+    return 0;
+}

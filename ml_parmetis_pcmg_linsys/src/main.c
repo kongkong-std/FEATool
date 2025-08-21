@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     PetscBool path_flag;
 
     char path_config[PETSC_MAX_PATH_LEN];
-    PetscInt order_rbm = 0, angle_type = 0;
+    PetscInt order_rbm = 0, angle_type = 0, mesh_type = 0;
 
     PetscCall(PetscOptionsGetString(NULL, NULL, "-config", path_config, sizeof(path_config), &path_flag));
     if (path_flag)
@@ -46,6 +46,17 @@ int main(int argc, char **argv)
          * angle_type = 1, normal rotational angle with axis
          */
         PetscCall(PetscPrintf(comm, "angle_type = %" PetscInt_FMT "\n", angle_type));
+    }
+
+    PetscCall(PetscOptionsGetInt(NULL, NULL, "-mesh_type", &mesh_type, &path_flag));
+    if (path_flag)
+    {
+        // parameter mesh_type
+        /*
+         * mesh_type = 0, gmsh type mesh file
+         * mesh_type = 1, comsol type mesh file
+         */
+        PetscCall(PetscPrintf(comm, "mesh_type = %" PetscInt_FMT "\n", mesh_type));
     }
 
     // user-defined precondition
@@ -110,7 +121,14 @@ int main(int argc, char **argv)
 
     if (my_rank == 0)
     {
-        FileProcessMesh(mla_ctx.config.file_config.file_mesh, &mesh_data);
+        if (mesh_type == 0)
+        {
+            FileProcessMesh(mla_ctx.config.file_config.file_mesh, &mesh_data);
+        }
+        else if (mesh_type == 1)
+        {
+            FileProcessComsolMesh(mla_ctx.config.file_config.file_mesh, &mesh_data);
+        }
 #if 0
         puts("\n>>>> information of mesh >>>>\n");
         printf("nn of mesh: %d\n", mesh_data.nn);
@@ -636,4 +654,5 @@ int main(int argc, char **argv)
  *     -pc_type hypre
  *     -pc_hypre_type boomeramg
  *     -pc_hypre_boomeramg_numfunctions
+ *     -mesh_type <0: gmsh file>/<1: comsol mesh file>
  */

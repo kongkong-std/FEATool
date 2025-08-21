@@ -100,6 +100,17 @@ typedef enum
 typedef Flag_Data_Block FlagDataBlockGmsh;
 
 /*
+ * comsol mesh data block flag
+ */
+typedef enum
+{
+    COMSOL_NONE,    // 0
+    COMSOL_TYPES,    // 1
+    COMSOL_NODES,    // 2
+    COMSOL_TRI_ELEMENTS    // 3
+} FlagDataBlockComsolMesh;
+
+/*
  * json data struct
  */
 typedef struct
@@ -382,9 +393,14 @@ int GlobalGraphCSRAdjGenerator(const DataMesh *mesh_data /*mesh data*/,
 /*
  * mesh data file
  *     1. gmsh file
- *     2. comsol mesh file
  */
 int FileProcessMesh(const char *path /*path to mesh file*/, DataMesh *mesh_data /*mesh data*/);
+
+/*
+ * mesh data file
+ *     1. comsol file
+ */
+int FileProcessComsolMesh(const char *path /*path to mesh file*/, DataMesh *mesh_data /*mesh data*/);
 
 /*
  * computing residual
