@@ -104,10 +104,10 @@ typedef Flag_Data_Block FlagDataBlockGmsh;
  */
 typedef enum
 {
-    COMSOL_NONE,    // 0
-    COMSOL_TYPES,    // 1
-    COMSOL_NODES,    // 2
-    COMSOL_TRI_ELEMENTS    // 3
+    COMSOL_NONE,        // 0
+    COMSOL_TYPES,       // 1
+    COMSOL_NODES,       // 2
+    COMSOL_TRI_ELEMENTS // 3
 } FlagDataBlockComsolMesh;
 
 /*
@@ -162,18 +162,20 @@ typedef struct
 typedef struct
 {
     /* data */
-    AdjDataMesh *fine;   // fine mesh
-    AdjDataMesh *coarse; // coarse mesh
-    Mat prolongation;    // prolongation operator
-    Mat operator_coarse; // coarse operator
-    Mat operator_fine;   // fine operator
-    KSP ksp_presmooth;   // pre-smooth solver
-    KSP ksp_postsmooth;  // post-smooth solver
-    KSP ksp_coarse;      // coarse solver
-    PC pc_presmooth;     // pre-smooth preconditioner
-    PC pc_postsmooth;    // post-smooth preconditioner
-    PC pc_coarse;        // coarse preconditioner
-    int level;           // current level
+    AdjDataMesh *fine;    // fine mesh
+    AdjDataMesh *coarse;  // coarse mesh
+    Mat prolongation;     // prolongation operator
+    Mat usa_prolongation; // unsmoothed prolongation operator
+    Mat sa_prolongation;  // smoothed prolongation operator
+    Mat operator_coarse;  // coarse operator
+    Mat operator_fine;    // fine operator
+    KSP ksp_presmooth;    // pre-smooth solver
+    KSP ksp_postsmooth;   // post-smooth solver
+    KSP ksp_coarse;       // coarse solver
+    PC pc_presmooth;      // pre-smooth preconditioner
+    PC pc_postsmooth;     // post-smooth preconditioner
+    PC pc_coarse;         // coarse preconditioner
+    int level;            // current level
 } MetisMLAGraph;
 
 typedef struct
@@ -192,6 +194,21 @@ typedef struct
 } MLAContext;
 
 // function prototype
+/*
+ * constructing smoothed aggregation prolongation operator
+ * from unsmoothed aggregation prolongation operator
+ *     P_smooth = (I - omega inv(D) A) P_unsmooth
+ *     omega is a constant number in (0, 1), generally set as 0.67
+ *     D is the diagonal of A (if zero in diagonal entry, set as 1.)
+ *
+ *     A (I) fine operator
+ *     P_unsmooth (I) unsmoothed prolongation
+ *     omega (I) jacobian smoother damping number
+ *     P_smooth (O) pointer to smoothed prolongation
+ */
+int USAProlongation2SAProlongation(Mat A, Mat P_unsmooth, PetscScalar omega,
+                                   Mat * P_smooth);
+
 /*
  * pcmg setup, mla_ctx aggregation setup data to pcmg framework
  *     mla_ctx (I) mla context data

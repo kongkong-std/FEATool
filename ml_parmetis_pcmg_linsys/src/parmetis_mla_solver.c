@@ -577,6 +577,95 @@ int DeepCopyCoarse2NextLevelFine(const AdjDataMesh *coarse_graph /*coarse level 
     return 0;
 }
 
+int USAProlongation2SAProlongation(Mat A, Mat P_unsmooth, PetscScalar omega,
+                                   Mat *P_smooth)
+{
+    PetscInt prolongation_m = 0, m_local_A, n_local_A;
+    PetscCall(MatGetSize(A, &prolongation_m, NULL));
+    PetscCall(MatGetLocalSize(A, &m_local_A, &n_local_A));
+
+    Vec D_vec;
+    PetscCall(MatCreateVecs(A, NULL, &D_vec));
+    PetscCall(MatGetDiagonal(A, D_vec));
+
+    PetscInt n_local;
+    PetscScalar *d_array;
+    PetscCall(VecGetLocalSize(D_vec, &n_local));
+    PetscCall(VecGetArray(D_vec, &d_array));
+
+    MPI_Comm comm = MPI_COMM_WORLD;
+    int my_rank, nprocs;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+    printf("in rank %d/%d, m_local_A = %d, n_local = %d\n", my_rank, nprocs, m_local_A, n_local);
+
+    for (PetscInt i = 0; i < n_local; i++)
+    {
+        if (PetscAbsScalar(d_array[i]) < PETSC_MACHINE_EPSILON)
+        {
+            d_array[i] = 1.0; // Set zero diagonal entries to 1
+        }
+    }
+
+    PetscCall(VecRestoreArray(D_vec, &d_array));
+    // Now compute D^{-1} (reciprocal of diagonal elements)
+    PetscCall(VecReciprocal(D_vec));
+
+    Mat D_inv;
+    PetscCall(MatCreate(PETSC_COMM_WORLD, &D_inv));
+    PetscCall(MatSetSizes(D_inv, m_local_A, n_local_A, prolongation_m, prolongation_m));
+    PetscCall(MatSetType(D_inv, MATAIJ));
+    PetscCall(MatSetUp(D_inv));
+    PetscCall(MatDiagonalSet(D_inv, D_vec, INSERT_VALUES));
+    PetscCall(MatAssemblyBegin(D_inv, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(D_inv, MAT_FINAL_ASSEMBLY));
+
+    Mat Dinv_A;
+    PetscCall(MatMatMult(D_inv, A, MAT_INITIAL_MATRIX, PETSC_DETERMINE, &Dinv_A));
+    PetscCall(MatScale(Dinv_A, -omega));
+
+    PetscCall(MatShift(Dinv_A, 1.));
+
+    // Mat A_times_usa;
+    // PetscCall(MatMatMult(A, P_unsmooth, MAT_INITIAL_MATRIX, PETSC_DETERMINE, &A_times_usa));
+
+    // Mat Dinv_A_usa;
+    // PetscCall(MatMatMult(D_inv, A_times_usa, MAT_INITIAL_MATRIX, PETSC_DETERMINE, &Dinv_A_usa));
+
+    // PetscCall(MatScale(Dinv_A_usa, omega));
+
+    // PetscCall(MatDuplicate(P_unsmooth,
+    //                        MAT_COPY_VALUES,
+    //                        &P_smooth));
+    // PetscCall(MatAXPY(P_unsmooth, -1.0, Dinv_A_usa, UNKNOWN_NONZERO_PATTERN));
+
+    // PetscCall(MatDuplicate(P_unsmooth,
+    //                        MAT_COPY_VALUES,
+    //                        &P_smooth));
+
+    PetscCall(MatMatMult(Dinv_A, P_unsmooth, MAT_INITIAL_MATRIX, PETSC_DETERMINE, P_smooth));
+
+#if 1
+    int m_dinv_a, n_dinv_a,
+        m_p_unsmooth, n_p_unsmooth,
+        m_p_smooth, n_p_smooth;
+    MatGetSize(Dinv_A, &m_dinv_a, &n_dinv_a);
+    MatGetSize(P_unsmooth, &m_p_unsmooth, &n_p_unsmooth);
+    MatGetSize(*P_smooth, &m_p_smooth, &n_p_smooth);
+    printf(">>>> size of dinv_a: m = %d, n = %d\n", m_dinv_a, n_dinv_a);
+    printf(">>>> size of p_unsmooth: m = %d, n = %d\n", m_p_unsmooth, n_p_unsmooth);
+    printf(">>>> size of p_smooth: m = %d, n = %d\n", m_p_smooth, n_p_smooth);
+#endif
+
+    PetscCall(MatDestroy(&Dinv_A));
+    PetscCall(VecDestroy(&D_vec));
+    PetscCall(MatDestroy(&D_inv));
+    // PetscCall(MatDestroy(&A_times_usa));
+    // PetscCall(MatDestroy(&Dinv_A_usa));
+
+    return 0;
+}
+
 int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
 {
     if (mla_ctx->setup == 1)
@@ -704,12 +793,22 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                        my_rank, nprocs,
                        local_prolongation_n, prolongation_n);
 #endif // prolongation size
+
+#if 0
                 PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].prolongation)));
                 PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].prolongation,
                                       6 * local_prolongation_m, 6 * local_prolongation_n,
                                       prolongation_m, prolongation_n));
                 PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].prolongation, MATAIJ)); // prolongation set type- mataij
                 PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].prolongation));
+#endif // original implementation, usa-prolongation operator
+
+                PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].usa_prolongation))); // usa-prolongation operator
+                PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
+                                      6 * local_prolongation_m, 6 * local_prolongation_n,
+                                      prolongation_m, prolongation_n));
+                PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MATAIJ)); // prolongation set type- mataij
+                PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].usa_prolongation));
 
                 for (int index_fine_node = local_index_start; index_fine_node < local_index_end; ++index_fine_node)
                 {
@@ -739,7 +838,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                     {
                         for (int index_tmp_j = 0; index_tmp_j < 6; ++index_tmp_j)
                         {
-                            PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                            PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                                   6 * index_fine_node + index_tmp_i,
                                                   6 * index_coarse_node + index_tmp_j,
                                                   p_loc[index_tmp_i][index_tmp_j],
@@ -748,8 +847,8 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                     }
                 }
 
-                PetscCall(MatAssemblyBegin(mla_ctx->metis_mla[index_cnt_level].prolongation, MAT_FINAL_ASSEMBLY));
-                PetscCall(MatAssemblyEnd(mla_ctx->metis_mla[index_cnt_level].prolongation, MAT_FINAL_ASSEMBLY));
+                PetscCall(MatAssemblyBegin(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MAT_FINAL_ASSEMBLY));
+                PetscCall(MatAssemblyEnd(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MAT_FINAL_ASSEMBLY));
 
 #if 0
                 puts("prolongation operator done!!\n\n");
@@ -768,10 +867,10 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                 }
 #endif // information of parallel layouts
 
-#if 1
+#if 0
                 // coarse operator
                 PetscCall(MatPtAP(mla_ctx->metis_mla[index_cnt_level].operator_fine,
-                                  mla_ctx->metis_mla[index_cnt_level].prolongation,
+                                  mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                   MAT_INITIAL_MATRIX,
                                   PETSC_DETERMINE,
                                   &(mla_ctx->metis_mla[index_cnt_level].operator_coarse)));
@@ -780,7 +879,45 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                 PetscCall(MatDuplicate(mla_ctx->metis_mla[index_cnt_level].operator_coarse,
                                        MAT_COPY_VALUES,
                                        &(mla_ctx->metis_mla[index_cnt_level + 1].operator_fine)));
-#endif
+#endif // unsmoothed aggregation-based mg
+
+#if 1
+                // smoothed prolongation operator
+                // PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].sa_prolongation))); // usa-prolongation operator
+                // PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                //                       6 * local_prolongation_m, 6 * local_prolongation_n,
+                //                       prolongation_m, prolongation_n));
+                // PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].sa_prolongation, MATAIJ)); // prolongation set type- mataij
+                // PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].sa_prolongation));
+
+                PetscScalar omega = 0.67;
+
+                PetscCall(USAProlongation2SAProlongation(mla_ctx->metis_mla[index_cnt_level].operator_fine,
+                                                         mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
+                                                         omega,
+                                                         &mla_ctx->metis_mla[index_cnt_level].sa_prolongation));
+
+#if 1
+                PetscInt m_sa_prolongation, n_sa_prolongation,
+                    m_operator_fine, n_operator_fine;
+                PetscCall(MatGetSize(mla_ctx->metis_mla[index_cnt_level].sa_prolongation, &m_sa_prolongation, &n_sa_prolongation));
+                PetscCall(MatGetSize(mla_ctx->metis_mla[index_cnt_level].operator_fine, &m_operator_fine, &n_operator_fine));
+                PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> size of sa_prolongation: m = %d, n = %d\n", m_sa_prolongation, n_sa_prolongation));
+                PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> size of operator_fine: m = %d, n = %d\n", m_operator_fine, n_operator_fine));
+#endif // size
+
+                // coarse operator
+                PetscCall(MatPtAP(mla_ctx->metis_mla[index_cnt_level].operator_fine,
+                                  mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                                  MAT_INITIAL_MATRIX,
+                                  PETSC_DETERMINE,
+                                  &(mla_ctx->metis_mla[index_cnt_level].operator_coarse)));
+
+                // next level fine operator
+                PetscCall(MatDuplicate(mla_ctx->metis_mla[index_cnt_level].operator_coarse,
+                                       MAT_COPY_VALUES,
+                                       &(mla_ctx->metis_mla[index_cnt_level + 1].operator_fine)));
+#endif // smoothed aggregation-based mg
             }
         }
 
@@ -811,21 +948,21 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                 PetscInt local_prolongation_m = local_index_end - local_index_start,
                          local_prolongation_n = coarse_local_index_end - coarse_local_index_start;
 
-                PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].prolongation)));
+                PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].usa_prolongation)));
                 if (index_cnt_level == 0)
                 {
-                    PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                    PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                           local_prolongation_m * 6, local_prolongation_n * 9,
                                           prolongation_m, prolongation_n));
                 }
                 else
                 {
-                    PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                    PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                           local_prolongation_m * 9, local_prolongation_n * 9,
                                           prolongation_m, prolongation_n));
                 }
-                PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].prolongation, MATAIJ)); // prolongation set type- mataij
-                PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].prolongation));
+                PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MATAIJ)); // prolongation set type- mataij
+                PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].usa_prolongation));
 
                 if (index_cnt_level == 0)
                 {
@@ -871,13 +1008,13 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                         p_loc[3][8] = (coarse_node_x - fine_node_x) / 2.; // -x/2
                         p_loc[4][6] = fine_node_x - coarse_node_x;        // x
                         p_loc[4][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
-#endif // suppose 0 in right-bottom
+#endif                                                                    // suppose 0 in right-bottom
 
                         for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
                         {
                             for (int index_tmp_j = 0; index_tmp_j < 9; ++index_tmp_j)
                             {
-                                PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                                PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                                       6 * index_fine_node + index_tmp_i,
                                                       9 * index_coarse_node + index_tmp_j,
                                                       p_loc[index_tmp_i][index_tmp_j],
@@ -930,13 +1067,13 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                         p_loc[3][8] = (coarse_node_x - fine_node_x) / 2.; // -x/2
                         p_loc[4][6] = fine_node_x - coarse_node_x;        // x
                         p_loc[4][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
-#endif // suppose 0 in right-bottom
+#endif                                                                    // suppose 0 in right-bottom
 
                         for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
                         {
                             for (int index_tmp_j = 0; index_tmp_j < 9; ++index_tmp_j)
                             {
-                                PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                                PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                                       9 * index_fine_node + index_tmp_i,
                                                       9 * index_coarse_node + index_tmp_j,
                                                       p_loc[index_tmp_i][index_tmp_j],
@@ -946,12 +1083,13 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                     }
                 }
 
-                PetscCall(MatAssemblyBegin(mla_ctx->metis_mla[index_cnt_level].prolongation, MAT_FINAL_ASSEMBLY));
-                PetscCall(MatAssemblyEnd(mla_ctx->metis_mla[index_cnt_level].prolongation, MAT_FINAL_ASSEMBLY));
+                PetscCall(MatAssemblyBegin(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MAT_FINAL_ASSEMBLY));
+                PetscCall(MatAssemblyEnd(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MAT_FINAL_ASSEMBLY));
 
+#if 0
                 // coarse operator
                 PetscCall(MatPtAP(mla_ctx->metis_mla[index_cnt_level].operator_fine,
-                                  mla_ctx->metis_mla[index_cnt_level].prolongation,
+                                  mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                   MAT_INITIAL_MATRIX,
                                   PETSC_DETERMINE,
                                   &(mla_ctx->metis_mla[index_cnt_level].operator_coarse)));
@@ -960,6 +1098,54 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                 PetscCall(MatDuplicate(mla_ctx->metis_mla[index_cnt_level].operator_coarse,
                                        MAT_COPY_VALUES,
                                        &(mla_ctx->metis_mla[index_cnt_level + 1].operator_fine)));
+#endif // unsmoothed aggregation-based mg
+
+#if 1
+                // smoothed prolongation operator
+                // PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].sa_prolongation))); // usa-prolongation operator
+                // if (index_cnt_level == 0)
+                // {
+                //     PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                //                           local_prolongation_m * 6, local_prolongation_n * 9,
+                //                           prolongation_m, prolongation_n));
+                // }
+                // else
+                // {
+                //     PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                //                           local_prolongation_m * 9, local_prolongation_n * 9,
+                //                           prolongation_m, prolongation_n));
+                // }
+                // PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MATAIJ)); // prolongation set type- mataij
+                // PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].usa_prolongation));
+
+                PetscScalar omega = 0.67;
+
+                PetscCall(USAProlongation2SAProlongation(mla_ctx->metis_mla[index_cnt_level].operator_fine,
+                                                         mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
+                                                         omega,
+                                                         &mla_ctx->metis_mla[index_cnt_level].sa_prolongation));
+
+#if 1
+                PetscInt m_sa_prolongation, n_sa_prolongation,
+                    m_operator_fine, n_operator_fine;
+                PetscCall(MatGetSize(mla_ctx->metis_mla[index_cnt_level].sa_prolongation, &m_sa_prolongation, &n_sa_prolongation));
+                PetscCall(MatGetSize(mla_ctx->metis_mla[index_cnt_level].operator_fine, &m_operator_fine, &n_operator_fine));
+                PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> size of sa_prolongation: m = %d, n = %d\n", m_sa_prolongation, n_sa_prolongation));
+                PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> size of operator_fine: m = %d, n = %d\n", m_operator_fine, n_operator_fine));
+#endif // size
+
+                // coarse operator
+                PetscCall(MatPtAP(mla_ctx->metis_mla[index_cnt_level].operator_fine,
+                                  mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                                  MAT_INITIAL_MATRIX,
+                                  PETSC_DETERMINE,
+                                  &(mla_ctx->metis_mla[index_cnt_level].operator_coarse)));
+
+                // next level fine operator
+                PetscCall(MatDuplicate(mla_ctx->metis_mla[index_cnt_level].operator_coarse,
+                                       MAT_COPY_VALUES,
+                                       &(mla_ctx->metis_mla[index_cnt_level + 1].operator_fine)));
+#endif // smoothed aggregation-based mg
             }
         }
     }
@@ -1000,12 +1186,12 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                        my_rank, nprocs,
                        local_prolongation_n, prolongation_n);
 #endif // prolongation size
-                PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].prolongation)));
-                PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].usa_prolongation)));
+                PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                       6 * local_prolongation_m, 6 * local_prolongation_n,
                                       prolongation_m, prolongation_n));
-                PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].prolongation, MATAIJ)); // prolongation set type- mataij
-                PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].prolongation));
+                PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MATAIJ)); // prolongation set type- mataij
+                PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].usa_prolongation));
 
                 for (int index_fine_node = local_index_start; index_fine_node < local_index_end; ++index_fine_node)
                 {
@@ -1035,7 +1221,7 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                     {
                         for (int index_tmp_j = 0; index_tmp_j < 6; ++index_tmp_j)
                         {
-                            PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                            PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                                   6 * index_fine_node + index_tmp_i,
                                                   6 * index_coarse_node + index_tmp_j,
                                                   p_loc[index_tmp_i][index_tmp_j],
@@ -1044,8 +1230,8 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                     }
                 }
 
-                PetscCall(MatAssemblyBegin(mla_ctx->metis_mla[index_cnt_level].prolongation, MAT_FINAL_ASSEMBLY));
-                PetscCall(MatAssemblyEnd(mla_ctx->metis_mla[index_cnt_level].prolongation, MAT_FINAL_ASSEMBLY));
+                PetscCall(MatAssemblyBegin(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MAT_FINAL_ASSEMBLY));
+                PetscCall(MatAssemblyEnd(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MAT_FINAL_ASSEMBLY));
 
 #if 0
                 puts("prolongation operator done!!\n\n");
@@ -1064,10 +1250,10 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                 }
 #endif // information of parallel layouts
 
-#if 1
+#if 0
                 // coarse operator
                 PetscCall(MatPtAP(mla_ctx->metis_mla[index_cnt_level].operator_fine,
-                                  mla_ctx->metis_mla[index_cnt_level].prolongation,
+                                  mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                   MAT_INITIAL_MATRIX,
                                   PETSC_DETERMINE,
                                   &(mla_ctx->metis_mla[index_cnt_level].operator_coarse)));
@@ -1076,7 +1262,45 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                 PetscCall(MatDuplicate(mla_ctx->metis_mla[index_cnt_level].operator_coarse,
                                        MAT_COPY_VALUES,
                                        &(mla_ctx->metis_mla[index_cnt_level + 1].operator_fine)));
-#endif
+#endif // unsmoothed aggregation-based mg
+
+#if 1
+                // smoothed prolongation operator
+                // PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].sa_prolongation))); // usa-prolongation operator
+                // PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                //                       6 * local_prolongation_m, 6 * local_prolongation_n,
+                //                       prolongation_m, prolongation_n));
+                // PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].sa_prolongation, MATAIJ)); // prolongation set type- mataij
+                // PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].sa_prolongation));
+
+                PetscScalar omega = 0.67;
+
+                PetscCall(USAProlongation2SAProlongation(mla_ctx->metis_mla[index_cnt_level].operator_fine,
+                                                         mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
+                                                         omega,
+                                                         &mla_ctx->metis_mla[index_cnt_level].sa_prolongation));
+
+#if 1
+                PetscInt m_sa_prolongation, n_sa_prolongation,
+                    m_operator_fine, n_operator_fine;
+                PetscCall(MatGetSize(mla_ctx->metis_mla[index_cnt_level].sa_prolongation, &m_sa_prolongation, &n_sa_prolongation));
+                PetscCall(MatGetSize(mla_ctx->metis_mla[index_cnt_level].operator_fine, &m_operator_fine, &n_operator_fine));
+                PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> size of sa_prolongation: m = %d, n = %d\n", m_sa_prolongation, n_sa_prolongation));
+                PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> size of operator_fine: m = %d, n = %d\n", m_operator_fine, n_operator_fine));
+#endif // size
+
+                // coarse operator
+                PetscCall(MatPtAP(mla_ctx->metis_mla[index_cnt_level].operator_fine,
+                                  mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                                  MAT_INITIAL_MATRIX,
+                                  PETSC_DETERMINE,
+                                  &(mla_ctx->metis_mla[index_cnt_level].operator_coarse)));
+
+                // next level fine operator
+                PetscCall(MatDuplicate(mla_ctx->metis_mla[index_cnt_level].operator_coarse,
+                                       MAT_COPY_VALUES,
+                                       &(mla_ctx->metis_mla[index_cnt_level + 1].operator_fine)));
+#endif // smoothed aggregation-based mg
             }
         }
 
@@ -1107,21 +1331,21 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                 PetscInt local_prolongation_m = local_index_end - local_index_start,
                          local_prolongation_n = coarse_local_index_end - coarse_local_index_start;
 
-                PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].prolongation)));
+                PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].usa_prolongation)));
                 if (index_cnt_level == 0)
                 {
-                    PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                    PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                           local_prolongation_m * 6, local_prolongation_n * 9,
                                           prolongation_m, prolongation_n));
                 }
                 else
                 {
-                    PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                    PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                           local_prolongation_m * 9, local_prolongation_n * 9,
                                           prolongation_m, prolongation_n));
                 }
-                PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].prolongation, MATAIJ)); // prolongation set type- mataij
-                PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].prolongation));
+                PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MATAIJ)); // prolongation set type- mataij
+                PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].usa_prolongation));
 
                 if (index_cnt_level == 0)
                 {
@@ -1167,8 +1391,8 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                         p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
                         p_loc[4][7] = fine_node_y - coarse_node_y;        // y
                         p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
-#endif // suppose 0 in right-bottom
-#endif    // kirchhoff-love
+#endif                                                                    // suppose 0 in right-bottom
+#endif                                                                    // kirchhoff-love
 
 #if 0
                         p_loc[0][3] = fine_node_z - coarse_node_z; // z
@@ -1195,13 +1419,13 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                         p_loc[4][7] = fine_node_y - coarse_node_y;        // y
                         p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
 #endif // suppose 0 in right-bottom
-#endif    // nullspace
+#endif // nullspace
 
                         for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
                         {
                             for (int index_tmp_j = 0; index_tmp_j < 9; ++index_tmp_j)
                             {
-                                PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                                PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                                       6 * index_fine_node + index_tmp_i,
                                                       9 * index_coarse_node + index_tmp_j,
                                                       p_loc[index_tmp_i][index_tmp_j],
@@ -1255,8 +1479,8 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                         p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
                         p_loc[4][7] = fine_node_y - coarse_node_y;        // y
                         p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
-#endif // suppose 0 in right-bottom
-#endif    // krichhoff
+#endif                                                                    // suppose 0 in right-bottom
+#endif                                                                    // krichhoff
 
 #if 0
                         p_loc[0][3] = fine_node_z - coarse_node_z; // z
@@ -1283,13 +1507,13 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                         p_loc[4][7] = fine_node_y - coarse_node_y;        // y
                         p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
 #endif // suppose 0 in right-bottom
-#endif    // nullspace
+#endif // nullspace
 
                         for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
                         {
                             for (int index_tmp_j = 0; index_tmp_j < 9; ++index_tmp_j)
                             {
-                                PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].prolongation,
+                                PetscCall(MatSetValue(mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
                                                       9 * index_fine_node + index_tmp_i,
                                                       9 * index_coarse_node + index_tmp_j,
                                                       p_loc[index_tmp_i][index_tmp_j],
@@ -1299,9 +1523,10 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                     }
                 }
 
-                PetscCall(MatAssemblyBegin(mla_ctx->metis_mla[index_cnt_level].prolongation, MAT_FINAL_ASSEMBLY));
-                PetscCall(MatAssemblyEnd(mla_ctx->metis_mla[index_cnt_level].prolongation, MAT_FINAL_ASSEMBLY));
+                PetscCall(MatAssemblyBegin(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MAT_FINAL_ASSEMBLY));
+                PetscCall(MatAssemblyEnd(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MAT_FINAL_ASSEMBLY));
 
+#if 0
                 // coarse operator
                 PetscCall(MatPtAP(mla_ctx->metis_mla[index_cnt_level].operator_fine,
                                   mla_ctx->metis_mla[index_cnt_level].prolongation,
@@ -1313,6 +1538,54 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                 PetscCall(MatDuplicate(mla_ctx->metis_mla[index_cnt_level].operator_coarse,
                                        MAT_COPY_VALUES,
                                        &(mla_ctx->metis_mla[index_cnt_level + 1].operator_fine)));
+#endif // unsmoothed aggregation-based mg
+
+#if 1
+                // smoothed prolongation operator
+                // PetscCall(MatCreate(PETSC_COMM_WORLD, &(mla_ctx->metis_mla[index_cnt_level].sa_prolongation))); // usa-prolongation operator
+                // if (index_cnt_level == 0)
+                // {
+                //     PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                //                           local_prolongation_m * 6, local_prolongation_n * 9,
+                //                           prolongation_m, prolongation_n));
+                // }
+                // else
+                // {
+                //     PetscCall(MatSetSizes(mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                //                           local_prolongation_m * 9, local_prolongation_n * 9,
+                //                           prolongation_m, prolongation_n));
+                // }
+                // PetscCall(MatSetType(mla_ctx->metis_mla[index_cnt_level].usa_prolongation, MATAIJ)); // prolongation set type- mataij
+                // PetscCall(MatSetUp(mla_ctx->metis_mla[index_cnt_level].usa_prolongation));
+
+                PetscScalar omega = 0.67;
+
+                PetscCall(USAProlongation2SAProlongation(mla_ctx->metis_mla[index_cnt_level].operator_fine,
+                                                         mla_ctx->metis_mla[index_cnt_level].usa_prolongation,
+                                                         omega,
+                                                         &mla_ctx->metis_mla[index_cnt_level].sa_prolongation));
+
+#if 1
+                PetscInt m_sa_prolongation, n_sa_prolongation,
+                    m_operator_fine, n_operator_fine;
+                PetscCall(MatGetSize(mla_ctx->metis_mla[index_cnt_level].sa_prolongation, &m_sa_prolongation, &n_sa_prolongation));
+                PetscCall(MatGetSize(mla_ctx->metis_mla[index_cnt_level].operator_fine, &m_operator_fine, &n_operator_fine));
+                PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> size of sa_prolongation: m = %d, n = %d\n", m_sa_prolongation, n_sa_prolongation));
+                PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> size of operator_fine: m = %d, n = %d\n", m_operator_fine, n_operator_fine));
+#endif // size
+
+                // coarse operator
+                PetscCall(MatPtAP(mla_ctx->metis_mla[index_cnt_level].operator_fine,
+                                  mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                                  MAT_INITIAL_MATRIX,
+                                  PETSC_DETERMINE,
+                                  &(mla_ctx->metis_mla[index_cnt_level].operator_coarse)));
+
+                // next level fine operator
+                PetscCall(MatDuplicate(mla_ctx->metis_mla[index_cnt_level].operator_coarse,
+                                       MAT_COPY_VALUES,
+                                       &(mla_ctx->metis_mla[index_cnt_level + 1].operator_fine)));
+#endif // smoothed aggregation-based mg
             }
         }
     }

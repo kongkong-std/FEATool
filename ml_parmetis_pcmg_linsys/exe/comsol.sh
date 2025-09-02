@@ -9,3 +9,5 @@ mpirun -np 4 ./app_petsc_exe \
 -ksp_rtol 1e-8 \
 -mesh_type 1 \
 2>&1 | tee comsol-hist-curved-kirchhoff.log
+-mg_coarse_pc_type lu
+-mg_coarse_pc_factor_mat_solver_type mumps
