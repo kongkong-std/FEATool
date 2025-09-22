@@ -1,0 +1,369 @@
+Config file: ../input/config/comsol/inclined-shell/refine0.json
+order_rbm = 2
+angle_type = 1
+mesh_type = 1
+==== basic information of linear system ====
+matrix Row = 13368, matrix Column = 13368
+matrix nz_allocated = 361262, matrix nz_used = 361262, matrix nz_unneeded = 0
+vector Row = 13368
+initial     || b ||_2 = 3.0009674865898700e+02
+>>>>local_vec_size = 3342
+>>>>~~~~ local_mat_m = 3342, local_mat_n = 3342
+>>>>local_vec_size = 3342
+>>>>~~~~ local_mat_m = 3342, local_mat_n = 3342
+>>>>local_vec_size = 3342
+>>>>~~~~ local_mat_m = 3342, local_mat_n = 3342
+>>>>local_vec_size = 3342
+>>>>~~~~ local_mat_m = 3342, local_mat_n = 3342
+            || b ||_2 = 3.0009674865898700e+02
+|| r ||_2 / || b ||_2 = 1.0000000000000000e+00
+Partitioning a graph of size 2228 serially
+      Setup: Max:   0.000, Sum:   0.002, Balance:   1.000
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.000
+      Total: Max:   0.108, Sum:   0.430, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.074
+Final 557-way Cut:   3737 	Balance: 1.250 
+Partitioning a graph of size 557 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.007
+      Remap: Max:   0.000, Sum:   0.000, Balance:   4.000
+      Total: Max:   0.027, Sum:   0.107, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.095
+Final 139-way Cut:    881 	Balance: 1.248 
+Partitioning a graph of size 139 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.000
+      Total: Max:   0.006, Sum:   0.024, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.040
+Final  34-way Cut:    206 	Balance: 1.223 
+Partitioning a graph of size 34 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.012
+      Remap: Max:   0.000, Sum:   0.000, Balance:   4.000
+      Total: Max:   0.001, Sum:   0.005, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.026
+Final   8-way Cut:     35 	Balance: 1.176 
+
+
+>>>>nodes in level 2 is 34, less than 100, setup DONE!>>>>
+
+
+in rank 0/4, m_local_A = 3342, n_local = 3342
+in rank 3/4, m_local_A = 3342, n_local = 3342
+in rank 1/4, m_local_A = 3342, n_local = 3342
+in rank 2/4, m_local_A = 3342, n_local = 3342
+>>>> size of dinv_a: m = 13368, n = 13368
+>>>> size of p_unsmooth: m = 13368, n = 5013
+>>>> size of p_smooth: m = 13368, n = 5013
+>>>> size of sa_prolongation: m = 13368, n = 5013
+>>>> size of operator_fine: m = 13368, n = 13368
+>>>> size of dinv_a: m = 13368, n = 13368
+>>>> size of p_unsmooth: m = 13368, n = 5013
+>>>> size of p_smooth: m = 13368, n = 5013
+>>>> size of dinv_a: m = 13368, n = 13368
+>>>> size of p_unsmooth: m = 13368, n = 5013
+>>>> size of p_smooth: m = 13368, n = 5013
+>>>> size of dinv_a: m = 13368, n = 13368
+>>>> size of p_unsmooth: m = 13368, n = 5013
+>>>> size of p_smooth: m = 13368, n = 5013
+in rank 0/4, m_local_A = 1260, n_local = 1260
+in rank 3/4, m_local_A = 1251, n_local = 1251
+in rank 1/4, m_local_A = 1251, n_local = 1251
+in rank 2/4, m_local_A = 1251, n_local = 1251
+>>>> size of dinv_a: m = 5013, n = 5013
+>>>> size of p_unsmooth: m = 5013, n = 1251
+>>>> size of p_smooth: m = 5013, n = 1251
+>>>> size of sa_prolongation: m = 5013, n = 1251
+>>>> size of operator_fine: m = 5013, n = 5013
+>>>> size of dinv_a: m = 5013, n = 5013
+>>>> size of p_unsmooth: m = 5013, n = 1251
+>>>> size of p_smooth: m = 5013, n = 1251
+>>>> size of dinv_a: m = 5013, n = 5013
+>>>> size of p_unsmooth: m = 5013, n = 1251
+>>>> size of p_smooth: m = 5013, n = 1251
+>>>> size of dinv_a: m = 5013, n = 5013
+>>>> size of p_unsmooth: m = 5013, n = 1251
+>>>> size of p_smooth: m = 5013, n = 1251
+in rank 0/4, m_local_A = 315, n_local = 315
+in rank 1/4, m_local_A = 315, n_local = 315
+in rank 3/4, m_local_A = 306, n_local = 306
+in rank 2/4, m_local_A = 315, n_local = 315
+>>>> size of dinv_a: m = 1251, n = 1251
+>>>> size of p_unsmooth: m = 1251, n = 306
+>>>> size of p_smooth: m = 1251, n = 306
+>>>> size of sa_prolongation: m = 1251, n = 306
+>>>> size of operator_fine: m = 1251, n = 1251
+>>>> size of dinv_a: m = 1251, n = 1251
+>>>> size of p_unsmooth: m = 1251, n = 306
+>>>> size of p_smooth: m = 1251, n = 306
+>>>> size of dinv_a: m = 1251, n = 1251
+>>>> size of p_unsmooth: m = 1251, n = 306
+>>>> size of p_smooth: m = 1251, n = 306
+>>>> size of dinv_a: m = 1251, n = 1251
+>>>> size of p_unsmooth: m = 1251, n = 306
+>>>> size of p_smooth: m = 1251, n = 306
+>>>> mla setup time: 0.550241 (s)
+KSP Object: (mg_coarse_) 4 MPI processes
+  type: preonly
+  maximum iterations=10000, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using DEFAULT norm type for convergence test
+PC Object: (mg_coarse_) 4 MPI processes
+  type: redundant
+  PC has not been set up so information may be incomplete
+    Not yet setup
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=306, cols=306
+    total: nonzeros=89424, allocated nonzeros=89424
+    total number of mallocs used during MatSetValues calls=0
+      using nonscalable MatPtAP() implementation
+      using I-node (on process 0) routines: found 17 nodes, limit used is 5
+KSP Object: (mg_levels_1_) 4 MPI processes
+  type: chebyshev
+    Chebyshev polynomial of first kind
+    eigenvalue targets used: min 0., max 0.
+  maximum iterations=2, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using NONE norm type for convergence test
+PC Object: (mg_levels_1_) 4 MPI processes
+  type: sor
+  PC has not been set up so information may be incomplete
+    type = local_symmetric, iterations = 1, local iterations = 1, omega = 1.
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=1251, cols=1251
+    total: nonzeros=393903, allocated nonzeros=393903
+    total number of mallocs used during MatSetValues calls=0
+      using I-node (on process 0) routines: found 70 nodes, limit used is 5
+KSP Object: (mg_levels_2_) 4 MPI processes
+  type: chebyshev
+    Chebyshev polynomial of first kind
+    eigenvalue targets used: min 0., max 0.
+  maximum iterations=2, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using NONE norm type for convergence test
+PC Object: (mg_levels_2_) 4 MPI processes
+  type: sor
+  PC has not been set up so information may be incomplete
+    type = local_symmetric, iterations = 1, local iterations = 1, omega = 1.
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=5013, cols=5013
+    total: nonzeros=738477, allocated nonzeros=738477
+    total number of mallocs used during MatSetValues calls=0
+      using I-node (on process 0) routines: found 280 nodes, limit used is 5
+KSP Object: (mg_levels_3_) 4 MPI processes
+  type: chebyshev
+    Chebyshev polynomial of first kind
+    eigenvalue targets used: min 0., max 0.
+  maximum iterations=2, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using NONE norm type for convergence test
+PC Object: (mg_levels_3_) 4 MPI processes
+  type: sor
+  PC has not been set up so information may be incomplete
+    type = local_symmetric, iterations = 1, local iterations = 1, omega = 1.
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=13368, cols=13368
+    total: nonzeros=361262, allocated nonzeros=361262
+    total number of mallocs used during MatSetValues calls=0
+      not using I-node (on process 0) routines
+KSP Object: (mg_coarse_) 4 MPI processes
+  type: preonly
+  maximum iterations=10000, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using DEFAULT norm type for convergence test
+PC Object: (mg_coarse_) 4 MPI processes
+  type: lu
+  PC has not been set up so information may be incomplete
+    out-of-place factorization
+    tolerance for zero pivot 2.22045e-14
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=306, cols=306
+    total: nonzeros=89424, allocated nonzeros=89424
+    total number of mallocs used during MatSetValues calls=0
+      using nonscalable MatPtAP() implementation
+      using I-node (on process 0) routines: found 17 nodes, limit used is 5
+  0 KSP unpreconditioned resid norm 3.000967486590e+02 true resid norm 3.000967486590e+02 ||r(i)||/||b|| 1.000000000000e+00
+  1 KSP unpreconditioned resid norm 3.204987637893e+03 true resid norm 3.204987637893e+03 ||r(i)||/||b|| 1.067984792310e+01
+  2 KSP unpreconditioned resid norm 2.774362183624e+03 true resid norm 2.774362183624e+03 ||r(i)||/||b|| 9.244892508905e+00
+  3 KSP unpreconditioned resid norm 2.345712028389e+03 true resid norm 2.345712028389e+03 ||r(i)||/||b|| 7.816519302095e+00
+  4 KSP unpreconditioned resid norm 2.008162125445e+03 true resid norm 2.008162125445e+03 ||r(i)||/||b|| 6.691715703083e+00
+  5 KSP unpreconditioned resid norm 1.736665882694e+03 true resid norm 1.736665882694e+03 ||r(i)||/||b|| 5.787019987570e+00
+  6 KSP unpreconditioned resid norm 1.512039500480e+03 true resid norm 1.512039500480e+03 ||r(i)||/||b|| 5.038506772353e+00
+  7 KSP unpreconditioned resid norm 1.322402480971e+03 true resid norm 1.322402480971e+03 ||r(i)||/||b|| 4.406587165241e+00
+  8 KSP unpreconditioned resid norm 1.160091579746e+03 true resid norm 1.160091579746e+03 ||r(i)||/||b|| 3.865725253371e+00
+  9 KSP unpreconditioned resid norm 1.019863148828e+03 true resid norm 1.019863148828e+03 ||r(i)||/||b|| 3.398447845189e+00
+ 10 KSP unpreconditioned resid norm 8.979298057468e+02 true resid norm 8.979298057468e+02 ||r(i)||/||b|| 2.992134402519e+00
+ 11 KSP unpreconditioned resid norm 7.914255449149e+02 true resid norm 7.914255449149e+02 ||r(i)||/||b|| 2.637234653329e+00
+ 12 KSP unpreconditioned resid norm 6.981028955985e+02 true resid norm 6.981028955985e+02 ||r(i)||/||b|| 2.326259443723e+00
+ 13 KSP unpreconditioned resid norm 6.161412883691e+02 true resid norm 6.161412883691e+02 ||r(i)||/||b|| 2.053142165393e+00
+ 14 KSP unpreconditioned resid norm 5.440404711921e+02 true resid norm 5.440404711921e+02 ||r(i)||/||b|| 1.812883590453e+00
+ 15 KSP unpreconditioned resid norm 4.805358444572e+02 true resid norm 4.805358444572e+02 ||r(i)||/||b|| 1.601269745855e+00
+ 16 KSP unpreconditioned resid norm 4.245525422408e+02 true resid norm 4.245525422408e+02 ||r(i)||/||b|| 1.414718900281e+00
+ 17 KSP unpreconditioned resid norm 3.751655659424e+02 true resid norm 3.751655659424e+02 ||r(i)||/||b|| 1.250148719101e+00
+ 18 KSP unpreconditioned resid norm 3.315751563580e+02 true resid norm 3.315751563580e+02 ||r(i)||/||b|| 1.104894197753e+00
+ 19 KSP unpreconditioned resid norm 2.930852874794e+02 true resid norm 2.930852874794e+02 ||r(i)||/||b|| 9.766359975212e-01
+ 20 KSP unpreconditioned resid norm 2.590888452656e+02 true resid norm 2.590888452656e+02 ||r(i)||/||b|| 8.633510573619e-01
+ 21 KSP unpreconditioned resid norm 2.290534209816e+02 true resid norm 2.290534209816e+02 ||r(i)||/||b|| 7.632652536394e-01
+ 22 KSP unpreconditioned resid norm 2.025126247851e+02 true resid norm 2.025126247851e+02 ||r(i)||/||b|| 6.748244547467e-01
+ 23 KSP unpreconditioned resid norm 1.790565850803e+02 true resid norm 1.790565850803e+02 ||r(i)||/||b|| 5.966628624950e-01
+ 24 KSP unpreconditioned resid norm 1.583234347672e+02 true resid norm 1.583234347672e+02 ||r(i)||/||b|| 5.275746420936e-01
+ 25 KSP unpreconditioned resid norm 1.399958379479e+02 true resid norm 1.399958379479e+02 ||r(i)||/||b|| 4.665023482376e-01
+ 26 KSP unpreconditioned resid norm 1.237930211771e+02 true resid norm 1.237930211771e+02 ||r(i)||/||b|| 4.125103711729e-01
+ 27 KSP unpreconditioned resid norm 1.094680356982e+02 true resid norm 1.094680356982e+02 ||r(i)||/||b|| 3.647758137580e-01
+ 28 KSP unpreconditioned resid norm 9.680252651170e+01 true resid norm 9.680252651170e+01 ||r(i)||/||b|| 3.225710606472e-01
+ 29 KSP unpreconditioned resid norm 8.560359019523e+01 true resid norm 8.560359019523e+01 ||r(i)||/||b|| 2.852533077341e-01
+ 30 KSP unpreconditioned resid norm 7.570111947174e+01 true resid norm 7.570111947174e+01 ||r(i)||/||b|| 2.522557135658e-01
+ 31 KSP unpreconditioned resid norm 6.694492371475e+01 true resid norm 6.694492371475e+01 ||r(i)||/||b|| 2.230778041212e-01
+ 32 KSP unpreconditioned resid norm 5.920199935528e+01 true resid norm 5.920199935528e+01 ||r(i)||/||b|| 1.972763771011e-01
+ 33 KSP unpreconditioned resid norm 5.235491165669e+01 true resid norm 5.235491165669e+01 ||r(i)||/||b|| 1.744601095835e-01
+ 34 KSP unpreconditioned resid norm 4.630007115048e+01 true resid norm 4.630007115048e+01 ||r(i)||/||b|| 1.542838146610e-01
+ 35 KSP unpreconditioned resid norm 4.094559257017e+01 true resid norm 4.094559257017e+01 ||r(i)||/||b|| 1.364413068557e-01
+ 36 KSP unpreconditioned resid norm 3.621055939747e+01 true resid norm 3.621055939747e+01 ||r(i)||/||b|| 1.206629513958e-01
+ 37 KSP unpreconditioned resid norm 3.202318925794e+01 true resid norm 3.202318925794e+01 ||r(i)||/||b|| 1.067095508400e-01
+ 38 KSP unpreconditioned resid norm 2.832012074059e+01 true resid norm 2.832012074059e+01 ||r(i)||/||b|| 9.436996857559e-02
+ 39 KSP unpreconditioned resid norm 2.504532937881e+01 true resid norm 2.504532937881e+01 ||r(i)||/||b|| 8.345751658668e-02
+ 40 KSP unpreconditioned resid norm 2.214926409825e+01 true resid norm 2.214926409825e+01 ||r(i)||/||b|| 7.380707787481e-02
+ 41 KSP unpreconditioned resid norm 1.958810996648e+01 true resid norm 1.958810996648e+01 ||r(i)||/||b|| 6.527264975050e-02
+ 42 KSP unpreconditioned resid norm 1.732315411555e+01 true resid norm 1.732315411555e+01 ||r(i)||/||b|| 5.772523092290e-02
+ 43 KSP unpreconditioned resid norm 1.532008207664e+01 true resid norm 1.532008207664e+01 ||r(i)||/||b|| 5.105047670493e-02
+ 44 KSP unpreconditioned resid norm 1.354865963447e+01 true resid norm 1.354865963447e+01 ||r(i)||/||b|| 4.514763886986e-02
+ 45 KSP unpreconditioned resid norm 1.198209076149e+01 true resid norm 1.198209076149e+01 ||r(i)||/||b|| 3.992742612184e-02
+ 46 KSP unpreconditioned resid norm 1.059664501262e+01 true resid norm 1.059664501262e+01 ||r(i)||/||b|| 3.531076247900e-02
+ 47 KSP unpreconditioned resid norm 9.371415086241e+00 true resid norm 9.371415086241e+00 ||r(i)||/||b|| 3.122797940370e-02
+ 48 KSP unpreconditioned resid norm 8.287856536445e+00 true resid norm 8.287856536445e+00 ||r(i)||/||b|| 2.761728200482e-02
+ 49 KSP unpreconditioned resid norm 7.329589781941e+00 true resid norm 7.329589781941e+00 ||r(i)||/||b|| 2.442408928019e-02
+ 50 KSP unpreconditioned resid norm 6.482127289693e+00 true resid norm 6.482127289693e+00 ||r(i)||/||b|| 2.160012502188e-02
+ 51 KSP unpreconditioned resid norm 5.732652458715e+00 true resid norm 5.732652458715e+00 ||r(i)||/||b|| 1.910268099982e-02
+ 52 KSP unpreconditioned resid norm 5.069838210382e+00 true resid norm 5.069838210382e+00 ||r(i)||/||b|| 1.689401245777e-02
+ 53 KSP unpreconditioned resid norm 4.483663608303e+00 true resid norm 4.483663608303e+00 ||r(i)||/||b|| 1.494072704332e-02
+ 54 KSP unpreconditioned resid norm 3.965263317038e+00 true resid norm 3.965263317038e+00 ||r(i)||/||b|| 1.321328316537e-02
+ 55 KSP unpreconditioned resid norm 3.506804744373e+00 true resid norm 3.506804744373e+00 ||r(i)||/||b|| 1.168558060040e-02
+ 56 KSP unpreconditioned resid norm 3.101352049433e+00 true resid norm 3.101352049433e+00 ||r(i)||/||b|| 1.033450733236e-02
+ 57 KSP unpreconditioned resid norm 2.742782552314e+00 true resid norm 2.742782552314e+00 ||r(i)||/||b|| 9.139661007894e-03
+ 58 KSP unpreconditioned resid norm 2.425669504437e+00 true resid norm 2.425669504437e+00 ||r(i)||/||b|| 8.082958296869e-03
+ 59 KSP unpreconditioned resid norm 2.145221383519e+00 true resid norm 2.145221383519e+00 ||r(i)||/||b|| 7.148432607500e-03
+ 60 KSP unpreconditioned resid norm 1.897197825555e+00 true resid norm 1.897197825555e+00 ||r(i)||/||b|| 6.321953949961e-03
+ 61 KSP unpreconditioned resid norm 1.677852573012e+00 true resid norm 1.677852573012e+00 ||r(i)||/||b|| 5.591038825011e-03
+ 62 KSP unpreconditioned resid norm 1.483866819290e+00 true resid norm 1.483866819290e+00 ||r(i)||/||b|| 4.944628110505e-03
+ 63 KSP unpreconditioned resid norm 1.312310674799e+00 true resid norm 1.312310674799e+00 ||r(i)||/||b|| 4.372958656376e-03
+ 64 KSP unpreconditioned resid norm 1.160588844291e+00 true resid norm 1.160588844291e+00 ||r(i)||/||b|| 3.867382267476e-03
+ 65 KSP unpreconditioned resid norm 1.026408566621e+00 true resid norm 1.026408566621e+00 ||r(i)||/||b|| 3.420258870539e-03
+ 66 KSP unpreconditioned resid norm 9.077420721996e-01 true resid norm 9.077420721996e-01 ||r(i)||/||b|| 3.024831412722e-03
+ 67 KSP unpreconditioned resid norm 8.027958022774e-01 true resid norm 8.027958022774e-01 ||r(i)||/||b|| 2.675123292287e-03
+ 68 KSP unpreconditioned resid norm 7.099826434542e-01 true resid norm 7.099826434542e-01 ||r(i)||/||b|| 2.365845836807e-03
+ 69 KSP unpreconditioned resid norm 6.278998077190e-01 true resid norm 6.278998077190e-01 ||r(i)||/||b|| 2.092324593735e-03
+ 70 KSP unpreconditioned resid norm 5.553073981152e-01 true resid norm 5.553073981152e-01 ||r(i)||/||b|| 1.850427905656e-03
+ 71 KSP unpreconditioned resid norm 4.911074364026e-01 true resid norm 4.911074364026e-01 ||r(i)||/||b|| 1.636497025033e-03
+ 72 KSP unpreconditioned resid norm 4.343302083242e-01 true resid norm 4.343302083242e-01 ||r(i)||/||b|| 1.447300613103e-03
+ 73 KSP unpreconditioned resid norm 3.841172331065e-01 true resid norm 3.841172331065e-01 ||r(i)||/||b|| 1.279977989842e-03
+ 74 KSP unpreconditioned resid norm 3.397092595792e-01 true resid norm 3.397092595792e-01 ||r(i)||/||b|| 1.131999133937e-03
+ 75 KSP unpreconditioned resid norm 3.004355132484e-01 true resid norm 3.004355132484e-01 ||r(i)||/||b|| 1.001128851249e-03
+ 76 KSP unpreconditioned resid norm 2.657023478405e-01 true resid norm 2.657023478405e-01 ||r(i)||/||b|| 8.853889588201e-04
+ 77 KSP unpreconditioned resid norm 2.349847397162e-01 true resid norm 2.349847397162e-01 ||r(i)||/||b|| 7.830299420647e-04
+ 78 KSP unpreconditioned resid norm 2.078183499319e-01 true resid norm 2.078183499319e-01 ||r(i)||/||b|| 6.925045034994e-04
+ 79 KSP unpreconditioned resid norm 1.837927584571e-01 true resid norm 1.837927584571e-01 ||r(i)||/||b|| 6.124450174098e-04
+ 80 KSP unpreconditioned resid norm 1.625448498194e-01 true resid norm 1.625448498194e-01 ||r(i)||/||b|| 5.416414891055e-04
+ 81 KSP unpreconditioned resid norm 1.437533921301e-01 true resid norm 1.437533921301e-01 ||r(i)||/||b|| 4.790234908326e-04
+ 82 KSP unpreconditioned resid norm 1.271343550215e-01 true resid norm 1.271343550215e-01 ||r(i)||/||b|| 4.236445599281e-04
+ 83 KSP unpreconditioned resid norm 1.124367265876e-01 true resid norm 1.124367265876e-01 ||r(i)||/||b|| 3.746682597863e-04
+ 84 KSP unpreconditioned resid norm 9.943825750317e-02 true resid norm 9.943825750317e-02 ||r(i)||/||b|| 3.313539981606e-04
+ 85 KSP unpreconditioned resid norm 8.794249676807e-02 true resid norm 8.794249676807e-02 ||r(i)||/||b|| 2.930471494978e-04
+ 86 KSP unpreconditioned resid norm 7.777573096940e-02 true resid norm 7.777573096940e-02 ||r(i)||/||b|| 2.591688557672e-04
+ 87 KSP unpreconditioned resid norm 6.878436674816e-02 true resid norm 6.878436674816e-02 ||r(i)||/||b|| 2.292073041628e-04
+ 88 KSP unpreconditioned resid norm 6.083247379983e-02 true resid norm 6.083247379983e-02 ||r(i)||/||b|| 2.027095397456e-04
+ 89 KSP unpreconditioned resid norm 5.379986482847e-02 true resid norm 5.379986482847e-02 ||r(i)||/||b|| 1.792750673537e-04
+ 90 KSP unpreconditioned resid norm 4.758027803348e-02 true resid norm 4.758027803348e-02 ||r(i)||/||b|| 1.585497951781e-04
+ 91 KSP unpreconditioned resid norm 4.207974513537e-02 true resid norm 4.207974513537e-02 ||r(i)||/||b|| 1.402205966023e-04
+ 92 KSP unpreconditioned resid norm 3.721509876375e-02 true resid norm 3.721509876375e-02 ||r(i)||/||b|| 1.240103364333e-04
+ 93 KSP unpreconditioned resid norm 3.291283902694e-02 true resid norm 3.291283902694e-02 ||r(i)||/||b|| 1.096740940181e-04
+ 94 KSP unpreconditioned resid norm 2.910794959279e-02 true resid norm 2.910794959279e-02 ||r(i)||/||b|| 9.699521811836e-05
+ 95 KSP unpreconditioned resid norm 2.574292855709e-02 true resid norm 2.574292855709e-02 ||r(i)||/||b|| 8.578209751396e-05
+ 96 KSP unpreconditioned resid norm 2.276693373039e-02 true resid norm 2.276693373039e-02 ||r(i)||/||b|| 7.586531287703e-05
+ 97 KSP unpreconditioned resid norm 2.013496070612e-02 true resid norm 2.013496070612e-02 ||r(i)||/||b|| 6.709489788240e-05
+ 98 KSP unpreconditioned resid norm 1.780727195142e-02 true resid norm 1.780727195142e-02 ||r(i)||/||b|| 5.933843679078e-05
+ 99 KSP unpreconditioned resid norm 1.574867969437e-02 true resid norm 1.574867969437e-02 ||r(i)||/||b|| 5.247867484319e-05
+100 KSP unpreconditioned resid norm 1.392806654368e-02 true resid norm 1.392806654368e-02 ||r(i)||/||b|| 4.641192084191e-05
+101 KSP unpreconditioned resid norm 1.231792912471e-02 true resid norm 1.231792912471e-02 ||r(i)||/||b|| 4.104652642773e-05
+102 KSP unpreconditioned resid norm 1.089393078199e-02 true resid norm 1.089393078199e-02 ||r(i)||/||b|| 3.630139556882e-05
+103 KSP unpreconditioned resid norm 9.634550631584e-03 true resid norm 9.634550631584e-03 ||r(i)||/||b|| 3.210481511258e-05
+104 KSP unpreconditioned resid norm 8.520760621007e-03 true resid norm 8.520760621007e-03 ||r(i)||/||b|| 2.839337866566e-05
+105 KSP unpreconditioned resid norm 7.535733490630e-03 true resid norm 7.535733490630e-03 ||r(i)||/||b|| 2.511101344584e-05
+106 KSP unpreconditioned resid norm 6.664576911136e-03 true resid norm 6.664576911136e-03 ||r(i)||/||b|| 2.220809435929e-05
+107 KSP unpreconditioned resid norm 5.894130217693e-03 true resid norm 5.894130217693e-03 ||r(i)||/||b|| 1.964076666619e-05
+108 KSP unpreconditioned resid norm 5.212751756920e-03 true resid norm 5.212751756920e-03 ||r(i)||/||b|| 1.737023736583e-05
+109 KSP unpreconditioned resid norm 4.610139296792e-03 true resid norm 4.610139296792e-03 ||r(i)||/||b|| 1.536217675597e-05
+110 KSP unpreconditioned resid norm 4.077193234558e-03 true resid norm 4.077193234558e-03 ||r(i)||/||b|| 1.358626260623e-05
+111 KSP unpreconditioned resid norm 3.605860294373e-03 true resid norm 3.605860294373e-03 ||r(i)||/||b|| 1.201565931816e-05
+112 KSP unpreconditioned resid norm 3.189012141426e-03 true resid norm 3.189012141426e-03 ||r(i)||/||b|| 1.062661343609e-05
+113 KSP unpreconditioned resid norm 2.820354037670e-03 true resid norm 2.820354037670e-03 ||r(i)||/||b|| 9.398149264438e-06
+114 KSP unpreconditioned resid norm 2.494313969883e-03 true resid norm 2.494313969883e-03 ||r(i)||/||b|| 8.311699413701e-06
+115 KSP unpreconditioned resid norm 2.205965217895e-03 true resid norm 2.205965217895e-03 ||r(i)||/||b|| 7.350846777757e-06
+116 KSP unpreconditioned resid norm 1.950950550836e-03 true resid norm 1.950950550836e-03 ||r(i)||/||b|| 6.501071936148e-06
+117 KSP unpreconditioned resid norm 1.725416049432e-03 true resid norm 1.725416049432e-03 ||r(i)||/||b|| 5.749532632866e-06
+118 KSP unpreconditioned resid norm 1.525954228067e-03 true resid norm 1.525954228067e-03 ||r(i)||/||b|| 5.084874244343e-06
+119 KSP unpreconditioned resid norm 1.349549543363e-03 true resid norm 1.349549543363e-03 ||r(i)||/||b|| 4.497048199934e-06
+120 KSP unpreconditioned resid norm 1.193538677975e-03 true resid norm 1.193538677975e-03 ||r(i)||/||b|| 3.977179637263e-06
+121 KSP unpreconditioned resid norm 1.055563757697e-03 true resid norm 1.055563757697e-03 ||r(i)||/||b|| 3.517411509502e-06
+122 KSP unpreconditioned resid norm 9.335392437185e-04 true resid norm 9.335392437185e-04 ||r(i)||/||b|| 3.110794261818e-06
+123 KSP unpreconditioned resid norm 8.256199055719e-04 true resid norm 8.256199055719e-04 ||r(i)||/||b|| 2.751179108942e-06
+124 KSP unpreconditioned resid norm 7.301769887902e-04 true resid norm 7.301769887902e-04 ||r(i)||/||b|| 2.433138619639e-06
+125 KSP unpreconditioned resid norm 6.457659893301e-04 true resid norm 6.457659893301e-04 ||r(i)||/||b|| 2.151859332751e-06
+126 KSP unpreconditioned resid norm 5.711140588960e-04 true resid norm 5.711140588960e-04 ||r(i)||/||b|| 1.903099788479e-06
+127 KSP unpreconditioned resid norm 5.050927980040e-04 true resid norm 5.050927980040e-04 ||r(i)||/||b|| 1.683099867830e-06
+128 KSP unpreconditioned resid norm 4.467032719047e-04 true resid norm 4.467032719047e-04 ||r(i)||/||b|| 1.488530861800e-06
+129 KSP unpreconditioned resid norm 3.950647756812e-04 true resid norm 3.950647756812e-04 ||r(i)||/||b|| 1.316458033773e-06
+130 KSP unpreconditioned resid norm 3.493931205275e-04 true resid norm 3.493931205275e-04 ||r(i)||/||b|| 1.164268263781e-06
+131 KSP unpreconditioned resid norm 3.090033672532e-04 true resid norm 3.090033672532e-04 ||r(i)||/||b|| 1.029679157252e-06
+132 KSP unpreconditioned resid norm 2.732822797581e-04 true resid norm 2.732822797581e-04 ||r(i)||/||b|| 9.106472528585e-07
+133 KSP unpreconditioned resid norm 2.416899028860e-04 true resid norm 2.416899028860e-04 ||r(i)||/||b|| 8.053732803373e-07
+134 KSP unpreconditioned resid norm 2.137505627542e-04 true resid norm 2.137505627542e-04 ||r(i)||/||b|| 7.122721712560e-07
+135 KSP unpreconditioned resid norm 1.890407999698e-04 true resid norm 1.890407999698e-04 ||r(i)||/||b|| 6.299328493712e-07
+136 KSP unpreconditioned resid norm 1.671872162010e-04 true resid norm 1.671872162010e-04 ||r(i)||/||b|| 5.571110548452e-07
+137 KSP unpreconditioned resid norm 1.478601133733e-04 true resid norm 1.478601133733e-04 ||r(i)||/||b|| 4.927081484023e-07
+138 KSP unpreconditioned resid norm 1.307671344959e-04 true resid norm 1.307671344959e-04 ||r(i)||/||b|| 4.357499209181e-07
+139 KSP unpreconditioned resid norm 1.156503416842e-04 true resid norm 1.156503416842e-04 ||r(i)||/||b|| 3.853768566338e-07
+140 KSP unpreconditioned resid norm 1.022814872272e-04 true resid norm 1.022814872272e-04 ||r(i)||/||b|| 3.408283751299e-07
+141 KSP unpreconditioned resid norm 9.045796904089e-05 true resid norm 9.045796904089e-05 ||r(i)||/||b|| 3.014293538504e-07
+142 KSP unpreconditioned resid norm 8.000051937529e-05 true resid norm 8.000051937529e-05 ||r(i)||/||b|| 2.665824262768e-07
+143 KSP unpreconditioned resid norm 7.075195770722e-05 true resid norm 7.075195770722e-05 ||r(i)||/||b|| 2.357638262440e-07
+144 KSP unpreconditioned resid norm 6.257266234863e-05 true resid norm 6.257266234863e-05 ||r(i)||/||b|| 2.085082981680e-07
+145 KSP unpreconditioned resid norm 5.533999095776e-05 true resid norm 5.533999095776e-05 ||r(i)||/||b|| 1.844071660391e-07
+146 KSP unpreconditioned resid norm 4.894205955331e-05 true resid norm 4.894205955331e-05 ||r(i)||/||b|| 1.630876034879e-07
+147 KSP unpreconditioned resid norm 4.328433801352e-05 true resid norm 4.328433801352e-05 ||r(i)||/||b|| 1.442346116942e-07
+148 KSP unpreconditioned resid norm 3.828059241366e-05 true resid norm 3.828059241366e-05 ||r(i)||/||b|| 1.275608369125e-07
+149 KSP unpreconditioned resid norm 3.385540960258e-05 true resid norm 3.385540960258e-05 ||r(i)||/||b|| 1.128149830142e-07
+150 KSP unpreconditioned resid norm 2.994201362122e-05 true resid norm 2.994201362122e-05 ||r(i)||/||b|| 9.977453522912e-08
+151 KSP unpreconditioned resid norm 2.648104285689e-05 true resid norm 2.648104285689e-05 ||r(i)||/||b|| 8.824168530723e-08
+152 KSP unpreconditioned resid norm 2.341939478584e-05 true resid norm 2.341939478584e-05 ||r(i)||/||b|| 7.803948190207e-08
+153 KSP unpreconditioned resid norm 2.071231859565e-05 true resid norm 2.071231859565e-05 ||r(i)||/||b|| 6.901880372983e-08
+154 KSP unpreconditioned resid norm 1.831768684883e-05 true resid norm 1.831768684883e-05 ||r(i)||/||b|| 6.103927127062e-08
+155 KSP unpreconditioned resid norm 1.620025667861e-05 true resid norm 1.620025667861e-05 ||r(i)||/||b|| 5.398344617529e-08
+156 KSP unpreconditioned resid norm 1.432780570169e-05 true resid norm 1.432780570169e-05 ||r(i)||/||b|| 4.774395512684e-08
+157 KSP unpreconditioned resid norm 1.267134386449e-05 true resid norm 1.267134386449e-05 ||r(i)||/||b|| 4.222419576725e-08
+158 KSP unpreconditioned resid norm 1.120605064973e-05 true resid norm 1.120605064973e-05 ||r(i)||/||b|| 3.734145971192e-08
+159 KSP unpreconditioned resid norm 9.911177986180e-06 true resid norm 9.911177986180e-06 ||r(i)||/||b|| 3.302660902015e-08
+160 KSP unpreconditioned resid norm 8.765859910972e-06 true resid norm 8.765859910972e-06 ||r(i)||/||b|| 2.921011290573e-08
+161 KSP unpreconditioned resid norm 7.752238049506e-06 true resid norm 7.752238049506e-06 ||r(i)||/||b|| 2.583246264462e-08
+162 KSP unpreconditioned resid norm 6.855373399319e-06 true resid norm 6.855373399319e-06 ||r(i)||/||b|| 2.284387761598e-08
+163 KSP unpreconditioned resid norm 6.063833999986e-06 true resid norm 6.063833999986e-06 ||r(i)||/||b|| 2.020626357027e-08
+164 KSP unpreconditioned resid norm 5.362081543106e-06 true resid norm 5.362081543106e-06 ||r(i)||/||b|| 1.786784284424e-08
+165 KSP unpreconditioned resid norm 4.742583939361e-06 true resid norm 4.742583939361e-06 ||r(i)||/||b|| 1.580351656775e-08
+166 KSP unpreconditioned resid norm 4.193835573081e-06 true resid norm 4.193835573081e-06 ||r(i)||/||b|| 1.397494505296e-08
+167 KSP unpreconditioned resid norm 3.709452299434e-06 true resid norm 3.709452299434e-06 ||r(i)||/||b|| 1.236085467773e-08
+168 KSP unpreconditioned resid norm 3.280504179849e-06 true resid norm 3.280504179849e-06 ||r(i)||/||b|| 1.093148857663e-08
+169 KSP unpreconditioned resid norm 2.900738141880e-06 true resid norm 2.900738141880e-06 ||r(i)||/||b|| 9.666009894616e-09
+>>>> ksp solve time: 1.53565 (s)
+            || b ||_2 = 3.0009674865898700e+02
+|| r ||_2 / || b ||_2 = 9.6660098946163448e-09

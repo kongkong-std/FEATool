@@ -1,0 +1,152 @@
+Config file: ../input/config/comsol/flat-shell/refine0.json
+order_rbm = 2
+angle_type = 1
+mesh_type = 1
+==== basic information of linear system ====
+matrix Row = 6006, matrix Column = 6006
+matrix nz_allocated = 77658, matrix nz_used = 77658, matrix nz_unneeded = 0
+vector Row = 6006
+initial     || b ||_2 = 8.0242448126731133e+03
+>>>>local_vec_size = 1500
+>>>>~~~~ local_mat_m = 1500, local_mat_n = 1500
+>>>>local_vec_size = 1500
+>>>>~~~~ local_mat_m = 1500, local_mat_n = 1500
+>>>>local_vec_size = 1500
+>>>>~~~~ local_mat_m = 1500, local_mat_n = 1500
+>>>>local_vec_size = 1506
+>>>>~~~~ local_mat_m = 1506, local_mat_n = 1506
+            || b ||_2 = 8.0242448126731133e+03
+|| r ||_2 / || b ||_2 = 1.0000000000000000e+00
+Partitioning a graph of size 1001 serially
+      Setup: Max:   0.001, Sum:   0.002, Balance:   1.000
+      Total: Max:   0.047, Sum:   0.190, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.023
+Final 250-way Cut:   1636 	Balance: 1.249 
+Partitioning a graph of size 250 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.008
+      Remap: Max:   0.000, Sum:   0.000, Balance:   4.000
+      Total: Max:   0.011, Sum:   0.043, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.349
+Final  62-way Cut:    372 	Balance: 1.240 
+Partitioning a graph of size 62 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.005
+      Remap: Max:   0.000, Sum:   0.000, Balance:   4.000
+      Total: Max:   0.002, Sum:   0.009, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.029
+Final  15-way Cut:     74 	Balance: 1.210 
+
+
+>>>>nodes in level 1 is 62, less than 100, setup DONE!>>>>
+
+
+>>>> mla setup time: 0.0873747 (s)
+KSP Object: (mg_coarse_) 4 MPI processes
+  type: preonly
+  maximum iterations=10000, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using DEFAULT norm type for convergence test
+PC Object: (mg_coarse_) 4 MPI processes
+  type: redundant
+  PC has not been set up so information may be incomplete
+    Not yet setup
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=558, cols=558
+    total: nonzeros=29484, allocated nonzeros=29484
+    total number of mallocs used during MatSetValues calls=0
+      using nonscalable MatPtAP() implementation
+      using I-node (on process 0) routines: found 32 nodes, limit used is 5
+KSP Object: (mg_levels_1_) 4 MPI processes
+  type: chebyshev
+    Chebyshev polynomial of first kind
+    eigenvalue targets used: min 0., max 0.
+  maximum iterations=5, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using NONE norm type for convergence test
+PC Object: (mg_levels_1_) 4 MPI processes
+  type: sor
+  PC has not been set up so information may be incomplete
+    type = local_symmetric, iterations = 1, local iterations = 1, omega = 1.
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=2250, cols=2250
+    total: nonzeros=130896, allocated nonzeros=130896
+    total number of mallocs used during MatSetValues calls=0
+      using I-node (on process 0) routines: found 126 nodes, limit used is 5
+KSP Object: (mg_levels_2_) 4 MPI processes
+  type: chebyshev
+    Chebyshev polynomial of first kind
+    eigenvalue targets used: min 0., max 0.
+  maximum iterations=5, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using NONE norm type for convergence test
+PC Object: (mg_levels_2_) 4 MPI processes
+  type: sor
+  PC has not been set up so information may be incomplete
+    type = local_symmetric, iterations = 1, local iterations = 1, omega = 1.
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=6006, cols=6006
+    total: nonzeros=77658, allocated nonzeros=77658
+    total number of mallocs used during MatSetValues calls=0
+      using I-node (on process 0) routines: found 1098 nodes, limit used is 5
+KSP Object: (mg_coarse_) 4 MPI processes
+  type: preonly
+  maximum iterations=10000, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using DEFAULT norm type for convergence test
+PC Object: (mg_coarse_) 4 MPI processes
+  type: lu
+  PC has not been set up so information may be incomplete
+    out-of-place factorization
+    tolerance for zero pivot 2.22045e-14
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=558, cols=558
+    total: nonzeros=29484, allocated nonzeros=29484
+    total number of mallocs used during MatSetValues calls=0
+      using nonscalable MatPtAP() implementation
+      using I-node (on process 0) routines: found 32 nodes, limit used is 5
+  0 KSP unpreconditioned resid norm 8.024244812673e+03 true resid norm 8.024244812673e+03 ||r(i)||/||b|| 1.000000000000e+00
+  1 KSP unpreconditioned resid norm 5.472259119523e+05 true resid norm 5.472259119524e+05 ||r(i)||/||b|| 6.819656238405e+01
+  2 KSP unpreconditioned resid norm 4.612139004115e+05 true resid norm 4.612139004115e+05 ||r(i)||/||b|| 5.747754600945e+01
+  3 KSP unpreconditioned resid norm 2.700221162418e+05 true resid norm 2.700221162417e+05 ||r(i)||/||b|| 3.365078241572e+01
+  4 KSP unpreconditioned resid norm 1.289520925458e+05 true resid norm 1.289520925459e+05 ||r(i)||/||b|| 1.607030886473e+01
+  5 KSP unpreconditioned resid norm 6.291250520981e+04 true resid norm 6.291250520978e+04 ||r(i)||/||b|| 7.840302318595e+00
+  6 KSP unpreconditioned resid norm 3.325056382596e+04 true resid norm 3.325056382584e+04 ||r(i)||/||b|| 4.143762385380e+00
+  7 KSP unpreconditioned resid norm 1.651296991388e+04 true resid norm 1.651296991396e+04 ||r(i)||/||b|| 2.057884610883e+00
+  8 KSP unpreconditioned resid norm 6.732381922973e+03 true resid norm 6.732381923033e+03 ||r(i)||/||b|| 8.390050503445e-01
+  9 KSP unpreconditioned resid norm 3.255175797647e+03 true resid norm 3.255175797645e+03 ||r(i)||/||b|| 4.056675579618e-01
+ 10 KSP unpreconditioned resid norm 1.559241873446e+03 true resid norm 1.559241873298e+03 ||r(i)||/||b|| 1.943163387581e-01
+ 11 KSP unpreconditioned resid norm 6.724490725507e+02 true resid norm 6.724490725896e+02 ||r(i)||/||b|| 8.380216310544e-02
+ 12 KSP unpreconditioned resid norm 3.091345534413e+02 true resid norm 3.091345531613e+02 ||r(i)||/||b|| 3.852506502208e-02
+ 13 KSP unpreconditioned resid norm 1.628343483479e+02 true resid norm 1.628343482179e+02 ||r(i)||/||b|| 2.029279415313e-02
+ 14 KSP unpreconditioned resid norm 7.711050579818e+01 true resid norm 7.711050561691e+01 ||r(i)||/||b|| 9.609690060195e-03
+ 15 KSP unpreconditioned resid norm 3.300975681265e+01 true resid norm 3.300975659990e+01 ||r(i)||/||b|| 4.113752430355e-03
+ 16 KSP unpreconditioned resid norm 1.338666645385e+01 true resid norm 1.338666602600e+01 ||r(i)||/||b|| 1.668277369212e-03
+ 17 KSP unpreconditioned resid norm 5.572049252348e+00 true resid norm 5.572050268347e+00 ||r(i)||/||b|| 6.944018282626e-04
+ 18 KSP unpreconditioned resid norm 2.962247211178e+00 true resid norm 2.962247024896e+00 ||r(i)||/||b|| 3.691620948825e-04
+ 19 KSP unpreconditioned resid norm 7.942133553921e-01 true resid norm 7.942128537868e-01 ||r(i)||/||b|| 9.897664793732e-05
+ 20 KSP unpreconditioned resid norm 5.518344008209e-01 true resid norm 5.518351797700e-01 ||r(i)||/||b|| 6.877098003023e-05
+ 21 KSP unpreconditioned resid norm 2.045125925137e-01 true resid norm 2.045120337536e-01 ||r(i)||/||b|| 2.548676399187e-05
+ 22 KSP unpreconditioned resid norm 8.812221464966e-02 true resid norm 8.812314054920e-02 ||r(i)||/||b|| 1.098211016818e-05
+ 23 KSP unpreconditioned resid norm 4.168207510590e-02 true resid norm 4.168206990861e-02 ||r(i)||/||b|| 5.194516229463e-06
+ 24 KSP unpreconditioned resid norm 1.458797814842e-02 true resid norm 1.458797036204e-02 ||r(i)||/||b|| 1.817986701876e-06
+ 25 KSP unpreconditioned resid norm 6.615184729534e-03 true resid norm 6.615694808640e-03 ||r(i)||/||b|| 8.244632315045e-07
+ 26 KSP unpreconditioned resid norm 2.934331639020e-03 true resid norm 2.934952603534e-03 ||r(i)||/||b|| 3.657606007856e-07
+ 27 KSP unpreconditioned resid norm 1.256980455721e-03 true resid norm 1.257673116050e-03 ||r(i)||/||b|| 1.567341407709e-07
+ 28 KSP unpreconditioned resid norm 7.051409758953e-04 true resid norm 7.063176134521e-04 ||r(i)||/||b|| 8.802293922246e-08
+ 29 KSP unpreconditioned resid norm 2.724218947528e-04 true resid norm 2.744459349925e-04 ||r(i)||/||b|| 3.420208896905e-08
+ 30 KSP unpreconditioned resid norm 1.274645189412e-04 true resid norm 1.332547628503e-04 ||r(i)||/||b|| 1.660651761769e-08
+ 31 KSP unpreconditioned resid norm 6.273436268249e-05 true resid norm 7.288853649168e-05 ||r(i)||/||b|| 9.083538475367e-09
+>>>> ksp solve time: 0.0782578 (s)
+            || b ||_2 = 8.0242448126731133e+03
+|| r ||_2 / || b ||_2 = 9.0835384753666513e-09

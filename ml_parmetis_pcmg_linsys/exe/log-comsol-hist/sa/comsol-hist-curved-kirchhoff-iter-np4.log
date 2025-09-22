@@ -1,0 +1,165 @@
+Config file: ../input/config/comsol/curved-shell/refine0.json
+order_rbm = 2
+angle_type = 1
+mesh_type = 1
+==== basic information of linear system ====
+matrix Row = 9438, matrix Column = 9438
+matrix nz_allocated = 375678, matrix nz_used = 375678, matrix nz_unneeded = 0
+vector Row = 9438
+initial     || b ||_2 = 1.9604109142303623e+04
+>>>>local_vec_size = 2358
+>>>>~~~~ local_mat_m = 2358, local_mat_n = 2358
+>>>>local_vec_size = 2358
+>>>>~~~~ local_mat_m = 2358, local_mat_n = 2358
+>>>>local_vec_size = 2358
+>>>>~~~~ local_mat_m = 2358, local_mat_n = 2358
+>>>>local_vec_size = 2364
+>>>>~~~~ local_mat_m = 2364, local_mat_n = 2364
+            || b ||_2 = 1.9604109142303623e+04
+|| r ||_2 / || b ||_2 = 1.0000000000000000e+00
+Partitioning a graph of size 1573 serially
+      Setup: Max:   0.001, Sum:   0.002, Balance:   1.000
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.000
+      Total: Max:   0.083, Sum:   0.332, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.015
+Final 393-way Cut:   2625 	Balance: 1.249 
+Partitioning a graph of size 393 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.007
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.333
+      Total: Max:   0.020, Sum:   0.081, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.037
+Final  98-way Cut:    617 	Balance: 1.247 
+Partitioning a graph of size 98 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.003
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.000
+      Total: Max:   0.005, Sum:   0.018, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.209
+Final  24-way Cut:    135 	Balance: 1.224 
+
+
+>>>>nodes in level 1 is 98, less than 100, setup DONE!>>>>
+
+
+in rank 1/4, m_local_A = 2358, n_local = 2358
+in rank 3/4, m_local_A = 2358, n_local = 2358
+in rank 0/4, m_local_A = 2364, n_local = 2364
+in rank 2/4, m_local_A = 2358, n_local = 2358
+>>>> size of dinv_a: m = 9438, n = 9438
+>>>> size of p_unsmooth: m = 9438, n = 3537
+>>>> size of p_smooth: m = 9438, n = 3537
+>>>> size of sa_prolongation: m = 9438, n = 3537
+>>>> size of operator_fine: m = 9438, n = 9438
+>>>> size of dinv_a: m = 9438, n = 9438
+>>>> size of p_unsmooth: m = 9438, n = 3537
+>>>> size of p_smooth: m = 9438, n = 3537
+>>>> size of dinv_a: m = 9438, n = 9438
+>>>> size of p_unsmooth: m = 9438, n = 3537
+>>>> size of p_smooth: m = 9438, n = 3537
+>>>> size of dinv_a: m = 9438, n = 9438
+>>>> size of p_unsmooth: m = 9438, n = 3537
+>>>> size of p_smooth: m = 9438, n = 3537
+in rank 1/4, m_local_A = 882, n_local = 882
+in rank 3/4, m_local_A = 882, n_local = 882
+in rank 0/4, m_local_A = 891, n_local = 891
+in rank 2/4, m_local_A = 882, n_local = 882
+>>>> size of dinv_a: m = 3537, n = 3537
+>>>> size of p_unsmooth: m = 3537, n = 882
+>>>> size of p_smooth: m = 3537, n = 882
+>>>> size of sa_prolongation: m = 3537, n = 882
+>>>> size of operator_fine: m = 3537, n = 3537
+>>>> size of dinv_a: m = 3537, n = 3537
+>>>> size of p_unsmooth: m = 3537, n = 882
+>>>> size of p_smooth: m = 3537, n = 882
+>>>> size of dinv_a: m = 3537, n = 3537
+>>>> size of p_unsmooth: m = 3537, n = 882
+>>>> size of p_smooth: m = 3537, n = 882
+>>>> size of dinv_a: m = 3537, n = 3537
+>>>> size of p_unsmooth: m = 3537, n = 882
+>>>> size of p_smooth: m = 3537, n = 882
+>>>> mla setup time: 0.323321 (s)
+KSP Object: (mg_coarse_) 4 MPI processes
+  type: preonly
+  maximum iterations=10000, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using DEFAULT norm type for convergence test
+PC Object: (mg_coarse_) 4 MPI processes
+  type: redundant
+  PC has not been set up so information may be incomplete
+    Not yet setup
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=882, cols=882
+    total: nonzeros=262116, allocated nonzeros=262116
+    total number of mallocs used during MatSetValues calls=0
+      using nonscalable MatPtAP() implementation
+      using I-node (on process 0) routines: found 50 nodes, limit used is 5
+KSP Object: (mg_levels_1_) 4 MPI processes
+  type: chebyshev
+    Chebyshev polynomial of first kind
+    eigenvalue targets used: min 0., max 0.
+  maximum iterations=2, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using NONE norm type for convergence test
+PC Object: (mg_levels_1_) 4 MPI processes
+  type: sor
+  PC has not been set up so information may be incomplete
+    type = local_symmetric, iterations = 1, local iterations = 1, omega = 1.
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=3537, cols=3537
+    total: nonzeros=519453, allocated nonzeros=519453
+    total number of mallocs used during MatSetValues calls=0
+      using I-node (on process 0) routines: found 198 nodes, limit used is 5
+KSP Object: (mg_levels_2_) 4 MPI processes
+  type: chebyshev
+    Chebyshev polynomial of first kind
+    eigenvalue targets used: min 0., max 0.
+  maximum iterations=2, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using NONE norm type for convergence test
+PC Object: (mg_levels_2_) 4 MPI processes
+  type: sor
+  PC has not been set up so information may be incomplete
+    type = local_symmetric, iterations = 1, local iterations = 1, omega = 1.
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=9438, cols=9438
+    total: nonzeros=375678, allocated nonzeros=375678
+    total number of mallocs used during MatSetValues calls=0
+      using I-node (on process 0) routines: found 860 nodes, limit used is 5
+KSP Object: (mg_coarse_) 4 MPI processes
+  type: preonly
+  maximum iterations=10000, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using DEFAULT norm type for convergence test
+PC Object: (mg_coarse_) 4 MPI processes
+  type: lu
+  PC has not been set up so information may be incomplete
+    out-of-place factorization
+    tolerance for zero pivot 2.22045e-14
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=882, cols=882
+    total: nonzeros=262116, allocated nonzeros=262116
+    total number of mallocs used during MatSetValues calls=0
+      using nonscalable MatPtAP() implementation
+      using I-node (on process 0) routines: found 50 nodes, limit used is 5
+  0 KSP unpreconditioned resid norm 1.960410914230e+04 true resid norm 1.960410914230e+04 ||r(i)||/||b|| 1.000000000000e+00
+  1 KSP unpreconditioned resid norm 6.126293267018e+05 true resid norm 6.126293267018e+05 ||r(i)||/||b|| 3.125004672514e+01
+  2 KSP unpreconditioned resid norm 6.650887774736e+05 true resid norm 6.650887774736e+05 ||r(i)||/||b|| 3.392598830407e+01
+  3 KSP unpreconditioned resid norm 1.453025715668e+06 true resid norm 1.453025715668e+06 ||r(i)||/||b|| 7.411842614836e+01
+  4 KSP unpreconditioned resid norm 4.750513700567e+06 true resid norm 4.750513700567e+06 ||r(i)||/||b|| 2.423223450800e+02
+  5 KSP unpreconditioned resid norm 1.750966278415e+07 true resid norm 1.750966278415e+07 ||r(i)||/||b|| 8.931628903436e+02
+  6 KSP unpreconditioned resid norm 6.764631780395e+07 true resid norm 6.764631780395e+07 ||r(i)||/||b|| 3.450619322353e+03
+  7 KSP unpreconditioned resid norm 2.678474723821e+08 true resid norm 2.678474723821e+08 ||r(i)||/||b|| 1.366282295400e+04
+>>>> ksp solve time: 0.0906315 (s)
+            || b ||_2 = 1.9604109142303623e+04
+|| r ||_2 / || b ||_2 = 1.3662822953997997e+04

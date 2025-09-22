@@ -1,0 +1,156 @@
+Config file: ../input/config/comsol/inclined-shell/refine0.json
+order_rbm = 1
+angle_type = 1
+mesh_type = 1
+==== basic information of linear system ====
+matrix Row = 13368, matrix Column = 13368
+matrix nz_allocated = 361262, matrix nz_used = 361262, matrix nz_unneeded = 0
+vector Row = 13368
+initial     || b ||_2 = 3.0009674865898700e+02
+>>>>local_vec_size = 13368
+>>>>~~~~ local_mat_m = 13368, local_mat_n = 13368
+            || b ||_2 = 3.0009674865898700e+02
+|| r ||_2 / || b ||_2 = 1.0000000000000000e+00
+
+
+>>>>nodes in level 2 is 34, less than 100, setup DONE!>>>>
+
+
+in rank 0/1, m_local_A = 13368, n_local = 13368
+>>>> size of dinv_a: m = 13368, n = 13368
+>>>> size of p_unsmooth: m = 13368, n = 3342
+>>>> size of p_smooth: m = 13368, n = 3342
+>>>> size of sa_prolongation: m = 13368, n = 3342
+>>>> size of operator_fine: m = 13368, n = 13368
+in rank 0/1, m_local_A = 3342, n_local = 3342
+>>>> size of dinv_a: m = 3342, n = 3342
+>>>> size of p_unsmooth: m = 3342, n = 834
+>>>> size of p_smooth: m = 3342, n = 834
+>>>> size of sa_prolongation: m = 3342, n = 834
+>>>> size of operator_fine: m = 3342, n = 3342
+in rank 0/1, m_local_A = 834, n_local = 834
+>>>> size of dinv_a: m = 834, n = 834
+>>>> size of p_unsmooth: m = 834, n = 204
+>>>> size of p_smooth: m = 834, n = 204
+>>>> size of sa_prolongation: m = 834, n = 204
+>>>> size of operator_fine: m = 834, n = 834
+>>>> mla setup time: 0.325548 (s)
+KSP Object: (mg_coarse_) 1 MPI process
+  type: preonly
+  maximum iterations=10000, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using DEFAULT norm type for convergence test
+PC Object: (mg_coarse_) 1 MPI process
+  type: lu
+  PC has not been set up so information may be incomplete
+    out-of-place factorization
+    tolerance for zero pivot 2.22045e-14
+    using diagonal shift on blocks to prevent zero pivot [INBLOCKS]
+  linear system matrix = precond matrix:
+  Mat Object: 1 MPI process
+    type: seqaij
+    rows=204, cols=204
+    total: nonzeros=39744, allocated nonzeros=39744
+    total number of mallocs used during MatSetValues calls=0
+      using I-node routines: found 52 nodes, limit used is 5
+KSP Object: (mg_levels_1_) 1 MPI process
+  type: chebyshev
+    Chebyshev polynomial of first kind
+    eigenvalue targets used: min 0., max 0.
+  maximum iterations=5, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using NONE norm type for convergence test
+PC Object: (mg_levels_1_) 1 MPI process
+  type: sor
+  PC has not been set up so information may be incomplete
+    type = local_symmetric, iterations = 1, local iterations = 1, omega = 1.
+  linear system matrix = precond matrix:
+  Mat Object: 1 MPI process
+    type: seqaij
+    rows=834, cols=834
+    total: nonzeros=178020, allocated nonzeros=178020
+    total number of mallocs used during MatSetValues calls=0
+      using I-node routines: found 278 nodes, limit used is 5
+KSP Object: (mg_levels_2_) 1 MPI process
+  type: chebyshev
+    Chebyshev polynomial of first kind
+    eigenvalue targets used: min 0., max 0.
+  maximum iterations=5, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using NONE norm type for convergence test
+PC Object: (mg_levels_2_) 1 MPI process
+  type: sor
+  PC has not been set up so information may be incomplete
+    type = local_symmetric, iterations = 1, local iterations = 1, omega = 1.
+  linear system matrix = precond matrix:
+  Mat Object: 1 MPI process
+    type: seqaij
+    rows=3342, cols=3342
+    total: nonzeros=330228, allocated nonzeros=330228
+    total number of mallocs used during MatSetValues calls=0
+      using I-node routines: found 1114 nodes, limit used is 5
+KSP Object: (mg_levels_3_) 1 MPI process
+  type: chebyshev
+    Chebyshev polynomial of first kind
+    eigenvalue targets used: min 0., max 0.
+  maximum iterations=5, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using NONE norm type for convergence test
+PC Object: (mg_levels_3_) 1 MPI process
+  type: sor
+  PC has not been set up so information may be incomplete
+    type = local_symmetric, iterations = 1, local iterations = 1, omega = 1.
+  linear system matrix = precond matrix:
+  Mat Object: 1 MPI process
+    type: seqaij
+    rows=13368, cols=13368
+    total: nonzeros=361262, allocated nonzeros=361262
+    total number of mallocs used during MatSetValues calls=0
+      not using I-node routines
+KSP Object: (mg_coarse_) 1 MPI process
+  type: preonly
+  maximum iterations=10000, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using DEFAULT norm type for convergence test
+PC Object: (mg_coarse_) 1 MPI process
+  type: lu
+  PC has not been set up so information may be incomplete
+    out-of-place factorization
+    tolerance for zero pivot 2.22045e-14
+    using diagonal shift on blocks to prevent zero pivot [INBLOCKS]
+  linear system matrix = precond matrix:
+  Mat Object: 1 MPI process
+    type: seqaij
+    rows=204, cols=204
+    total: nonzeros=39744, allocated nonzeros=39744
+    total number of mallocs used during MatSetValues calls=0
+      using I-node routines: found 52 nodes, limit used is 5
+  0 KSP unpreconditioned resid norm 3.000967486590e+02 true resid norm 3.000967486590e+02 ||r(i)||/||b|| 1.000000000000e+00
+  1 KSP unpreconditioned resid norm 2.298075916609e+03 true resid norm 2.298075916609e+03 ||r(i)||/||b|| 7.657783454429e+00
+  2 KSP unpreconditioned resid norm 1.384874387529e+03 true resid norm 1.384874387529e+03 ||r(i)||/||b|| 4.614759719048e+00
+  3 KSP unpreconditioned resid norm 5.964642097468e+02 true resid norm 5.964642097468e+02 ||r(i)||/||b|| 1.987573049065e+00
+  4 KSP unpreconditioned resid norm 1.800791563821e+02 true resid norm 1.800791563821e+02 ||r(i)||/||b|| 6.000703346066e-01
+  5 KSP unpreconditioned resid norm 6.786151883849e+01 true resid norm 6.786151883847e+01 ||r(i)||/||b|| 2.261321361918e-01
+  6 KSP unpreconditioned resid norm 1.418917418552e+01 true resid norm 1.418917418556e+01 ||r(i)||/||b|| 4.728199905186e-02
+  7 KSP unpreconditioned resid norm 3.969138101877e+00 true resid norm 3.969138101843e+00 ||r(i)||/||b|| 1.322619495073e-02
+  8 KSP unpreconditioned resid norm 1.058866622024e+00 true resid norm 1.058866622071e+00 ||r(i)||/||b|| 3.528417508028e-03
+  9 KSP unpreconditioned resid norm 6.111214582198e-01 true resid norm 6.111214581912e-01 ||r(i)||/||b|| 2.036414792636e-03
+ 10 KSP unpreconditioned resid norm 1.830813188292e-01 true resid norm 1.830813188614e-01 ||r(i)||/||b|| 6.100743166313e-04
+ 11 KSP unpreconditioned resid norm 9.145865493513e-02 true resid norm 9.145865496561e-02 ||r(i)||/||b|| 3.047638982238e-04
+ 12 KSP unpreconditioned resid norm 2.487190845476e-02 true resid norm 2.487190841376e-02 ||r(i)||/||b|| 8.287963306802e-05
+ 13 KSP unpreconditioned resid norm 1.009695767500e-02 true resid norm 1.009695771265e-02 ||r(i)||/||b|| 3.364567512900e-05
+ 14 KSP unpreconditioned resid norm 1.728411618431e-03 true resid norm 1.728411584173e-03 ||r(i)||/||b|| 5.759514529552e-06
+ 15 KSP unpreconditioned resid norm 6.374220281994e-04 true resid norm 6.374220365513e-04 ||r(i)||/||b|| 2.124055123555e-06
+ 16 KSP unpreconditioned resid norm 3.152136811109e-04 true resid norm 3.152136670323e-04 ||r(i)||/||b|| 1.050373482688e-06
+ 17 KSP unpreconditioned resid norm 8.208529786650e-05 true resid norm 8.208529028671e-05 ||r(i)||/||b|| 2.735294222731e-07
+ 18 KSP unpreconditioned resid norm 1.658303239446e-05 true resid norm 1.658305911153e-05 ||r(i)||/||b|| 5.525904291077e-08
+ 19 KSP unpreconditioned resid norm 3.533331566427e-06 true resid norm 3.533272970372e-06 ||r(i)||/||b|| 1.177377957662e-08
+ 20 KSP unpreconditioned resid norm 1.327688382703e-06 true resid norm 1.327763757378e-06 ||r(i)||/||b|| 4.424452325164e-09
+>>>> ksp solve time: 0.348257 (s)
+            || b ||_2 = 3.0009674865898700e+02
+|| r ||_2 / || b ||_2 = 4.4244523251637126e-09

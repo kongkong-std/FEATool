@@ -1,0 +1,152 @@
+Config file: ../input/config/comsol/flat-shell/refine1.json
+order_rbm = 2
+angle_type = 1
+mesh_type = 1
+==== basic information of linear system ====
+matrix Row = 360834, matrix Column = 360834
+matrix nz_allocated = 5279847, matrix nz_used = 5279847, matrix nz_unneeded = 0
+vector Row = 360834
+>>>>local_vec_size = 90210
+>>>>~~~~ local_mat_m = 90210, local_mat_n = 90210
+>>>>local_vec_size = 90204
+>>>>~~~~ local_mat_m = 90204, local_mat_n = 90204
+>>>>local_vec_size = 90210
+>>>>~~~~ local_mat_m = 90210, local_mat_n = 90210
+initial     || b ||_2 = 1.0229681021631814e+03
+>>>>local_vec_size = 90210
+>>>>~~~~ local_mat_m = 90210, local_mat_n = 90210
+            || b ||_2 = 1.0229681021631814e+03
+|| r ||_2 / || b ||_2 = 1.0000000000000000e+00
+[ 60139   358908 15034 15035] [60140] [ 0.000] [ 0.000]
+nvtxs:      60139, cut:   107401, balance: 1.200 
+	[0 0], [0.0001], [9 0 61]
+	[0 1], [0.0001], [6 0 41]
+		cut: 107388
+	[1 0], [0.0001], [1 0 7]
+	[1 1], [0.0001], [2 0 14]
+		cut: 107387
+	[2 0], [0.0001], [3 0 19]
+	[2 1], [0.0001], [0 0 0]
+		cut: 107385
+	[3 0], [0.0001], [0 0 0]
+	[3 1], [0.0001], [0 0 0]
+		cut: 107385
+      Setup: Max:   0.001, Sum:   0.003, Balance:   1.000
+   InitPart: Max:   0.767, Sum:   3.068, Balance:   1.000
+ Initialize: Max:   0.003, Sum:   0.011, Balance:   1.000
+      K-way: Max:   0.016, Sum:   0.064, Balance:   1.000
+      Remap: Max:   0.000, Sum:   0.000, Balance:   3.814
+      Total: Max:   0.787, Sum:   3.149, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.005
+Final 15034-way Cut: 107385 	Balance: 1.250 
+[ 15034    89204  3758  3759] [15035] [ 0.000] [ 0.000]
+nvtxs:      15034, cut:    26651, balance: 1.200 
+	[0 0], [0.0003], [9 0 55]
+	[0 1], [0.0003], [8 0 51]
+		cut: 26640
+	[1 0], [0.0003], [1 0 7]
+	[1 1], [0.0003], [0 0 0]
+		cut: 26639
+	[2 0], [0.0003], [0 0 0]
+	[2 1], [0.0003], [0 0 0]
+		cut: 26639
+      Setup: Max:   0.000, Sum:   0.001, Balance:   1.000
+   InitPart: Max:   0.226, Sum:   0.903, Balance:   1.000
+ Initialize: Max:   0.001, Sum:   0.003, Balance:   1.001
+      K-way: Max:   0.002, Sum:   0.009, Balance:   1.000
+      Total: Max:   0.229, Sum:   0.917, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.005
+Final 3758-way Cut:  26639 	Balance: 1.250 
+Partitioning a graph of size 3758 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.003
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.000
+      Total: Max:   0.186, Sum:   0.746, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.000
+Final 939-way Cut:   6316 	Balance: 1.249 
+Partitioning a graph of size 939 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.000
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.600
+      Total: Max:   0.044, Sum:   0.176, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.091
+Final 234-way Cut:   1525 	Balance: 1.246 
+Partitioning a graph of size 234 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.010
+      Total: Max:   0.009, Sum:   0.035, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.067
+Final  58-way Cut:    349 	Balance: 1.239 
+Partitioning a graph of size 58 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.025
+      Remap: Max:   0.000, Sum:   0.000, Balance:   4.000
+      Total: Max:   0.002, Sum:   0.007, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.081
+Final  14-way Cut:     72 	Balance: 1.207 
+
+
+>>>>nodes in level 4 is 58, less than 100, setup DONE!>>>>
+
+
+in rank 3/4, m_local_A = 90204, n_local = 90204
+in rank 0/4, m_local_A = 90210, n_local = 90210
+in rank 1/4, m_local_A = 90210, n_local = 90210
+in rank 2/4, m_local_A = 90210, n_local = 90210
+>>>> size of dinv_a: m = 360834, n = 360834
+>>>> size of p_unsmooth: m = 360834, n = 135306
+>>>> size of p_smooth: m = 360834, n = 135306
+>>>> size of sa_prolongation: m = 360834, n = 135306
+>>>> size of operator_fine: m = 360834, n = 360834
+>>>> size of dinv_a: m = 360834, n = 360834
+>>>> size of p_unsmooth: m = 360834, n = 135306
+>>>> size of p_smooth: m = 360834, n = 135306
+>>>> size of dinv_a: m = 360834, n = 360834
+>>>> size of p_unsmooth: m = 360834, n = 135306
+>>>> size of p_smooth: m = 360834, n = 135306
+>>>> size of dinv_a: m = 360834, n = 360834
+>>>> size of p_unsmooth: m = 360834, n = 135306
+>>>> size of p_smooth: m = 360834, n = 135306
+in rank 3/4, m_local_A = 33822, n_local = 33822
+in rank 0/4, m_local_A = 33831, n_local = 33831
+in rank 1/4, m_local_A = 33831, n_local = 33831
+in rank 2/4, m_local_A = 33822, n_local = 33822
+>>>> size of dinv_a: m = 135306, n = 135306
+>>>> size of p_unsmooth: m = 135306, n = 33822
+>>>> size of p_smooth: m = 135306, n = 33822
+>>>> size of sa_prolongation: m = 135306, n = 33822
+>>>> size of operator_fine: m = 135306, n = 135306
+>>>> size of dinv_a: m = 135306, n = 135306
+>>>> size of p_unsmooth: m = 135306, n = 33822
+>>>> size of p_smooth: m = 135306, n = 33822
+>>>> size of dinv_a: m = 135306, n = 135306
+>>>> size of p_unsmooth: m = 135306, n = 33822
+>>>> size of p_smooth: m = 135306, n = 33822
+>>>> size of dinv_a: m = 135306, n = 135306
+>>>> size of p_unsmooth: m = 135306, n = 33822
+>>>> size of p_smooth: m = 135306, n = 33822
+in rank 0/4, m_local_A = 8460, n_local = 8460
+in rank 1/4, m_local_A = 8460, n_local = 8460
+in rank 3/4, m_local_A = 8451, n_local = 8451
+in rank 2/4, m_local_A = 8451, n_local = 8451
+>>>> size of dinv_a: m = 33822, n = 33822
+>>>> size of p_unsmooth: m = 33822, n = 8451
+>>>> size of p_smooth: m = 33822, n = 8451
+>>>> size of dinv_a: m = 33822, n = 33822
+>>>> size of p_unsmooth: m = 33822, n = 8451
+>>>> size of p_smooth: m = 33822, n = 8451
+>>>> size of dinv_a: m = 33822, n = 33822
+>>>> size of p_unsmooth: m = 33822, n = 8451
+>>>> size of p_smooth: m = 33822, n = 8451
+>>>> size of dinv_a: m = 33822, n = 33822
+>>>> size of p_unsmooth: m = 33822, n = 8451
+>>>> size of p_smooth: m = 33822, n = 8451
+>>>> size of sa_prolongation: m = 33822, n = 8451
+>>>> size of operator_fine: m = 33822, n = 33822
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 9988 RUNNING AT bogon
+=   EXIT CODE: 9
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+YOUR APPLICATION TERMINATED WITH THE EXIT STRING: Killed (signal 9)
+This typically refers to a problem with your application.
+Please see the FAQ page for debugging suggestions
