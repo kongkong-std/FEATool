@@ -1,0 +1,57 @@
+Config file: ../input/config/comsol/flat-shell/refine0.json
+order_rbm = 1
+angle_type = 1
+mesh_type = 1
+==== basic information of linear system ====
+matrix Row = 6006, matrix Column = 6006
+dsqrt matrix Row = 6006, dsqrt matrix Column = 6006
+matrix nz_allocated = 77658, matrix nz_used = 77658, matrix nz_unneeded = 0
+dsqrt matrix nz_allocated = 6006, dsqrt matrix nz_used = 6006, dsqrt matrix nz_unneeded = 0
+vector Row = 6006
+initial     || b ||_2 = 5.4480202351603092e-02
+>>>>local_vec_size = 6006
+>>>>~~~~ local_mat_m = 6006, local_mat_n = 6006
+            || b ||_2 = 5.4480202351603092e-02
+|| r ||_2 / || b ||_2 = 1.0000000000000000e+00
+
+
+>>>>nodes in level 1 is 62, less than 100, setup DONE!>>>>
+
+
+in rank 0/1, m_local_A = 6006, n_local = 6006
+>>>> size of dinv_a: m = 6006, n = 6006
+>>>> size of p_unsmooth: m = 6006, n = 1500
+>>>> size of p_smooth: m = 6006, n = 1500
+>>>> size of sa_prolongation: m = 6006, n = 1500
+>>>> size of operator_fine: m = 6006, n = 6006
+[0]PETSC ERROR: --------------------- Error Message --------------------------------------------------------------
+[0]PETSC ERROR: General MPI error
+[0]PETSC ERROR: MPI error 672222725 Invalid communicator, error stack:
+                PMPI_Comm_get_attr(377): MPI_Comm_get_attr(comm=0x7fff, comm_keyval=-1539309568, attribute_val=0x7fff99f5a1c8, flag=0x7fff99f5a1bc) failed
+                MPIR_CommGetAttr(286)..: MPIR_Comm_get_attr(comm=0x7fff, comm_keyval=-1539309568, attribute_val=0x7fff99f5a1c8, flag=0x7fff99f5a1bc) failed
+                MPIR_CommGetAttr(58)...: Invalid communicator
+[0]PETSC ERROR: WARNING! There are unused option(s) set! Could be the program crashed before usage or a spelling mistake, etc!
+[0]PETSC ERROR:   Option left: name:-ksp_max_it value: 2000 source: command line
+[0]PETSC ERROR:   Option left: name:-ksp_monitor_true_residual (no value) source: command line
+[0]PETSC ERROR:   Option left: name:-ksp_norm_type value: unpreconditioned source: command line
+[0]PETSC ERROR:   Option left: name:-ksp_rtol value: 1e-8 source: command line
+[0]PETSC ERROR:   Option left: name:-ksp_type value: fcg source: command line
+[0]PETSC ERROR: See https://petsc.org/release/faq/ for trouble shooting.
+[0]PETSC ERROR: Petsc Release Version 3.21.4, Jul 30, 2024 
+[0]PETSC ERROR: ./app_petsc_exe on a  named bogon by kongkong Sat Nov  1 00:58:13 2025
+[0]PETSC ERROR: Configure options --prefix=/home/kongkong/software/petsc/3.21.4/real/gklib-metis --with-clanguage=C --with-debugging=0 --with-precision=double --with-scalar-type=real --with-shared-libraries=0 --COPTFLAGS="-O3 -march=native -mtune=native" --CXXOPTFLAGS="-O3 -march=native -mtune=native" --FOPTFLAGS="-O3 -march=native -mtune=native" --with-mpi=1 --with-mpi-dir=/opt/apps/mpich/3.2.1/gcc-10.3.0 --with-hypre=1 --download-hypre=/home/kongkong/tarball/hypre-2.31.0.tar.gz --with-mumps=1 --download-mumps=/home/kongkong/tarball/MUMPS_5.7.3.tar.gz --with-openblas=1 --download-openblas=/home/kongkong/tarball/OpenBLAS-0.3.28.tar.gz --with-scalapack=1 --download-scalapack=/home/kongkong/tarball/scalapack-2.2.0.tar.gz --with-metis=1 --with-metis-include=/opt/apps/metis/include --with-metis-lib="/opt/apps/metis/lib/libmetis.a /opt/apps/gklib/lib/libGKlib.a" --with-parmetis=1 --with-parmetis-include=/opt/apps/parmetis/include --with-parmetis-lib="/opt/apps/parmetis/lib/libparmetis.a /opt/apps/metis/lib/libmetis.a /opt/apps/gklib/lib/libGKlib.a"
+[0]PETSC ERROR: #1 PetscCommDuplicate() at /home/kongkong/temporary/petsc-3.21.4/src/sys/objects/tagm.c:208
+[0]PETSC ERROR: #2 PetscHeaderCreate_Private() at /home/kongkong/temporary/petsc-3.21.4/src/sys/objects/inherit.c:51
+[0]PETSC ERROR: #3 PetscHeaderCreate_Function() at /home/kongkong/temporary/petsc-3.21.4/src/sys/objects/inherit.c:26
+[0]PETSC ERROR: #4 MatCreate() at /home/kongkong/temporary/petsc-3.21.4/src/mat/utils/gcreate.c:105
+[0]PETSC ERROR: #5 MatProductCreate() at /home/kongkong/temporary/petsc-3.21.4/src/mat/interface/matproduct.c:1121
+[0]PETSC ERROR: #6 ParMetisMLASolverSetupPhase() at ../src/parmetis_mla_solver.c:1310
+>>>> mla setup time: 0.0736158 (s)
+[0]PETSC ERROR: ------------------------------------------------------------------------
+[0]PETSC ERROR: Caught signal number 11 SEGV: Segmentation Violation, probably memory access out of range
+[0]PETSC ERROR: Try option -start_in_debugger or -on_error_attach_debugger
+[0]PETSC ERROR: or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/
+[0]PETSC ERROR: configure using --with-debugging=yes, recompile, link, and run 
+[0]PETSC ERROR: to get more information on the crash.
+[0]PETSC ERROR: Run with -malloc_debug to check if memory corruption is causing the crash.
+application called MPI_Abort(MPI_COMM_WORLD, 59) - process 0

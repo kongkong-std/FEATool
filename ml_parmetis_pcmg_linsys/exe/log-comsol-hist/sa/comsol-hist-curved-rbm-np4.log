@@ -1,0 +1,72 @@
+Config file: ../input/config/comsol/curved-shell/refine0.json
+order_rbm = 1
+angle_type = 1
+mesh_type = 1
+==== basic information of linear system ====
+matrix Row = 9438, matrix Column = 9438
+dsqrt matrix Row = 9438, dsqrt matrix Column = 9438
+matrix nz_allocated = 375678, matrix nz_used = 375678, matrix nz_unneeded = 0
+dsqrt matrix nz_allocated = 9438, dsqrt matrix nz_used = 9438, dsqrt matrix nz_unneeded = 0
+>>>>---- dsqrt row = 9438, col = 9438
+>>>>---- fro norm of dsqrt = 1.3677350739381351e+07
+vector Row = 9438
+initial     || b ||_2 = 1.0992902800555333e-01
+>>>>local_vec_size = 2358
+>>>>~~~~ local_mat_m = 2358, local_mat_n = 2358
+>>>>local_vec_size = 2358
+>>>>~~~~ local_mat_m = 2358, local_mat_n = 2358
+>>>>local_vec_size = 2358
+>>>>~~~~ local_mat_m = 2358, local_mat_n = 2358
+>>>>local_vec_size = 2364
+>>>>~~~~ local_mat_m = 2364, local_mat_n = 2364
+            || b ||_2 = 1.0992902800555333e-01
+|| r ||_2 / || b ||_2 = 1.0000000000000000e+00
+Partitioning a graph of size 1573 serially
+      Setup: Max:   0.000, Sum:   0.002, Balance:   1.005
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.333
+      Total: Max:   0.250, Sum:   0.998, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.035
+Final 393-way Cut:   2625 	Balance: 1.249 
+Partitioning a graph of size 393 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.022
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.333
+      Total: Max:   0.014, Sum:   0.056, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.037
+Final  98-way Cut:    617 	Balance: 1.247 
+Partitioning a graph of size 98 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.016
+      Remap: Max:   0.000, Sum:   0.000, Balance:   2.000
+      Total: Max:   0.003, Sum:   0.012, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.189
+Final  24-way Cut:    135 	Balance: 1.224 
+
+
+>>>>nodes in level 1 is 98, less than 100, setup DONE!>>>>
+
+
+in rank 0/4, m_local_A = 2364, n_local = 2364
+in rank 1/4, m_local_A = 2358, n_local = 2358
+in rank 2/4, m_local_A = 2358, n_local = 2358
+in rank 3/4, m_local_A = 2358, n_local = 2358
+>>>> size of dinv_a: m = 9438, n = 9438
+>>>> size of p_unsmooth: m = 9438, n = 2358
+>>>> size of p_smooth: m = 9438, n = 2358
+>>>> size of sa_prolongation: m = 9438, n = 2358
+>>>> size of operator_fine: m = 9438, n = 9438
+>>>> size of dinv_a: m = 9438, n = 9438
+>>>> size of p_unsmooth: m = 9438, n = 2358
+>>>> size of p_smooth: m = 9438, n = 2358
+>>>> size of dinv_a: m = 9438, n = 9438
+>>>> size of p_unsmooth: m = 9438, n = 2358
+>>>> size of p_smooth: m = 9438, n = 2358
+>>>> size of dinv_a: m = 9438, n = 9438
+>>>> size of p_unsmooth: m = 9438, n = 2358
+>>>> size of p_smooth: m = 9438, n = 2358
+[0]PETSC ERROR: ------------------------------------------------------------------------
+[0]PETSC ERROR: Caught signal number 11 SEGV: Segmentation Violation, probably memory access out of range
+[0]PETSC ERROR: Try option -start_in_debugger or -on_error_attach_debugger
+[0]PETSC ERROR: or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/
+[0]PETSC ERROR: configure using --with-debugging=yes, recompile, link, and run 
+[0]PETSC ERROR: to get more information on the crash.
+[0]PETSC ERROR: Run with -malloc_debug to check if memory corruption is causing the crash.
+application called MPI_Abort(MPI_COMM_WORLD, 59) - process 0

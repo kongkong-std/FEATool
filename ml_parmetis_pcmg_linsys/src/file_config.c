@@ -41,12 +41,14 @@ int ConfigParse(MPI_Comm comm /*communicator*/,
         {
             cJSON *file_mat = cJSON_GetObjectItem(file_obj, "file_mat");
             cJSON *file_rhs = cJSON_GetObjectItem(file_obj, "file_rhs");
+            cJSON *file_dsqrt = cJSON_GetObjectItem(file_obj, "file_dsqrt");
             cJSON *file_mesh = cJSON_GetObjectItem(file_obj, "file_mesh");
 
-            if (file_mat && file_rhs && file_mesh)
+            if (file_mat && file_rhs && file_dsqrt && file_mesh)
             {
                 snprintf(file_config->file_mat, sizeof(file_config->file_mat), "%s", file_mat->valuestring);
                 snprintf(file_config->file_rhs, sizeof(file_config->file_rhs), "%s", file_rhs->valuestring);
+                snprintf(file_config->file_dsqrt, sizeof(file_config->file_dsqrt), "%s", file_dsqrt->valuestring);
                 snprintf(file_config->file_mesh, sizeof(file_config->file_mesh), "%s", file_mesh->valuestring);
             }
         }

@@ -250,7 +250,7 @@ int Level0FinePartition(const AdjDataMesh *data_mesh /*initial data mesh*/,
     (void)MPI_Bcast(fine_graph->coordinates, fine_graph->dim * fine_graph->nn, MPI_DOUBLE, 0, comm);
     (void)MPI_Bcast(fine_graph->vtxdist, (nprocs + 1) * sizeof(idx_t), MPI_BYTE, 0, comm);
 
-    idx_t nparts = fine_graph->nn / 4;
+    idx_t nparts = fine_graph->nn / 100;    // aggregate number
     idx_t edgecut = 0;
     idx_t num_local_node = fine_graph->vtxdist[my_rank + 1] -
                            fine_graph->vtxdist[my_rank];
@@ -396,7 +396,7 @@ int LevelKCoarsePartition(const AdjDataMesh *fine_graph /*level k fine data mesh
     (void)MPI_Bcast(coarse_graph->coordinates, coarse_graph->dim * coarse_graph->nn, MPI_DOUBLE, 0, comm);
     (void)MPI_Bcast(coarse_graph->vtxdist, (nprocs + 1) * sizeof(idx_t), MPI_BYTE, 0, comm);
 
-    idx_t nparts = coarse_graph->nn / 4;
+    idx_t nparts = coarse_graph->nn / 100;    // aggregate number
     idx_t edgecut = 0;
     idx_t num_local_node = coarse_graph->vtxdist[my_rank + 1] -
                            coarse_graph->vtxdist[my_rank];
@@ -1220,12 +1220,23 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                            coarse_node_y = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 1],
                            coarse_node_z = mla_ctx->metis_mla[index_cnt_level].coarse->coordinates[3 * index_coarse_node + 2];
 
+#if 0
                     p_loc[0][3] = fine_node_z - coarse_node_z; // z
                     p_loc[0][5] = coarse_node_y - fine_node_y; // -y
                     p_loc[1][4] = fine_node_z - coarse_node_z; // z
                     p_loc[1][5] = fine_node_x - coarse_node_x; // x
                     p_loc[2][3] = coarse_node_x - fine_node_x; // -x
                     p_loc[2][4] = coarse_node_y - fine_node_y; // -y
+#endif // local coordinate difference
+
+#if 1
+                    p_loc[0][3] = fine_node_z;  // z
+                    p_loc[0][5] = -fine_node_y; // -y
+                    p_loc[1][4] = fine_node_z;  // z
+                    p_loc[1][5] = fine_node_x;  // x
+                    p_loc[2][3] = -fine_node_x; // -x
+                    p_loc[2][4] = -fine_node_y; // -y
+#endif                                          // global coordinate difference
 
                     for (int index_tmp_i = 0; index_tmp_i < 6; ++index_tmp_i)
                     {
@@ -1298,6 +1309,62 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                 PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> size of sa_prolongation: m = %d, n = %d\n", m_sa_prolongation, n_sa_prolongation));
                 PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> size of operator_fine: m = %d, n = %d\n", m_operator_fine, n_operator_fine));
 #endif // size
+
+#if 0
+                if (index_cnt_level == 0)
+                {
+                    // updating prolongation operator
+                    /*
+                     * P = D^{1/2} P
+                     */
+                    Mat P_tmp;
+
+#if 1
+                    PetscInt m_dsqrt = 0, n_dsqrt = 0;
+                    PetscReal dsqrt_norm_fro = 0.;
+                    PetscCall(MatGetSize(mla_ctx->mysolver.d_sqrt, &m_dsqrt, &n_dsqrt));
+                    PetscCall(MatNorm(mla_ctx->mysolver.d_sqrt, NORM_FROBENIUS, &dsqrt_norm_fro));
+                    PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>>---- dsqrt row = %" PetscInt_FMT ", col = %" PetscInt_FMT "\n", m_dsqrt, n_dsqrt));
+                    PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>>---- fro norm of dsqrt = %021.16le\n", dsqrt_norm_fro));
+#endif // test diagonal sqrt fro-norm
+
+#if 0
+                    // parallel layout
+                    PetscLayout rmap_dsqrt, cmap_dsqrt,
+                        rmap_psa, cmap_psa,
+                        rmap_a, cmap_a;
+                    PetscCall(MatGetLayouts(mla_ctx->mysolver.d_sqrt, &rmap_dsqrt, &cmap_dsqrt));
+                    PetscCall(MatGetLayouts(mla_ctx->metis_mla[index_cnt_level].sa_prolongation, &rmap_psa, &cmap_psa));
+                    PetscCall(MatGetLayouts(mla_ctx->mysolver.solver_a, &rmap_a, &cmap_a));
+
+                    PetscBool r_cong_dp, c_cong_dp,
+                        r_cong_da, c_cong_da,
+                        r_cong_pa, c_cong_pa;
+
+                    PetscCall(PetscLayoutCompare(rmap_dsqrt, rmap_a, &r_cong_da));
+                    PetscCall(PetscLayoutCompare(cmap_dsqrt, cmap_a, &c_cong_da));
+
+                    if (r_cong_da && c_cong_da)
+                    {
+                        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "\n\n>>>>++++==== dsqrt and A have same layout !!!!....----\n\n"););
+                    }
+                    else
+                    {
+                        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "\n\n>>>>++++==== dsqrt and A have different layout !!!!....----\n\n"););
+                    }
+#endif
+
+                    PetscCall(MatDuplicate(mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                                           MAT_SHARE_NONZERO_PATTERN,
+                                           &P_tmp));
+                    PetscCall(MatMatMult(mla_ctx->mysolver.d_sqrt,
+                                         mla_ctx->metis_mla[index_cnt_level].sa_prolongation,
+                                         MAT_INITIAL_MATRIX,
+                                         PETSC_DETERMINE,
+                                         &P_tmp));
+                    PetscCall(MatCopy(P_tmp, mla_ctx->metis_mla[index_cnt_level].sa_prolongation, SAME_NONZERO_PATTERN));
+                }
+#endif // diag scaling
 
                 // coarse operator
                 PetscCall(MatPtAP(mla_ctx->metis_mla[index_cnt_level].operator_fine,
@@ -1414,14 +1481,14 @@ int ParMetisMLASolverSetupPhase(MLAContext *mla_ctx /*mla context data*/)
                                       (fine_node_y - coarse_node_y) / 2.; // -y^2/2
                         p_loc[2][8] = -(fine_node_x - coarse_node_x) *
                                       (fine_node_y - coarse_node_y) / 2.; // -xy/2
-#endif                                                                    // kirchhoff 2nd-order
+#endif // kirchhoff 2nd-order
 #if 0
                         p_loc[3][6] = fine_node_x - coarse_node_x;        // x
                         p_loc[3][8] = (fine_node_y - coarse_node_y) / 2.; // y/2
                         p_loc[4][7] = fine_node_y - coarse_node_y;        // y
                         p_loc[4][8] = (fine_node_x - coarse_node_x) / 2.; // x/2
-#endif                                                                    // suppose 0 in right-bottom
-#endif                                                                    // kirchhoff-love
+#endif // suppose 0 in right-bottom
+#endif // kirchhoff-love
 
 #if 0
                         p_loc[0][3] = fine_node_z - coarse_node_z; // z

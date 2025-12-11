@@ -118,6 +118,7 @@ typedef struct
     char file_mat[PETSC_MAX_PATH_LEN];
     char file_rhs[PETSC_MAX_PATH_LEN];
     char file_mesh[PETSC_MAX_PATH_LEN];
+    char file_dsqrt[PETSC_MAX_PATH_LEN];
 } ConfigFile;
 
 typedef struct
@@ -152,7 +153,7 @@ typedef struct
 {
     KSP ksp;
     PC pc;
-    Mat solver_a;
+    Mat solver_a, d_sqrt;    // A, D^{1/2}
     Vec solver_b, solver_x, solver_r; // rhs, solution, residual
 } MySolver;
 
@@ -434,6 +435,7 @@ int SolverPetscResidualCheck(MySolver *mysolver /*solver data*/);
  */
 int SolverPetscInitialize(const char *path_mat /*path to matrix file*/,
                           const char *path_rhs /*path to rhs file*/,
+                          const char *path_dsqrt /*path to dsqrt file*/,
                           const int *node_vtxdist /*distribution of nodes*/,
                           MySolver *mysolver /*solver data*/);
 

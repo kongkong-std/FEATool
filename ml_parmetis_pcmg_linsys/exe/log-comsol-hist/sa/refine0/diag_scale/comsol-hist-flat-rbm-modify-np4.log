@@ -1,0 +1,70 @@
+Config file: ../input/config/comsol/flat-shell/refine0.json
+order_rbm = 1
+angle_type = 1
+mesh_type = 1
+==== basic information of linear system ====
+matrix Row = 6006, matrix Column = 6006
+dsqrt matrix Row = 6006, dsqrt matrix Column = 6006
+matrix nz_allocated = 77658, matrix nz_used = 77658, matrix nz_unneeded = 0
+dsqrt matrix nz_allocated = 6006, dsqrt matrix nz_used = 6006, dsqrt matrix nz_unneeded = 0
+vector Row = 6006
+>>>>local_vec_size = 1500
+>>>>~~~~ local_mat_m = 1500, local_mat_n = 1500
+>>>>local_vec_size = 1500
+>>>>~~~~ local_mat_m = 1500, local_mat_n = 1500
+>>>>local_vec_size = 1500
+>>>>~~~~ local_mat_m = 1500, local_mat_n = 1500
+initial     || b ||_2 = 5.4480202351603092e-02
+>>>>local_vec_size = 1506
+>>>>~~~~ local_mat_m = 1506, local_mat_n = 1506
+            || b ||_2 = 5.4480202351603092e-02
+|| r ||_2 / || b ||_2 = 1.0000000000000000e+00
+Partitioning a graph of size 1001 serially
+      Setup: Max:   0.001, Sum:   0.002, Balance:   1.001
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.000
+      Total: Max:   0.131, Sum:   0.524, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.009
+Final 250-way Cut:   1636 	Balance: 1.249 
+Partitioning a graph of size 250 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.003
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.333
+      Total: Max:   0.007, Sum:   0.030, Balance:   1.001
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.000
+Final  62-way Cut:    372 	Balance: 1.240 
+Partitioning a graph of size 62 serially
+      Setup: Max:   0.000, Sum:   0.000, Balance:   1.009
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.000
+      Total: Max:   0.002, Sum:   0.006, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.067
+Final  15-way Cut:     74 	Balance: 1.210 
+
+
+>>>>nodes in level 1 is 62, less than 100, setup DONE!>>>>
+
+
+in rank 0/4, m_local_A = 1506, n_local = 1506
+in rank 1/4, m_local_A = 1500, n_local = 1500
+in rank 2/4, m_local_A = 1500, n_local = 1500
+in rank 3/4, m_local_A = 1500, n_local = 1500
+>>>> size of dinv_a: m = 6006, n = 6006
+>>>> size of p_unsmooth: m = 6006, n = 1500
+>>>> size of p_smooth: m = 6006, n = 1500
+>>>> size of sa_prolongation: m = 6006, n = 1500
+>>>> size of operator_fine: m = 6006, n = 6006
+>>>> size of dinv_a: m = 6006, n = 6006
+>>>> size of p_unsmooth: m = 6006, n = 1500
+>>>> size of p_smooth: m = 6006, n = 1500
+>>>> size of dinv_a: m = 6006, n = 6006
+>>>> size of p_unsmooth: m = 6006, n = 1500
+>>>> size of p_smooth: m = 6006, n = 1500
+>>>> size of dinv_a: m = 6006, n = 6006
+>>>> size of p_unsmooth: m = 6006, n = 1500
+>>>> size of p_smooth: m = 6006, n = 1500
+[0]PETSC ERROR: ------------------------------------------------------------------------
+[0]PETSC ERROR: Caught signal number 11 SEGV: Segmentation Violation, probably memory access out of range
+[0]PETSC ERROR: Try option -start_in_debugger or -on_error_attach_debugger
+[0]PETSC ERROR: or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/
+[0]PETSC ERROR: configure using --with-debugging=yes, recompile, link, and run 
+[0]PETSC ERROR: to get more information on the crash.
+[0]PETSC ERROR: Run with -malloc_debug to check if memory corruption is causing the crash.
+application called MPI_Abort(MPI_COMM_WORLD, 59) - process 0

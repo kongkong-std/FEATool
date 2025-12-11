@@ -2,6 +2,7 @@
     "file": {
         "file_mat": "/home/kongkong/Documents/DocFEMTool/FEATool/ml_parmetis_pcmg_linsys/input/comsol-linsys/inclined-shell/refine0/mat.txt",
         "file_rhs": "/home/kongkong/Documents/DocFEMTool/FEATool/ml_parmetis_pcmg_linsys/input/comsol-linsys/inclined-shell/refine0/rhs.txt",
+        "file_dsqrt": "/home/kongkong/Documents/DocFEMTool/FEATool/ml_parmetis_pcmg_linsys/input/comsol-linsys/inclined-shell/refine0/d_sqrt.txt",
         "file_mesh": "/home/kongkong/Documents/DocFEMTool/FEATool/ml_parmetis_pcmg_linsys/input/comsol-mesh/inclined-shell/refine0/mesh.txt"
     },
     "mesh_label": {

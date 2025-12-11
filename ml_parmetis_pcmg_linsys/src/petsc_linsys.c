@@ -10,6 +10,7 @@ int DeepCopyMLAContextMySolver(MySolver *dst, MySolver *src)
     PetscCall(VecCopy(src->solver_r, dst->solver_r));
 
     PetscCall(MatDuplicate(src->solver_a, MAT_COPY_VALUES, &(dst->solver_a)));
+    PetscCall(MatDuplicate(src->d_sqrt, MAT_COPY_VALUES, &(dst->d_sqrt)));
 
     return 0;
 }
@@ -84,7 +85,8 @@ int FileProcessCSRVector(const char *path, CSRVector *vec_data)
     return 0;
 }
 
-int SolverPetscInitialize(const char *path_mat, const char *path_rhs, const int *node_vtxdist,
+int SolverPetscInitialize(const char *path_mat, const char *path_rhs, const char *path_dsqrt,
+                          const int *node_vtxdist,
                           MySolver *mysolver)
 {
     int my_rank, nprocs;
@@ -182,6 +184,90 @@ int SolverPetscInitialize(const char *path_mat, const char *path_rhs, const int 
     (void)MPI_Bcast(&mat_data.nrows, 1, MPI_INT, 0, comm);
     (void)MPI_Bcast(&mat_data.ncols, 1, MPI_INT, 0, comm);
 
+    // sqrt(diagonal) file process
+    CSRMatrix dsqrt_mat_data;
+    dsqrt_mat_data.local_nrows = (local_node_end - local_node_start) * 6; // 6 dofs each node
+
+    dsqrt_mat_data.local_row_ptr = (int *)malloc((dsqrt_mat_data.local_nrows + 1) * sizeof(int));
+    assert(dsqrt_mat_data.local_row_ptr);
+
+    if (my_rank == 0)
+    {
+        FileProcessCSRMatrix(path_dsqrt, &dsqrt_mat_data);
+
+        memcpy(dsqrt_mat_data.local_row_ptr,
+               dsqrt_mat_data.row_ptr,
+               (dsqrt_mat_data.local_nrows + 1) * sizeof(int));
+
+        int tmp_csr_shift = dsqrt_mat_data.local_row_ptr[0];
+        for (int index = 0; index < dsqrt_mat_data.local_nrows + 1; ++index)
+        {
+            dsqrt_mat_data.local_row_ptr[index] -= tmp_csr_shift; // local row_ptr start from 0
+        }
+
+        dsqrt_mat_data.local_nnz = dsqrt_mat_data.local_row_ptr[dsqrt_mat_data.local_nrows] - dsqrt_mat_data.local_row_ptr[0];
+
+        dsqrt_mat_data.local_col_idx = (int *)malloc(dsqrt_mat_data.local_nnz * sizeof(int));
+        dsqrt_mat_data.local_val = (double *)malloc(dsqrt_mat_data.local_nnz * sizeof(double));
+        assert(dsqrt_mat_data.local_col_idx && dsqrt_mat_data.local_val);
+
+        memcpy(dsqrt_mat_data.local_col_idx,
+               dsqrt_mat_data.col_idx,
+               dsqrt_mat_data.local_nnz * sizeof(int));
+
+        memcpy(dsqrt_mat_data.local_val,
+               dsqrt_mat_data.val,
+               dsqrt_mat_data.local_nnz * sizeof(double));
+
+        for (int index_p = 1; index_p < nprocs; ++index_p)
+        {
+            int tmp_local_node_start = node_vtxdist[index_p],
+                tmp_local_node_end = node_vtxdist[index_p + 1];
+
+            int tmp_local_nrows = (tmp_local_node_end - tmp_local_node_start) * 6;
+
+            int tmp_local_index_start = tmp_local_node_start * 6;
+
+            (void)MPI_Send(dsqrt_mat_data.row_ptr + tmp_local_index_start, tmp_local_nrows + 1, MPI_INT,
+                           index_p, 0, comm);
+
+            int tmp_local_nnz = dsqrt_mat_data.row_ptr[tmp_local_index_start + tmp_local_nrows] -
+                                dsqrt_mat_data.row_ptr[tmp_local_index_start];
+
+            (void)MPI_Send(dsqrt_mat_data.col_idx + dsqrt_mat_data.row_ptr[tmp_local_index_start],
+                           tmp_local_nnz, MPI_INT, index_p, 1, comm); // local_col_idx
+
+            (void)MPI_Send(dsqrt_mat_data.val + dsqrt_mat_data.row_ptr[tmp_local_index_start],
+                           tmp_local_nnz, MPI_DOUBLE, index_p, 2, comm); // local_val
+        }
+    }
+    else
+    {
+        (void)MPI_Recv(dsqrt_mat_data.local_row_ptr, dsqrt_mat_data.local_nrows + 1, MPI_INT,
+                       0, 0, comm, MPI_STATUS_IGNORE);
+
+        int tmp_csr_shift = dsqrt_mat_data.local_row_ptr[0];
+        for (int index = 0; index < dsqrt_mat_data.local_nrows + 1; ++index)
+        {
+            dsqrt_mat_data.local_row_ptr[index] -= tmp_csr_shift;
+        }
+
+        dsqrt_mat_data.local_nnz = dsqrt_mat_data.local_row_ptr[dsqrt_mat_data.local_nrows];
+
+        dsqrt_mat_data.local_col_idx = (int *)malloc(dsqrt_mat_data.local_nnz * sizeof(int));
+        dsqrt_mat_data.local_val = (double *)malloc(dsqrt_mat_data.local_nnz * sizeof(double));
+        assert(dsqrt_mat_data.local_col_idx && dsqrt_mat_data.local_val);
+
+        (void)MPI_Recv(dsqrt_mat_data.local_col_idx, dsqrt_mat_data.local_nnz, MPI_INT,
+                       0, 1, comm, MPI_STATUS_IGNORE);
+
+        (void)MPI_Recv(dsqrt_mat_data.local_val, dsqrt_mat_data.local_nnz, MPI_DOUBLE,
+                       0, 2, comm, MPI_STATUS_IGNORE);
+    }
+
+    (void)MPI_Bcast(&dsqrt_mat_data.nrows, 1, MPI_INT, 0, comm);
+    (void)MPI_Bcast(&dsqrt_mat_data.ncols, 1, MPI_INT, 0, comm);
+
     // vector file process
     CSRVector rhs_data;
     rhs_data.local_nrows = (local_node_end - local_node_start) * 6; // 6 dofs each node
@@ -268,6 +354,31 @@ int SolverPetscInitialize(const char *path_mat, const char *path_rhs, const int 
     PetscCall(MatAssemblyBegin(mysolver->solver_a, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(mysolver->solver_a, MAT_FINAL_ASSEMBLY));
 
+    // distributed dsqrt
+    PetscCall(MatCreate(comm, &mysolver->d_sqrt));
+    PetscCall(MatSetSizes(mysolver->d_sqrt,
+                          dsqrt_mat_data.local_nrows, rhs_data.local_nrows,
+                          dsqrt_mat_data.nrows, dsqrt_mat_data.ncols));
+    PetscCall(MatSetType(mysolver->d_sqrt, MATAIJ));
+    PetscCall(MatSetUp(mysolver->d_sqrt));
+
+    for (int index = local_index_start; index < local_index_end; ++index)
+    {
+        int index_start = dsqrt_mat_data.local_row_ptr[index - local_index_start],
+            index_end = dsqrt_mat_data.local_row_ptr[index - local_index_start + 1];
+
+        for (int index_j = index_start; index_j < index_end; ++index_j)
+        {
+            PetscCall(MatSetValue(mysolver->d_sqrt,
+                                  index,
+                                  dsqrt_mat_data.local_col_idx[index_j],
+                                  dsqrt_mat_data.local_val[index_j],
+                                  INSERT_VALUES));
+        }
+    }
+    PetscCall(MatAssemblyBegin(mysolver->d_sqrt, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(mysolver->d_sqrt, MAT_FINAL_ASSEMBLY));
+
     // distributed vector
     PetscCall(VecCreate(comm, &mysolver->solver_b));
     PetscCall(VecSetSizes(mysolver->solver_b, rhs_data.local_nrows, rhs_data.nrows));
@@ -311,10 +422,24 @@ int SolverPetscInitialize(const char *path_mat, const char *path_rhs, const int 
     PetscInt m_mat = 0, n_mat = 0; // nnz_mat = 0;
     PetscCall(MatGetSize(mysolver->solver_a, &m_mat, &n_mat));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "matrix Row = %" PetscInt_FMT ", matrix Column = %" PetscInt_FMT "\n", m_mat, n_mat));
+    PetscCall(MatGetSize(mysolver->d_sqrt, &m_mat, &n_mat));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "dsqrt matrix Row = %" PetscInt_FMT ", dsqrt matrix Column = %" PetscInt_FMT "\n", m_mat, n_mat));
     MatInfo info_mat;
     PetscCall(MatGetInfo(mysolver->solver_a, MAT_GLOBAL_SUM, &info_mat));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "matrix nz_allocated = %ld, matrix nz_used = %ld, matrix nz_unneeded = %ld\n",
                           (long)(info_mat.nz_allocated), (long)(info_mat.nz_used), (long)(info_mat.nz_unneeded)));
+    PetscCall(MatGetInfo(mysolver->d_sqrt, MAT_GLOBAL_SUM, &info_mat));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "dsqrt matrix nz_allocated = %ld, dsqrt matrix nz_used = %ld, dsqrt matrix nz_unneeded = %ld\n",
+                          (long)(info_mat.nz_allocated), (long)(info_mat.nz_used), (long)(info_mat.nz_unneeded)));
+#if 0
+PetscInt m_dsqrt = 0, n_dsqrt = 0;
+PetscReal dsqrt_norm_fro = 0.;
+PetscCall(MatGetSize(mysolver->d_sqrt, &m_dsqrt, &n_dsqrt));
+PetscCall(MatNorm(mysolver->d_sqrt, NORM_FROBENIUS, &dsqrt_norm_fro));
+PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>>---- dsqrt row = %" PetscInt_FMT ", col = %" PetscInt_FMT "\n", m_dsqrt, n_dsqrt));
+PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>>---- fro norm of dsqrt = %021.16le\n", dsqrt_norm_fro));
+#endif // test diagonal sqrt fro-norm
+
     PetscInt n_vec = 0;
     PetscCall(VecGetSize(mysolver->solver_b, &n_vec));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "vector Row = %" PetscInt_FMT "\n", n_vec));
@@ -331,6 +456,9 @@ int SolverPetscInitialize(const char *path_mat, const char *path_rhs, const int 
     free(mat_data.local_val);
     free(mat_data.local_col_idx);
     free(mat_data.local_row_ptr);
+    free(dsqrt_mat_data.local_val);
+    free(dsqrt_mat_data.local_col_idx);
+    free(dsqrt_mat_data.local_row_ptr);
     free(rhs_data.local_val);
     if (my_rank == 0)
     {
@@ -338,6 +466,9 @@ int SolverPetscInitialize(const char *path_mat, const char *path_rhs, const int 
         free(mat_data.row_ptr);
         free(mat_data.col_idx);
         free(mat_data.val);
+        free(dsqrt_mat_data.row_ptr);
+        free(dsqrt_mat_data.col_idx);
+        free(dsqrt_mat_data.val);
 
         // csr rhs data
         free(rhs_data.val);

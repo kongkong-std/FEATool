@@ -223,6 +223,7 @@ int main(int argc, char **argv)
     MySolver mysolver;
     SolverPetscInitialize(mla_ctx.config.file_config.file_mat,
                           mla_ctx.config.file_config.file_rhs,
+                          mla_ctx.config.file_config.file_dsqrt,
                           node_vtxdist,
                           &mysolver);
 
