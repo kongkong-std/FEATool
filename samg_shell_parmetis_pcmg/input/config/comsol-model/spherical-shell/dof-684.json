@@ -1,0 +1,15 @@
+{
+    "file": {
+        "file_mat": "/home/kongkong/Documents/DocFEMTool/FEATool/samg_shell_parmetis_pcmg/input/spherical-shell/dof-684/np-4",
+        "file_rhs": "/home/kongkong/Documents/DocFEMTool/FEATool/samg_shell_parmetis_pcmg/input/spherical-shell/dof-684/np-4",
+        "file_vtx": "/home/kongkong/Documents/DocFEMTool/FEATool/samg_shell_parmetis_pcmg/input/spherical-shell/dof-684/np-4",
+        "file_adj": "/home/kongkong/Documents/DocFEMTool/FEATool/samg_shell_parmetis_pcmg/input/spherical-shell/dof-684/np-4"
+    },
+    "mg": {
+        "pre_smooth": 2,
+        "post_smooth": 2,
+        "num_level": 10,
+        "num_coarse_vtx": 100,
+        "est_size_agg": 4
+    }
+}
