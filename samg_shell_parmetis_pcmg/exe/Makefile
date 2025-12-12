@@ -3,7 +3,7 @@
 # module load tools/cJSON/1.7.18 tpl/gklib/gklib tpl/metis/metis tpl/parmetis/parmetis
 include config.mk
 
-CC = ${MPICH_DIR}/mpicc
+CC = ${MPICH_DIR}/bin/mpicc
 SRC = ../src
 
 CFLAGS = -c
@@ -41,11 +41,11 @@ LIB_PATH = \
     -Wl,-rpath,$(PETSC_DIR)/lib \
     -L$(METIS_DIR)/lib \
     -L$(PARMETIS_DIR)/lib \
-    -L$(CJSON_DIR)/lib \
+    -L$(CJSON_DIR)/lib64 \
     -L$(GKLIB_DIR)/lib \
     -Wl,-rpath,$(METIS_DIR)/lib \
     -Wl,-rpath,$(PARMETIS_DIR)/lib \
-    -Wl,-rpath,$(CJSON_DIR)/lib \
+    -Wl,-rpath,$(CJSON_DIR)/lib64 \
     $(GCC_LIBPATH)
 
 

@@ -93,6 +93,6 @@ if __name__ == "__main__":
 
 """
 用法示例：
-python mat2csr.py --mat matrix.mat --var A --out a.txt --type matrix
-python mat2csr.py --mat vector.mat --var b --out b.txt --type vector
+python mat2csr-process.py --mat matrix.mat --var A --out a.txt --type matrix
+python mat2csr-process.py --mat vector.mat --var b --out b.txt --type vector
 """
