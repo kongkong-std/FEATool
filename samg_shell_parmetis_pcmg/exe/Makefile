@@ -48,8 +48,6 @@ LIB_PATH = \
     -Wl,-rpath,$(CJSON_DIR)/lib64 \
     $(GCC_LIBPATH)
 
-
-
 LIB_FLAG = -lpetsc -lHYPRE -ldmumps -lsmumps -lzmumps -lcmumps -lmumps_common \
 	   -lpord -lpthread -lscalapack -lopenblas \
 	   -lpthread -lparmetis -lmetis -lGKlib -lmetis -lGKlib \

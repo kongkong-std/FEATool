@@ -2,7 +2,7 @@
 
 GCC_DIR      = /opt/apps/compilers/gcc-10.3.0
 MPICH_DIR    = /opt/apps/mpich/3.2.1/gcc-10.3.0/
-PETSC_DIR    = /home/kongkong/software/petsc/3.21.4/real/0openmp
+PETSC_DIR    = /home/kongkong/software/petsc/3.21.4/real/gklib-metis
 METIS_DIR    = /opt/apps/metis/
 PARMETIS_DIR = /opt/apps/parmetis/
 CJSON_DIR    = /opt/apps/cJSON/1.7.18
