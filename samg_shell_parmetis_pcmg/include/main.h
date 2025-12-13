@@ -60,6 +60,28 @@ typedef struct
 } MySolver;
 
 /*
+ * CSR matrix data
+ */
+typedef struct
+{
+    int nrows, ncols, nnz;
+    int *row_idx; // row indices, size: nrows
+    int *row_ptr; // size: nrows + 1
+    int *col_idx; // size: nnz
+    double *val;  // size: nnz
+} CSRMatrix;
+
+/*
+ * CSR vector data
+ */
+typedef struct
+{
+    int nrows;
+    int *row_idx; // row indices, size: nrows
+    double *val;  // size: nrows
+} CSRVector;
+
+/*
  * SAMG context data struct
  */
 typedef struct
@@ -68,7 +90,34 @@ typedef struct
     CfgJson data_cfg; // config data
 } SAMGCtx;
 
-// funcion
+// function
+/*
+ * computing residual
+ *     r = b - Ax
+ */
+int SolverPetscResidualCheck(MySolver *mysolver /*solver data*/);
+
+/*
+ * CSR vector file process
+ */
+int FileProcessCSRVector(const char *path_rhs /*path to rhs file*/,
+                         CSRVector *data_rhs);
+
+/*
+ * CSR matrix file process
+ */
+int FileProcessCSRMatrix(const char *path_mat /*path to matrix file*/,
+                         CSRMatrix *data_mat);
+
+/*
+ * solver initialize with file
+ *     1. matrix
+ *     2. rhs
+ */
+int SolverInitializeWithFile(const char *path_mat /*path to matrix file*/,
+                             const char *path_rhs /*path to rhs file*/,
+                             MySolver *mysolver /*solver data*/);
+
 /*
  * parse config json file
  */
