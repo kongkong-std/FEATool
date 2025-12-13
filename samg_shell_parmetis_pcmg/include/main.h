@@ -48,6 +48,18 @@ typedef struct
 } CfgJson;
 
 /*
+ * PETSc solver data
+ */
+typedef struct
+{
+    /* data */
+    KSP ksp;
+    PC pc;
+    Mat solver_a;                     // A
+    Vec solver_b, solver_x, solver_r; // rhs, solution, residual
+} MySolver;
+
+/*
  * SAMG context data struct
  */
 typedef struct
