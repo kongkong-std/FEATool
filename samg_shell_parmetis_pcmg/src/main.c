@@ -53,6 +53,12 @@ int main(int argc, char **argv)
 #endif // print config file
 
     // linear system file process
+    MySolver mysolver;
+    PetscCall(SolverInitializeWithFile(mla_ctx.data_cfg.cfg_file.file_mat,
+                                       mla_ctx.data_cfg.cfg_file.file_rhs,
+                                       &mysolver));
+    PetscCall(PetscPrintf(comm, "==== Initial L2 norm of residual\n"));
+    SolverPetscResidualCheck(&mysolver);
 
     PetscCall(PetscFinalize());
     // MPI_Finalize();

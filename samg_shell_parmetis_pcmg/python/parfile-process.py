@@ -141,6 +141,7 @@ def matrix_process_dist(vertex_coor_dist, file_path):
         dofdist.append(dofdist[-1] + local_dof)
 
     # ---- Distributed CSR arrays ----
+    row_idx_dist = []
     row_ptr_dist = []
     col_idx_dist = []
     val_dist = []
@@ -158,6 +159,9 @@ def matrix_process_dist(vertex_coor_dist, file_path):
         rp_start = row_ptr[rp_row_start]
         rp_end   = row_ptr[rp_row_end]
 
+        local_row_idx = list(range(global_start_dof, global_end_dof + 1))
+        row_idx_dist.append(local_row_idx)
+
         # build local row_ptr (size = local_dof + 1)
         local_row_ptr = [
             row_ptr[rp_row_start + i] - rp_start
@@ -173,12 +177,13 @@ def matrix_process_dist(vertex_coor_dist, file_path):
         val_dist.append(local_val)
 
     return (
+        np.array(row_idx_dist, dtype=object),
         np.array(row_ptr_dist, dtype=object),
         np.array(col_idx_dist, dtype=object),
         np.array(val_dist, dtype=object)
     )
 
-def write_matrix_process_dist(file_path, row_ptr_dist, col_idx_dist, val_dist):
+def write_matrix_process_dist(file_path, row_idx_dist, row_ptr_dist, col_idx_dist, val_dist):
     num_proc = len(row_ptr_dist)
 
     base_path = Path(file_path)
@@ -187,6 +192,7 @@ def write_matrix_process_dist(file_path, row_ptr_dist, col_idx_dist, val_dist):
 
     for index in range(num_proc):
         local_file = local_path / f"A-{index}.txt"
+        local_row_idx = row_idx_dist[index]
         local_row_ptr = row_ptr_dist[index]
         local_col_idx = col_idx_dist[index]
         local_val = val_dist[index]
@@ -194,6 +200,8 @@ def write_matrix_process_dist(file_path, row_ptr_dist, col_idx_dist, val_dist):
             local_m = len(local_row_ptr) - 1
             local_nnz = local_row_ptr[local_m] - local_row_ptr[0]
             f.write(f"{local_m}\t{local_m}\t{local_nnz}\n")
+            for tmp_val in local_row_idx:
+                f.write(f"{tmp_val}\n")
             for tmp_val in local_row_ptr:
                 f.write(f"{tmp_val}\n")
             for tmp_val in local_col_idx:
@@ -232,18 +240,22 @@ def vector_process_dist(vertex_coor_dist, file_path):
     # --------------------------
     # distribute vector
     # --------------------------
+    idx_dist = []
     val_dist = []
 
     for rank in range(num_proc):
         start = dofdist[rank]
         end   = dofdist[rank + 1]  # exclusive
 
+        local_idx = list(range(start, end))
+        idx_dist.append(local_idx)
+
         local_vec = val[start : end]
         val_dist.append(local_vec)
 
-    return np.array(val_dist, dtype=object)
+    return np.array(idx_dist, dtype=object), np.array(val_dist, dtype=object)
 
-def write_vector_process_dist(file_path, vec_dist):
+def write_vector_process_dist(file_path, idx_dist, vec_dist):
     num_proc = len(vec_dist)
 
     base_path = Path(file_path)
@@ -252,12 +264,17 @@ def write_vector_process_dist(file_path, vec_dist):
 
     for index in range(num_proc):
         local_file = local_path / f"b-{index}.txt"
+        local_idx = idx_dist[index]
         local_val = vec_dist[index]
         with open(local_file, 'w') as f:
             local_m = len(local_val)
             f.write(f"{local_m}\n")
-            for tmp_val in local_val:
-                f.write(f"{tmp_val:021.16e}\n")
+            for tmp_idx, tmp_val in zip(local_idx, local_val):
+                f.write(f"{tmp_idx}\t{tmp_val:021.16e}\n")
+            #for tmp_val in local_idx:
+            #    f.write(f"{tmp_val}\n")
+            #for tmp_val in local_val:
+            #    f.write(f"{tmp_val:021.16e}\n")
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -355,16 +372,16 @@ if __name__ == "__main__":
     write_adjacent_list_process_dist(args.output_adjacent_list, vtx_ptr_dist, adj_vtx_idx_dist)
 
     # distributed matrix data
-    mat_row_ptr_dist, mat_col_idx_dist, mat_val_dist = matrix_process_dist(vertex_coor_dist, args.mat_file)
+    mat_row_idx_dist, mat_row_ptr_dist, mat_col_idx_dist, mat_val_dist = matrix_process_dist(vertex_coor_dist, args.mat_file)
 
     # output distributed matrix data
-    write_matrix_process_dist(args.output_mat_file, mat_row_ptr_dist, mat_col_idx_dist, mat_val_dist)
+    write_matrix_process_dist(args.output_mat_file, mat_row_idx_dist, mat_row_ptr_dist, mat_col_idx_dist, mat_val_dist)
 
     # distributed vector data
-    vec_val_dist = vector_process_dist(vertex_coor_dist, args.vec_file)
+    vec_idx_dist, vec_val_dist = vector_process_dist(vertex_coor_dist, args.vec_file)
 
     # ouput distributed vector data
-    write_vector_process_dist(args.output_vec_file, vec_val_dist)
+    write_vector_process_dist(args.output_vec_file, vec_idx_dist, vec_val_dist)
 
 # usage
 # python parfile-process.py --num_proc <number of processors> \
