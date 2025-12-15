@@ -36,6 +36,9 @@ typedef struct
     int num_level;               // number of levels
     int num_coarse_vtx;          // number of coarse level vertices
     int est_size_agg;            // estimation size of each aggregate
+    int ps_num_steps;            // number of smoothed prolongation operators steps
+    int ps_type;                 // prolongation operator smoother type
+    double ps_scale;             // scaled prolongation operator smoother, default is 0.67
 } CfgMG;
 
 /*
@@ -82,15 +85,60 @@ typedef struct
 } CSRVector;
 
 /*
+ * prolongation operator smoother
+ *     P_sa = (I - P_smoother A)^{v} P_us
+ */
+typedef struct
+{
+    int num_steps;         // number of smoothing steps
+    int smoother_type;     // 0: scaled weighted jacobi, 1: GS
+    double smoother_scale; // scaled smoother, default 0.67
+    PC pc;                 // smoother, PCJACOBI, ...
+} PSmoother;
+
+/*
+ * multigrid level hierarchy data
+ */
+typedef struct
+{
+    Mat op_f, op_c; // fine-/coarse- level operators
+    Mat op_ua_p;    // unsmoothed aggregation prolongation operator
+    Mat op_sa_p;    // smoothed aggregation prolongation operator
+    PSmoother op_s; // prolongation operator smoother
+} MGLevel;
+
+/*
  * SAMG context data struct
  */
 typedef struct
 {
     /* data */
-    CfgJson data_cfg; // config data
+    CfgJson data_cfg;  // config data
+    int num_level;     // true number of levels
+    MySolver mysolver; // setup phase, mysolver data
+    MGLevel *levels;   // level hierarchy information
 } SAMGCtx;
 
 // function
+/*
+ * apply one-time prolongation smoother
+ *     P_sa = (I - S A) P_ua
+ */
+int SAMGApplyProlongationSmoother(PSmoother p_s /*prolongation operator smoother*/,
+                                  Mat *p_sa /*smoothed prolongation operator*/,
+                                  Mat *p_ua /*unsmoothed prolongation operator*/);
+
+/*
+ * samg setup phase
+ */
+int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/);
+
+/*
+ * deep copy
+ */
+int DeepCopyMySolverData(MySolver *dst /*destinated mysolver data*/,
+                         MySolver *src /*source mysolver data*/);
+
 /*
  * computing residual
  *     r = b - Ax

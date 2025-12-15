@@ -25,9 +25,9 @@ int main(int argc, char **argv)
         PetscCall(PetscPrintf(comm, "Config file: %s\n", path_config));
     }
 
-    SAMGCtx mla_ctx;
+    SAMGCtx samg_ctx;
 
-    int status_config_json = ParseConfig(comm, path_config, &(mla_ctx.data_cfg));
+    int status_config_json = ParseConfig(comm, path_config, &(samg_ctx.data_cfg));
     if (status_config_json != 0)
     {
         exit(EXIT_FAILURE);
@@ -38,15 +38,15 @@ int main(int argc, char **argv)
         if (index == my_rank)
         {
             printf("in rank %d =====\n", my_rank);
-            printf("file_mat: %s\n", mla_ctx.data_cfg.cfg_file.file_mat);
-            printf("file_rhs: %s\n", mla_ctx.data_cfg.cfg_file.file_rhs);
-            printf("file_vtx: %s\n", mla_ctx.data_cfg.cfg_file.file_vtx);
-            printf("file_adj: %s\n", mla_ctx.data_cfg.cfg_file.file_adj);
-            printf("pre_smooth: %d\n", mla_ctx.data_cfg.cfg_mg.pre_smooth);
-            printf("post_smooth: %d\n", mla_ctx.data_cfg.cfg_mg.post_smooth);
-            printf("num_level: %d\n", mla_ctx.data_cfg.cfg_mg.num_level);
-            printf("num_coarse_vtx: %d\n", mla_ctx.data_cfg.cfg_mg.num_coarse_vtx);
-            printf("est_size_agg: %d\n", mla_ctx.data_cfg.cfg_mg.est_size_agg);
+            printf("file_mat: %s\n", samg_ctx.data_cfg.cfg_file.file_mat);
+            printf("file_rhs: %s\n", samg_ctx.data_cfg.cfg_file.file_rhs);
+            printf("file_vtx: %s\n", samg_ctx.data_cfg.cfg_file.file_vtx);
+            printf("file_adj: %s\n", samg_ctx.data_cfg.cfg_file.file_adj);
+            printf("pre_smooth: %d\n", samg_ctx.data_cfg.cfg_mg.pre_smooth);
+            printf("post_smooth: %d\n", samg_ctx.data_cfg.cfg_mg.post_smooth);
+            printf("num_level: %d\n", samg_ctx.data_cfg.cfg_mg.num_level);
+            printf("num_coarse_vtx: %d\n", samg_ctx.data_cfg.cfg_mg.num_coarse_vtx);
+            printf("est_size_agg: %d\n", samg_ctx.data_cfg.cfg_mg.est_size_agg);
             puts("\n");
         }
     }
@@ -54,11 +54,48 @@ int main(int argc, char **argv)
 
     // linear system file process
     MySolver mysolver;
-    PetscCall(SolverInitializeWithFile(mla_ctx.data_cfg.cfg_file.file_mat,
-                                       mla_ctx.data_cfg.cfg_file.file_rhs,
+    PetscCall(SolverInitializeWithFile(samg_ctx.data_cfg.cfg_file.file_mat,
+                                       samg_ctx.data_cfg.cfg_file.file_rhs,
                                        &mysolver));
     PetscCall(PetscPrintf(comm, "==== Initial L2 norm of residual\n"));
-    SolverPetscResidualCheck(&mysolver);
+    PetscCall(SolverPetscResidualCheck(&mysolver));
+
+    // linear system copy to mg context
+    PetscCall(DeepCopyMySolverData(&samg_ctx.mysolver, &mysolver));
+#if 0
+    PetscCall(PetscPrintf(comm, ">>>> SAMG context mysolver data:\n"));
+    PetscCall(SolverPetscResidualCheck(&samg_ctx.mysolver));
+#endif // check samg context mysolver data
+
+    // setup + solve
+    PetscCall(KSPSetFromOptions(mysolver.ksp));
+
+    PetscLogDouble time1, time2;
+    PetscCall(PetscTime(&time1));
+    PetscCall(SAMGSetupPhase(&samg_ctx));
+    PetscCall(PetscTime(&time2));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> samg setup time: %g (s)\n", time2 - time1));
+
+    PetscCall(KSPSetOperators(mysolver.ksp, mysolver.solver_a, mysolver.solver_a));
+    PetscCall(KSPGetPC(mysolver.ksp, &(mysolver.pc)));
+    PetscCall(PetscTime(&time1));
+    PetscCall(KSPSolve(mysolver.ksp, mysolver.solver_b, mysolver.solver_x));
+    PetscCall(PetscTime(&time2));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> ksp solve time: %g (s)\n", time2 - time1));
+
+    PetscCall(SolverPetscResidualCheck(&mysolver));
+
+    // free memory
+    free(samg_ctx.levels);
+    PetscCall(MatDestroy(&mysolver.solver_a));
+    PetscCall(MatDestroy(&samg_ctx.mysolver.solver_a));
+    PetscCall(VecDestroy(&mysolver.solver_b));
+    PetscCall(VecDestroy(&mysolver.solver_x));
+    PetscCall(VecDestroy(&mysolver.solver_r));
+    PetscCall(VecDestroy(&samg_ctx.mysolver.solver_b));
+    PetscCall(VecDestroy(&samg_ctx.mysolver.solver_x));
+    PetscCall(VecDestroy(&samg_ctx.mysolver.solver_r));
+    PetscCall(KSPDestroy(&mysolver.ksp));
 
     PetscCall(PetscFinalize());
     // MPI_Finalize();

@@ -61,18 +61,27 @@ int ParseConfig(MPI_Comm comm /*communicator*/,
             cJSON *num_level = cJSON_GetObjectItem(mg_obj, "num_level");
             cJSON *num_coarse_vtx = cJSON_GetObjectItem(mg_obj, "num_coarse_vtx");
             cJSON *est_size_agg = cJSON_GetObjectItem(mg_obj, "est_size_agg");
+            cJSON *ps_num_steps = cJSON_GetObjectItem(mg_obj, "ps_num_steps");
+            cJSON *ps_type = cJSON_GetObjectItem(mg_obj, "ps_type");
+            cJSON *ps_scale = cJSON_GetObjectItem(mg_obj, "ps_scale");
 
             if (pre_smooth &&
                 post_smooth &&
                 num_level &&
                 num_coarse_vtx &&
-                est_size_agg)
+                est_size_agg &&
+                ps_num_steps &&
+                ps_type &&
+                ps_scale)
             {
                 cfg_mg->pre_smooth = pre_smooth->valueint;
                 cfg_mg->post_smooth = post_smooth->valueint;
                 cfg_mg->num_level = num_level->valueint;
                 cfg_mg->num_coarse_vtx = num_coarse_vtx->valueint;
                 cfg_mg->est_size_agg = est_size_agg->valueint;
+                cfg_mg->ps_num_steps = ps_num_steps->valueint;
+                cfg_mg->ps_type = ps_type->valueint;
+                cfg_mg->ps_scale = ps_type->valuedouble;
             }
         }
     }
@@ -94,6 +103,9 @@ int ParseConfig(MPI_Comm comm /*communicator*/,
     (void)MPI_Bcast(&config->cfg_mg.num_level, 1, MPI_INT, 0, comm);
     (void)MPI_Bcast(&config->cfg_mg.num_coarse_vtx, 1, MPI_INT, 0, comm);
     (void)MPI_Bcast(&config->cfg_mg.est_size_agg, 1, MPI_INT, 0, comm);
+    (void)MPI_Bcast(&config->cfg_mg.ps_num_steps, 1, MPI_INT, 0, comm);
+    (void)MPI_Bcast(&config->cfg_mg.ps_type, 1, MPI_INT, 0, comm);
+    (void)MPI_Bcast(&config->cfg_mg.ps_scale, 1, MPI_DOUBLE, 0, comm);
 
     // free memory
     if (my_rank == 0)
