@@ -124,7 +124,7 @@ typedef struct
  * apply one-time prolongation smoother
  *     P_sa = (I - S A) P_ua
  */
-int SAMGApplyProlongationSmoother(PSmoother p_s /*prolongation operator smoother*/,
+int SAMGApplyProlongationSmoother(PSmoother *p_s /*prolongation operator smoother*/,
                                   Mat *p_sa /*smoothed prolongation operator*/,
                                   Mat *p_ua /*unsmoothed prolongation operator*/);
 
