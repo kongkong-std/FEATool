@@ -97,14 +97,58 @@ typedef struct
 } PSmoother;
 
 /*
+ * coordinate data
+ */
+typedef struct
+{
+    /* data */
+    double x, y, z;
+} CoorData;
+
+/*
+ * mesh vertex information data
+ */
+typedef struct
+{
+    int local_nv;
+    int *idx;            // size: local_nv, vertex global index
+    int *type;           // size: local_nv, 0: shell, 1: solid
+    CoorData *data_coor; // size: local_nv, vertex coordinate datas
+} MeshVtx;
+
+/*
+ * mesh adjacent list data
+ */
+typedef struct
+{
+    /* data */
+    int local_nv;
+    int *xadj;   // size: local_nv + 1, csr row ptr
+    int *adjncy; // size: xadj[local_nv] - xadj[0], adjacent vertices
+} MeshAdj;
+
+/*
+ * mesh data
+ */
+typedef struct
+{
+    /* data */
+    int nv;           // number of vertices in mesh
+    int np;           // number of partitions
+    MeshVtx data_vtx; // mesh vertex data
+    MeshAdj data_adj; // mesh adjacent list data
+} MeshData;
+
+/*
  * multigrid level hierarchy data
  */
 typedef struct
 {
-    Mat op_f, op_c; // fine-/coarse- level operators
-    Mat op_ua_p;    // unsmoothed aggregation prolongation operator
-    Mat op_sa_p;    // smoothed aggregation prolongation operator
-    PSmoother op_s; // prolongation operator smoother
+    MeshData data_f_mesh, data_c_mesh; // fine-/coarse- level mesh data
+    Mat op_f, op_c;                    // fine-/coarse- level operators
+    Mat op_ua_p;                       // unsmoothed aggregation prolongation operator
+    Mat op_sa_p;                       // smoothed aggregation prolongation operator
+    PSmoother op_s;                    // prolongation operator smoother
 } MGLevel;
 
 /*
@@ -120,6 +164,25 @@ typedef struct
 } SAMGCtx;
 
 // function
+/*
+ * mesh vertex file process
+ */
+int FileProcessMeshVtx(const char *path_file /*path to mesh vertex file*/,
+                       MeshVtx *data_vtx /*mesh vertex data*/);
+
+/*
+ * level 0 mesh generator
+ */
+int SAMGLevel0Mesh(const CfgJson *data_cfg /*config data*/,
+                   MeshData *data_f_mesh /*fine-level mesh data*/,
+                   MeshData *data_c_mesh /*coarse-level mesh data*/);
+
+/*
+ * mesh hierarchy generator
+ */
+int SAMGLevelMesh(int cfg_mg_num_level /*config number of levels*/,
+                  SAMGCtx **samg_ctx /*samg context data*/);
+
 /*
  * smoothed prolongation
  *     P_sa = (I - S A)^\nu P_ua

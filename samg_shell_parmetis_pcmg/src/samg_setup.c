@@ -1,5 +1,40 @@
 #include "../include/main.h"
 
+int SAMGLevel0Mesh(const CfgJson *data_cfg /*config data*/,
+                   MeshData *data_f_mesh /*fine-level mesh data*/,
+                   MeshData *data_c_mesh /*coarse-level mesh data*/)
+{
+    FileProcessMeshVtx(data_cfg->cfg_file.file_vtx,
+                       &data_f_mesh->data_vtx);
+
+    return 0;
+}
+
+int SAMGLevelMesh(int cfg_mg_num_level /*config number of levels*/,
+                  SAMGCtx **samg_ctx /*samg context data*/)
+{
+    SAMGCtx *data_samg_ctx = *samg_ctx;
+
+    int cfg_mg_num_level = data_samg_ctx->data_cfg.cfg_mg.num_level;
+
+    data_samg_ctx->levels = (MGLevel *)malloc(cfg_mg_num_level * sizeof(MGLevel));
+    assert(data_samg_ctx->levels);
+
+    int cnt_level = 0;
+    PetscCall(SAMGLevel0Mesh(&data_samg_ctx->data_cfg,
+                             &data_samg_ctx->levels[cnt_level].data_f_mesh,
+                             &data_samg_ctx->levels[cnt_level].data_c_mesh));
+
+    while (cnt_level < cfg_mg_num_level)
+    {
+        ++cnt_level;
+    }
+
+    data_samg_ctx->num_level = cnt_level;
+
+    return 0;
+}
+
 int SAMGSmoothedProlongation(MGLevel *level /*level hierarchy data*/)
 {
     MPI_Comm comm;
@@ -126,26 +161,27 @@ int SAMGApplyProlongationSmoother(int n /*column size of prolongation operator*/
 
 int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/)
 {
-    int cfg_mg_num_level = samg_ctx->data_cfg.cfg_mg.num_level;
-    int cfg_mg_pre_smooth = samg_ctx->data_cfg.cfg_mg.pre_smooth;
-    int cfg_mg_post_smooth = samg_ctx->data_cfg.cfg_mg.post_smooth;
+    // int cfg_mg_pre_smooth = samg_ctx->data_cfg.cfg_mg.pre_smooth;
+    // int cfg_mg_post_smooth = samg_ctx->data_cfg.cfg_mg.post_smooth;
     int cfg_mg_num_coarse_vtx = samg_ctx->data_cfg.cfg_mg.num_coarse_vtx;
-    int cfg_mg_est_size_agg = samg_ctx->data_cfg.cfg_mg.est_size_agg;
+    // int cfg_mg_est_size_agg = samg_ctx->data_cfg.cfg_mg.est_size_agg;
     int cfg_mg_ps_num_steps = samg_ctx->data_cfg.cfg_mg.ps_num_steps;
     int cfg_mg_ps_type = samg_ctx->data_cfg.cfg_mg.ps_type;
     double cfg_mg_ps_scale = samg_ctx->data_cfg.cfg_mg.ps_scale;
 
-    samg_ctx->levels = (MGLevel *)malloc(cfg_mg_num_level * sizeof(MGLevel));
-    assert(samg_ctx->levels);
+    // samg_ctx->levels = (MGLevel *)malloc(cfg_mg_num_level * sizeof(MGLevel));
+    // assert(samg_ctx->levels);
+
+    PetscCall(SAMGLevelMesh(cfg_mg_num_level, &samg_ctx));
 
     int cnt_level = 0;
     PetscCall(MatDuplicate(samg_ctx->mysolver.solver_a, MAT_COPY_VALUES, &samg_ctx->levels[cnt_level].op_f));
-    while (cnt_level < cfg_mg_num_level)
-    {
-        ++cnt_level;
-    }
 
-    samg_ctx->num_level = cnt_level;
+    // while (cnt_level < cfg_mg_num_level &&
+    //        samg_ctx->levels[cnt_level].data_f_mesh.np > cfg_mg_num_coarse_vtx)
+    // {
+    //     ++cnt_level;
+    // }
 
     return 0;
 }
