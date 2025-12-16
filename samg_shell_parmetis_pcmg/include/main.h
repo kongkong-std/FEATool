@@ -121,12 +121,21 @@ typedef struct
 
 // function
 /*
+ * smoothed prolongation
+ *     P_sa = (I - S A)^\nu P_ua
+ */
+int SAMGSmoothedProlongation(MGLevel *level /*level hierarchy data*/);
+
+/*
  * apply one-time prolongation smoother
  *     P_sa = (I - S A) P_ua
  */
-int SAMGApplyProlongationSmoother(PSmoother *p_s /*prolongation operator smoother*/,
+int SAMGApplyProlongationSmoother(int n /*column size of prolongation operator*/,
+                                  double omega /*scaling weight parameter*/,
+                                  PSmoother *p_s /*prolongation operator smoother*/,
                                   Mat *p_sa /*smoothed prolongation operator*/,
-                                  Mat *p_ua /*unsmoothed prolongation operator*/);
+                                  Mat *p_ua /*unsmoothed prolongation operator*/,
+                                  Mat *A /*fine-level operator*/);
 
 /*
  * samg setup phase
