@@ -28,8 +28,14 @@ int FileProcessMeshAdj(const char *path_file /*path to mesh adjacent list file*/
     int local_nv = 0;
     fscanf(fp, " %d ", &local_nv);
 
+    data_adj->idx = (int *)malloc(local_nv * sizeof(int));
     data_adj->xadj = (int *)malloc((local_nv + 1) * sizeof(int));
-    assert(data_adj->xadj);
+    assert(data_adj->idx && data_adj->xadj);
+
+    for (int index = 0; index < local_nv; ++index)
+    {
+        fscanf(fp, " %d ", data_adj->idx + index);
+    }
 
     for (int index = 0; index < local_nv + 1; ++index)
     {
@@ -37,10 +43,18 @@ int FileProcessMeshAdj(const char *path_file /*path to mesh adjacent list file*/
     }
 
     int local_len_adjncy = data_adj->xadj[local_nv] - data_adj->xadj[0];
+    data_adj->adjncy = (int *)malloc(local_len_adjncy * sizeof(int));
+    assert(data_adj->adjncy);
+
     for (int index = 0; index < local_len_adjncy; ++index)
     {
         fscanf(fp, " %d ", data_adj->adjncy + index);
     }
+
+    fclose(fp);
+
+    (void)MPI_Allreduce(&local_nv, &data_adj->nv,
+                        1, MPI_INT, MPI_SUM, comm);
 
     return 0;
 }
@@ -92,6 +106,9 @@ int FileProcessMeshVtx(const char *path_file /*path to mesh vertex file*/,
     }
 
     fclose(fp);
+
+    (void)MPI_Allreduce(&local_nv, &data_vtx->nv,
+                        1, MPI_INT, MPI_SUM, comm);
 
     return 0;
 }

@@ -111,8 +111,9 @@ typedef struct
  */
 typedef struct
 {
+    int nv; // global number of vertices
     int local_nv;
-    int *idx;            // size: local_nv, vertex global index
+    int *idx;            // size: local_nv, local vertex index
     int *type;           // size: local_nv, 0: shell, 1: solid
     CoorData *data_coor; // size: local_nv, vertex coordinate and normal data
 } MeshVtx;
@@ -123,7 +124,9 @@ typedef struct
 typedef struct
 {
     /* data */
+    int nv; // global number of vertices
     int local_nv;
+    int *idx;    // size: local_nv, local vertex index
     int *xadj;   // size: local_nv + 1, csr row ptr
     int *adjncy; // size: xadj[local_nv] - xadj[0], adjacent vertices
 } MeshAdj;
@@ -136,8 +139,10 @@ typedef struct
     /* data */
     int nv;           // number of vertices in mesh
     int np;           // number of partitions
+    int *vtxdist;     // size: np + 1, vertex distribution
     MeshVtx data_vtx; // mesh vertex data
     MeshAdj data_adj; // mesh adjacent list data
+    int *parts;       // size: local_nv, partition
 } MeshData;
 
 /*
