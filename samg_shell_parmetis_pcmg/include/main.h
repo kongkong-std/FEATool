@@ -103,6 +103,7 @@ typedef struct
 {
     /* data */
     double x, y, z;
+    double nx, ny, nz;
 } CoorData;
 
 /*
@@ -113,7 +114,7 @@ typedef struct
     int local_nv;
     int *idx;            // size: local_nv, vertex global index
     int *type;           // size: local_nv, 0: shell, 1: solid
-    CoorData *data_coor; // size: local_nv, vertex coordinate datas
+    CoorData *data_coor; // size: local_nv, vertex coordinate and normal data
 } MeshVtx;
 
 /*
@@ -164,6 +165,12 @@ typedef struct
 } SAMGCtx;
 
 // function
+/*
+ * mesh adjacent list process
+ */
+int FileProcessMeshAdj(const char *path_file /*path to mesh adjacent list file*/,
+                       MeshAdj *data_adj /*mesh adjacent list data*/);
+
 /*
  * mesh vertex file process
  */

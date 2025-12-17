@@ -86,6 +86,14 @@ int main(int argc, char **argv)
     PetscCall(SolverPetscResidualCheck(&mysolver));
 
     // free memory
+    for (int index = 0; index < samg_ctx.num_level; ++index)
+    {
+        free(samg_ctx.levels[index].data_f_mesh.data_vtx.idx);
+        free(samg_ctx.levels[index].data_f_mesh.data_vtx.type);
+        free(samg_ctx.levels[index].data_f_mesh.data_vtx.data_coor);
+        free(samg_ctx.levels[index].data_f_mesh.data_adj.xadj);
+        free(samg_ctx.levels[index].data_f_mesh.data_adj.adjncy);
+    }
     free(samg_ctx.levels);
     PetscCall(MatDestroy(&mysolver.solver_a));
     PetscCall(MatDestroy(&samg_ctx.mysolver.solver_a));

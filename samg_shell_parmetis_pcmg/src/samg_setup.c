@@ -6,6 +6,8 @@ int SAMGLevel0Mesh(const CfgJson *data_cfg /*config data*/,
 {
     FileProcessMeshVtx(data_cfg->cfg_file.file_vtx,
                        &data_f_mesh->data_vtx);
+    FileProcessMeshAdj(data_cfg->cfg_file.file_adj,
+                       &data_f_mesh->data_adj);
 
     return 0;
 }
