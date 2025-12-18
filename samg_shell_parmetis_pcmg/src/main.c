@@ -94,6 +94,8 @@ int main(int argc, char **argv)
         free(samg_ctx.levels[index].data_f_mesh.data_adj.idx);
         free(samg_ctx.levels[index].data_f_mesh.data_adj.xadj);
         free(samg_ctx.levels[index].data_f_mesh.data_adj.adjncy);
+        free(samg_ctx.levels[index].data_f_mesh.vtxdist);
+        free(samg_ctx.levels[index].data_f_mesh.parts);
     }
     free(samg_ctx.levels);
     PetscCall(MatDestroy(&mysolver.solver_a));

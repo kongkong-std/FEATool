@@ -1,8 +1,329 @@
 #include "../include/main.h"
 
+int SAMGPartitionOwnerVertexData(AggData **agg /*aggregation data*/,
+                                 MeshData **mesh_f /*fine-level mesh data*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    MeshData *data_mesh_f = *mesh_f;
+    AggData *data_agg = *agg;
+
+    data_agg->n_fine = (int *)malloc(data_agg->np * sizeof(int));
+    data_agg->fine_gids = (int **)malloc(data_agg->np * sizeof(int *));
+    assert(data_agg->n_fine && data_agg->fine_gids);
+
+    (void)MPI_Allreduce(data_agg->nlocal,
+                        data_agg->n_fine,
+                        data_agg->np,
+                        MPI_INT,
+                        MPI_SUM,
+                        comm);
+
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (data_agg->owner[index] == my_rank)
+        {
+            data_agg->fine_gids[index] = (int *)malloc(data_agg->n_fine[index] * sizeof(int));
+            assert(data_agg->fine_gids[index]);
+        }
+    }
+
+    int *nlocal_all = (int *)malloc(nprocs * data_agg->np * sizeof(int));
+    assert(nlocal_all);
+    (void)MPI_Allgather(data_agg->nlocal,
+                        data_agg->np,
+                        MPI_INT,
+                        nlocal_all,
+                        data_agg->np,
+                        MPI_INT,
+                        comm);
+
+    int *offset = (int *)calloc(data_agg->np, sizeof(int));
+    assert(offset);
+
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (data_agg->owner[index] == my_rank)
+        {
+            offset[index] = 0;
+
+            if (data_agg->nlocal[index] > 0)
+            {
+                memcpy(data_agg->fine_gids[index],
+                       data_agg->local_gids[index],
+                       data_agg->nlocal[index] * sizeof(int));
+                offset[index] += data_agg->nlocal[index];
+            }
+        }
+    }
+
+    // sending non-owner data
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (data_agg->nlocal[index] > 0 &&
+            data_agg->owner[index] != my_rank)
+        {
+            (void)MPI_Send(data_agg->local_gids[index],
+                           data_agg->nlocal[index],
+                           MPI_INT,
+                           data_agg->owner[index],
+                           1000 + index, // tag, partition_id + 1000
+                           comm);
+        }
+    }
+
+    // receiving non-owner data in owner rank
+    MPI_Status status;
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (data_agg->owner[index] != my_rank)
+        {
+            continue;
+        }
+
+        for (int index_r = 0; index_r < nprocs; ++index_r)
+        {
+            if (index_r == my_rank)
+            {
+                continue;
+            }
+
+            int tmp_cnt = nlocal_all[index_r * data_agg->np + index];
+            if (tmp_cnt <= 0)
+            {
+                continue;
+            }
+
+            MPI_Recv(data_agg->fine_gids[index] + offset[index],
+                     tmp_cnt,
+                     MPI_INT,
+                     index_r,
+                     1000 + index, // tag, partition_id + 1000
+                     comm,
+                     &status);
+
+            offset[index] += tmp_cnt;
+        }
+    }
+
+    // free memory
+    free(nlocal_all);
+    free(offset);
+
+    return 0;
+}
+
+int SAMGPartitionOwnerRankConstructor(AggData **agg /*aggregation data*/,
+                                      MeshData **mesh_f /*fine-level mesh data*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    MeshData *data_mesh_f = *mesh_f;
+    AggData *data_agg = *agg;
+
+    int *flag_parts = (int *)calloc(data_mesh_f->np, sizeof(int));
+    int *owner_rank_candidate_parts = (int *)malloc(data_mesh_f->np * sizeof(int));
+    int *owner_rank_parts = (int *)malloc(data_mesh_f->np * sizeof(int));
+    data_agg->owner = (int *)malloc(data_mesh_f->np * sizeof(int));
+    assert(flag_parts && owner_rank_candidate_parts && data_agg->owner);
+
+    for (int index = 0; index < data_mesh_f->data_vtx.local_nv; ++index)
+    {
+        flag_parts[data_mesh_f->parts[index]] = 1;
+    }
+    for (int index = 0; index < data_mesh_f->np; ++index)
+    {
+        owner_rank_candidate_parts[index] = flag_parts[index] ? my_rank : INT_MAX;
+    }
+    (void)MPI_Allreduce(owner_rank_candidate_parts,
+                        data_agg->owner,
+                        data_mesh_f->np,
+                        MPI_INT,
+                        MPI_MIN,
+                        comm);
+
+    // free memory
+    free(owner_rank_candidate_parts);
+    free(flag_parts);
+
+    return 0;
+}
+
+int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
+                              MeshData **mesh_c /*coarse-level mesh data*/,
+                              AggData **agg /*aggregation data*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    MeshData *data_mesh_f = *mesh_f;
+    MeshData *data_mesh_c = *mesh_c;
+    AggData *data_agg = *agg;
+
+    data_agg->np = data_mesh_f->np;
+
+    // partition owner rank
+    PetscCall(SAMGPartitionOwnerRankConstructor(agg, mesh_f));
+
+    // coarse vtxdist
+    int local_nv_c = 0;
+    for (int index = 0; index < data_mesh_f->np; ++index)
+    {
+        if (data_agg->owner[index] == my_rank)
+        {
+            ++local_nv_c;
+        }
+    }
+
+    data_mesh_c->data_vtx.local_nv = local_nv_c;
+    data_mesh_c->data_adj.local_nv = local_nv_c;
+
+    int *nv_rank_c = (int *)malloc(nprocs * sizeof(int));
+    assert(nv_rank_c);
+    (void)MPI_Allgather(&local_nv_c,
+                        1,
+                        MPI_INT,
+                        nv_rank_c,
+                        1,
+                        MPI_INT,
+                        comm);
+
+    data_mesh_c->vtxdist = (int *)malloc((nprocs + 1) * sizeof(int));
+    assert(data_mesh_c->vtxdist);
+
+    data_mesh_c->vtxdist[0] = 0;
+    for (int index = 0; index < nprocs; ++index)
+    {
+        data_mesh_c->vtxdist[index + 1] = data_mesh_c->vtxdist[index] + nv_rank_c[index];
+    }
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, owner rank:", index);
+            printf("partition_id\t owner_rank\n");
+            for (int index_i = 0; index_i < data_mesh_f->np; ++index_i)
+            {
+                if (data_agg->owner[index_i] == my_rank)
+                {
+                    printf("%d\t %d\n", index_i, my_rank);
+                }
+            }
+            printf("vtxdist[]:\n");
+            for (int index_i = 0; index_i < nprocs + 1; ++index_i)
+            {
+                printf("%d\t", data_mesh_c->vtxdist[index_i]);
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check owner rank and vtxdist
+
+    // partition local data
+    data_agg->nlocal = (int *)calloc(data_agg->np, sizeof(int));
+    data_agg->local_gids = (int **)malloc(data_agg->np * sizeof(int *));
+    assert(data_agg->nlocal && data_agg->local_gids);
+
+    for (int index = 0; index < data_mesh_f->data_vtx.local_nv; ++index)
+    {
+        ++(data_agg->nlocal[data_mesh_f->parts[index]]);
+    }
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (data_agg->nlocal[index] > 0)
+        {
+            data_agg->local_gids[index] = (int *)malloc(data_agg->nlocal[index] * sizeof(int));
+            assert(data_agg->local_gids[index]);
+        }
+    }
+
+    int *cnt_local_gids = (int *)calloc(data_agg->np, sizeof(int));
+    assert(cnt_local_gids);
+    for (int index = 0; index < data_mesh_f->data_vtx.local_nv; ++index)
+    {
+        int p = data_mesh_f->parts[index];
+        data_agg->local_gids[p][cnt_local_gids[p]] = data_mesh_f->data_vtx.idx[index];
+        ++(cnt_local_gids[p]);
+    }
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, partition local data\n", index);
+            printf("partition_id\t vertex_id\n");
+            for (int index_i = 0; index_i < data_agg->np; ++index_i)
+            {
+                if (data_agg->nlocal[index_i] > 0)
+                {
+                    printf("%d\t ", index_i);
+                    for (int index_j = 0; index_j < data_agg->nlocal[index_i]; ++index_j)
+                    {
+                        printf("%d\t ", data_agg->local_gids[index_i][index_j]);
+                    }
+                    printf("\n");
+                }
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check partition local data
+
+    // partition owner vertex data
+    PetscCall(SAMGPartitionOwnerVertexData(agg, mesh_f));
+#if 1
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, partition owner vertex data\n", index);
+            printf("partition_id\t vertex_id\n");
+            for (int index_i = 0; index_i < data_agg->np; ++index_i)
+            {
+                if (data_agg->owner[index_i] == my_rank)
+                {
+                    printf("%d\t ", index_i);
+                    for (int index_j = 0; index_j < data_agg->n_fine[index_i]; ++index_j)
+                    {
+                        printf("%d\t ", data_agg->fine_gids[index_i][index_j]);
+                    }
+                    printf("\n");
+                }
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check partition owner vertex data
+
+    // free memory
+    free(cnt_local_gids);
+    free(nv_rank_c);
+
+    return 0;
+}
+
 int SAMGLevel0Mesh(const CfgJson *data_cfg /*config data*/,
                    MeshData *data_f_mesh /*fine-level mesh data*/,
-                   MeshData *data_c_mesh /*coarse-level mesh data*/)
+                   MeshData *data_c_mesh /*coarse-level mesh data*/,
+                   AggData *data_agg /*aggregation data*/)
 {
     int my_rank, nprocs;
     MPI_Comm comm;
@@ -22,13 +343,13 @@ int SAMGLevel0Mesh(const CfgJson *data_cfg /*config data*/,
 
     data_c_mesh->nv = data_f_mesh->np;
     data_c_mesh->np = data_c_mesh->nv / cfg_mg_est_size_agg;
+    data_c_mesh->data_vtx.nv = data_c_mesh->nv;
+    data_c_mesh->data_adj.nv = data_c_mesh->nv;
 
     data_f_mesh->vtxdist = (int *)malloc((nprocs + 1) * sizeof(int));
-    data_c_mesh->vtxdist = (int *)malloc((nprocs + 1) * sizeof(int));
-    assert(data_f_mesh->vtxdist && data_c_mesh->vtxdist);
+    assert(data_f_mesh->vtxdist);
 
     data_f_mesh->vtxdist[0] = 0;
-    data_c_mesh->vtxdist[0] = 0;
 
     int *nv_rank = (int *)malloc(nprocs * sizeof(int));
     assert(nv_rank);
@@ -60,33 +381,6 @@ int SAMGLevel0Mesh(const CfgJson *data_cfg /*config data*/,
     }
 #endif // check vtxdist
 
-    // data_c_mesh->vtxdist
-    for (int index = 0; index < nprocs; ++index)
-    {
-        nv_rank[index] = data_c_mesh->nv / nprocs;
-    }
-    for (int index = 0; index < data_c_mesh->nv % nprocs; ++index)
-    {
-        nv_rank[index] += 1;
-    }
-    for (int index = 0; index < nprocs; ++index)
-    {
-        data_c_mesh->vtxdist[index + 1] = data_c_mesh->vtxdist[index] + nv_rank[index];
-    }
-#if 0
-    for (int rank = 0; rank < nprocs; ++rank)
-    {
-        if (rank == my_rank)
-        {
-            printf(">>>> in rank %d:\n", rank);
-            for (int index = 0; index < nprocs + 1; ++index)
-            {
-                printf("in coarse-level mesh, vtxdist[%d] = %d\n", index, data_c_mesh->vtxdist[index]);
-            }
-        }
-    }
-#endif // check vtxdist
-
     data_f_mesh->parts = (int *)malloc(data_f_mesh->data_vtx.local_nv * sizeof(int));
     assert(data_f_mesh->parts);
 
@@ -113,6 +407,26 @@ int SAMGLevel0Mesh(const CfgJson *data_cfg /*config data*/,
                                             &wgtflag, &numflag, &ncon, &nparts,
                                             tpwgts, &ubvec, options,
                                             &edgecut, data_f_mesh->parts, &comm);
+#if 0
+    for (int rank = 0; rank < nprocs; ++rank)
+    {
+        (void)MPI_Barrier(comm);
+        if (rank == my_rank)
+        {
+            printf(">>>> in rank %d, partition result:\n", rank);
+            printf("local vertex\t global vertex\t partition\n");
+            for(int index = 0; index < data_f_mesh->data_vtx.local_nv; ++index)
+            {
+                printf("%d\t %d\t %d\n", index, data_f_mesh->vtxdist[rank] + index, data_f_mesh->parts[index]);
+            }
+            printf("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check partition result
+
+    // coarse-level mesh data construction
+    PetscCall(SAMGCoarseMeshConstructor(&data_f_mesh, &data_c_mesh, &data_agg));
 
     // free memory
     free(tpwgts);
@@ -134,7 +448,8 @@ int SAMGLevelMesh(int cfg_mg_num_level /*config number of levels*/,
     int cnt_level = 0;
     PetscCall(SAMGLevel0Mesh(&data_samg_ctx->data_cfg,
                              &data_samg_ctx->levels[cnt_level].data_f_mesh,
-                             &data_samg_ctx->levels[cnt_level].data_c_mesh));
+                             &data_samg_ctx->levels[cnt_level].data_c_mesh,
+                             &data_samg_ctx->levels[cnt_level].data_agg));
 
     while (cnt_level < cfg_mg_num_level &&
            data_samg_ctx->levels[cnt_level].data_c_mesh.nv > cfg_mg_num_coarse_vtx)

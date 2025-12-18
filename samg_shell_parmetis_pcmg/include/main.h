@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <parmetis.h>
 #include <metis.h>
+#include <limits.h>
 
 #define MAX_SIZE PETSC_MAX_PATH_LEN
 #define BUF_MAX_SIZE PETSC_MAX_PATH_LEN
@@ -146,11 +147,34 @@ typedef struct
 } MeshData;
 
 /*
+ * aggregation data
+ */
+typedef struct
+{
+    int np;     // number of partitions (global)
+    int *owner; // size: np, owner rank of each partition
+
+    /* local appearance */
+    int *nlocal;      // size: np
+    int **local_gids; // local fine global vertex IDs per partition
+
+    /* owner-only */
+    int *n_fine;     // size: np
+    int **fine_gids; // full fine vertex list per partition
+
+    /* ghost mapping on owner */
+    int *fgid2flid;
+    int *flid2fgid;
+    int nghost;
+} AggData;
+
+/*
  * multigrid level hierarchy data
  */
 typedef struct
 {
     MeshData data_f_mesh, data_c_mesh; // fine-/coarse- level mesh data
+    AggData data_agg;                  // aggregation data
     Mat op_f, op_c;                    // fine-/coarse- level operators
     Mat op_ua_p;                       // unsmoothed aggregation prolongation operator
     Mat op_sa_p;                       // smoothed aggregation prolongation operator
@@ -171,6 +195,25 @@ typedef struct
 
 // function
 /*
+ * partition owner vertex data
+ */
+int SAMGPartitionOwnerVertexData(AggData **agg /*aggregation data*/,
+                                 MeshData **mesh_f /*fine-level mesh data*/);
+
+/*
+ * partition owner rank constructor
+ */
+int SAMGPartitionOwnerRankConstructor(AggData **agg /*aggregation data*/,
+                                      MeshData **mesh_f /*fine-level mesh data*/);
+
+/*
+ * coarse-level mesh constructor
+ */
+int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
+                              MeshData **mesh_c /*coarse-level mesh data*/,
+                              AggData **agg /*aggregation data*/);
+
+/*
  * mesh adjacent list process
  */
 int FileProcessMeshAdj(const char *path_file /*path to mesh adjacent list file*/,
@@ -187,7 +230,8 @@ int FileProcessMeshVtx(const char *path_file /*path to mesh vertex file*/,
  */
 int SAMGLevel0Mesh(const CfgJson *data_cfg /*config data*/,
                    MeshData *data_f_mesh /*fine-level mesh data*/,
-                   MeshData *data_c_mesh /*coarse-level mesh data*/);
+                   MeshData *data_c_mesh /*coarse-level mesh data*/,
+                   AggData *data_agg /*aggregation data*/);
 
 /*
  * mesh hierarchy generator
