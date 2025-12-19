@@ -1,5 +1,287 @@
 #include "../include/main.h"
 
+int SAMGPartitionRenumberID(AggData **agg /*aggregation data*/,
+                            MeshData **mesh_f /*fine-level mesh data*/,
+                            MeshData **mesh_c /*coarse-level mesh data*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    MeshData *data_mesh_f = *mesh_f;
+    MeshData *data_mesh_c = *mesh_c;
+    AggData *data_agg = *agg;
+
+    int *old2new = (int *)malloc(data_agg->np * sizeof(int)); // mapping old partition_id to new partition_id
+    assert(old2new);
+    memset(old2new, -1, data_agg->np * sizeof(int));
+
+    for (int index = 0; index < nprocs; ++index)
+    {
+        int start = data_mesh_c->vtxdist[index];
+        int tmp_cnt = 0;
+
+        for (int index_p = 0; index_p < data_agg->np; ++index_p)
+        {
+            if (data_agg->owner[index_p] == index)
+            {
+                old2new[index_p] = start + tmp_cnt;
+                ++tmp_cnt;
+            }
+        }
+    }
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, mapping from old to new\n", index);
+            printf("old_partition_id\t ->\t new_partition_id\n");
+            for (int index_p = 0; index_p < data_agg->np; ++index_p)
+            {
+                printf("%d\t ->\t %d\n", index_p, old2new[index_p]);
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check mapping from old to new
+
+#if 0
+    // updating partition_id of fine-level mesh
+    for (int index = 0; index < data_mesh_f->data_vtx.local_nv; ++index)
+    {
+        int old_part = data_mesh_f->parts[index];
+        data_mesh_f->parts[index] = old2new[old_part];
+    }
+#endif // partition_id updating
+
+    // updating owner rank of data_agg
+    int *new_owner = (int *)malloc(data_agg->np * sizeof(int));
+    assert(new_owner);
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        new_owner[old2new[index]] = data_agg->owner[index];
+    }
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, new/old owner rank\n", index);
+            printf("new_partition_id\t new_owner_rank\t old_partition_id\t old_owner_rank\n");
+            for (int index_p = 0; index_p < data_agg->np; ++index_p)
+            {
+                if (data_agg->owner[index_p] == my_rank)
+                {
+                    printf("%d\t %d\t %d\t %d\n", old2new[index_p], new_owner[old2new[index_p]],
+                           index_p, data_agg->owner[index_p]);
+                }
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check new_owner rank
+
+    // updating nlocal and local_gids
+    int *new_nlocal = (int *)malloc(data_agg->np * sizeof(int));
+    assert(new_nlocal);
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        new_nlocal[old2new[index]] = data_agg->nlocal[index];
+    }
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf("in rank %d, new/old nlocal\n", index);
+            printf("new_partition_id\t new_nlocal\t old_partition_id\t old_nlocal\n");
+            for (int index_p = 0; index_p < data_agg->np; ++index_p)
+            {
+                if (data_agg->owner[index_p] == index)
+                {
+                    printf("%d\t %d\t %d\t %d\n", old2new[index_p], new_nlocal[old2new[index_p]],
+                           index_p, data_agg->nlocal[index_p]);
+                }
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check new_nlocal
+
+    int **new_local_gids = (int **)malloc(data_agg->np * sizeof(int *));
+    assert(new_local_gids);
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (new_nlocal[index] > 0)
+        {
+            new_local_gids[index] = (int *)malloc(new_nlocal[index] * sizeof(int));
+            assert(new_local_gids[index]);
+        }
+    }
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (data_agg->nlocal[index] > 0)
+        {
+            memcpy(new_local_gids[old2new[index]],
+                   data_agg->local_gids[index],
+                   data_agg->nlocal[index] * sizeof(int));
+        }
+    }
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, new/old local_gids\n", index);
+            printf("new_partition_id\t vertex_id\n");
+            printf("old_partition_id\t vertex_id\n");
+            for (int index_p = 0; index_p < data_agg->np; ++index_p)
+            {
+                if (data_agg->owner[index_p] == index)
+                {
+                    printf("%d\t ", old2new[index_p]);
+                    for (int index_v = 0; index_v < new_nlocal[old2new[index_p]]; ++index_v)
+                    {
+                        printf("%d\t ", new_local_gids[old2new[index_p]][index_v]);
+                    }
+                    printf("\n");
+                    printf("%d\t ", index_p);
+                    for (int index_v = 0; index_v < data_agg->nlocal[index_p]; ++index_v)
+                    {
+                        printf("%d\t ", data_agg->local_gids[index_p][index_v]);
+                    }
+                    puts("\n");
+                }
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check new_local_gids
+
+    // updating n_fine and fine_gids
+    int *new_n_fine = (int *)malloc(data_agg->np * sizeof(int));
+    assert(new_n_fine);
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        new_n_fine[old2new[index]] = data_agg->n_fine[index];
+    }
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, new/old n_fine\n", index);
+            printf("new_partition_id\t new_n_fine\t old_partition_id\t old_n_fine\n");
+            for (int index_p = 0; index_p < data_agg->np; ++index_p)
+            {
+                if (data_agg->owner[index_p] == index)
+                {
+                    printf("%d\t %d\t %d\t %d\n", old2new[index_p], new_n_fine[old2new[index_p]],
+                           index_p, data_agg->n_fine[index_p]);
+                }
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check new_n_fine
+
+    int **new_fine_gids = (int **)malloc(data_agg->np * sizeof(int *));
+    assert(new_fine_gids);
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (new_owner[index] == my_rank)
+        {
+            new_fine_gids[index] = (int *)malloc(new_n_fine[index] * sizeof(int));
+            assert(new_fine_gids);
+        }
+    }
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (data_agg->owner[index] == my_rank)
+        {
+            memcpy(new_fine_gids[old2new[index]],
+                   data_agg->fine_gids[index],
+                   data_agg->n_fine[index] * sizeof(int));
+        }
+    }
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, new/old fine_gids\n", index);
+            printf("new_partition_id\t vertex_id\n");
+            printf("old_partition_id\t vertex_id\n");
+            for (int index_p = 0; index_p < data_agg->np; ++index_p)
+            {
+                if (data_agg->owner[index_p] == my_rank)
+                {
+                    printf("%d\t ", old2new[index_p]);
+                    for (int index_v = 0; index_v < new_n_fine[old2new[index_p]]; ++index_v)
+                    {
+                        printf("%d\t ", new_fine_gids[old2new[index_p]][index_v]);
+                    }
+                    printf("\n");
+                    printf("%d\t ", index_p);
+                    for (int index_v = 0; index_v < data_agg->n_fine[index_p]; ++index_v)
+                    {
+                        printf("%d\t ", data_agg->fine_gids[index_p][index_v]);
+                    }
+                    puts("\n");
+                }
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check new_fine_gids
+
+    // free memory
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (data_agg->owner[index] == my_rank)
+        {
+            free(data_agg->fine_gids[index]);
+        }
+    }
+    free(data_agg->fine_gids);
+    free(data_agg->n_fine);
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (data_agg->nlocal[index] > 0)
+        {
+            free(data_agg->local_gids[index]);
+        }
+    }
+    free(data_agg->local_gids);
+    free(data_agg->nlocal);
+    free(data_agg->owner);
+    free(old2new);
+
+    // updating data agg value
+    data_agg->owner = new_owner;
+    data_agg->nlocal = new_nlocal;
+    data_agg->local_gids = new_local_gids;
+    data_agg->n_fine = new_n_fine;
+    data_agg->fine_gids = new_fine_gids;
+
+    return 0;
+}
+
 int SAMGPartitionOwnerVertexData(AggData **agg /*aggregation data*/,
                                  MeshData **mesh_f /*fine-level mesh data*/)
 {
@@ -131,7 +413,6 @@ int SAMGPartitionOwnerRankConstructor(AggData **agg /*aggregation data*/,
 
     int *flag_parts = (int *)calloc(data_mesh_f->np, sizeof(int));
     int *owner_rank_candidate_parts = (int *)malloc(data_mesh_f->np * sizeof(int));
-    int *owner_rank_parts = (int *)malloc(data_mesh_f->np * sizeof(int));
     data_agg->owner = (int *)malloc(data_mesh_f->np * sizeof(int));
     assert(flag_parts && owner_rank_candidate_parts && data_agg->owner);
 
@@ -287,6 +568,7 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
 
     // partition owner vertex data
     PetscCall(SAMGPartitionOwnerVertexData(agg, mesh_f));
+    PetscCall(SAMGPartitionRenumberID(agg, mesh_f, mesh_c));
 #if 1
     for (int index = 0; index < nprocs; ++index)
     {
