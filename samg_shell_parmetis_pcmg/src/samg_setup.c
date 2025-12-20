@@ -569,7 +569,7 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
     // partition owner vertex data
     PetscCall(SAMGPartitionOwnerVertexData(agg, mesh_f));
     PetscCall(SAMGPartitionRenumberID(agg, mesh_f, mesh_c));
-#if 1
+#if 0
     for (int index = 0; index < nprocs; ++index)
     {
         (void)MPI_Barrier(comm);
@@ -594,6 +594,8 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
         fflush(stdout);
     }
 #endif // check partition owner vertex data
+
+    // construct ghost
 
     // free memory
     free(cnt_local_gids);

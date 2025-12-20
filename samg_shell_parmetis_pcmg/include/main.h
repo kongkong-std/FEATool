@@ -147,6 +147,16 @@ typedef struct
 } MeshData;
 
 /*
+ * ghost mapping on owner rank
+ */
+typedef struct
+{
+    int *fgid2flid; // global fine-id mapping to owner-local fine-id
+    int *flid2fgid; // owner-local find-id mapping to global fine-id
+    int nghost;     // number of ghosts in owner-local fine-id
+} GhostAggData;
+
+/*
  * aggregation data
  */
 typedef struct
@@ -163,9 +173,7 @@ typedef struct
     int **fine_gids; // full fine vertex list per partition
 
     /* ghost mapping on owner */
-    int *fgid2flid;
-    int *flid2fgid;
-    int nghost;
+    GhostAggData *data_ghost_agg; // size: np
 } AggData;
 
 /*
