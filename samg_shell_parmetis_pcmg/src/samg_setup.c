@@ -1,5 +1,38 @@
 #include "../include/main.h"
 
+int SAMGCoarseVertexCoordinate(AggData **agg /*aggregation data*/,
+                               MeshData **mesh_f /*fine-level mesh data*/,
+                               MeshData **mesh_c /*coarse-level mesh data*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    MeshData *data_mesh_f = *mesh_f;
+    MeshData *data_mesh_c = *mesh_c;
+    AggData *data_agg = *agg;
+
+    data_mesh_c->data_vtx.nv = data_mesh_c->nv;
+    data_mesh_c->data_vtx.local_nv = data_mesh_c->vtxdist[my_rank + 1] - data_mesh_c->vtxdist[my_rank];
+    data_mesh_c->data_vtx.idx = (int *)malloc(data_mesh_c->data_vtx.local_nv * sizeof(int));
+    data_mesh_c->data_vtx.type = (int *)malloc(data_mesh_c->data_vtx.local_nv * sizeof(int));
+    assert(data_mesh_c->data_vtx.idx && data_mesh_c->data_vtx.type);
+
+    for (int index = 0; index < data_mesh_c->data_vtx.local_nv; ++index)
+    {
+        data_mesh_c->data_vtx.idx[index] = index + data_mesh_c->vtxdist[my_rank];
+
+        int fine_vtx_start = data_mesh_f->vtxdist[my_rank];
+        int fine_vtx = data_agg->local_gids[index + data_mesh_c->vtxdist[my_rank]][0];
+        int local_fine_vtx = fine_vtx - fine_vtx_start;
+        data_mesh_c->data_vtx.type[index] = data_mesh_f->data_vtx.type[local_fine_vtx];
+    }
+
+    return 0;
+}
+
 static int CheckValueInArray(int *a, int size, int val)
 {
     for (int index = 0; index < size; ++index)
@@ -665,7 +698,7 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
 
     // construct ghost
     PetscCall(SAMGPartitionGhostDataMapping(agg));
-#if 1
+#if 0
     for (int index = 0; index < nprocs; ++index)
     {
         (void)MPI_Barrier(comm);
@@ -696,6 +729,27 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
         fflush(stdout);
     }
 #endif // check partition ghost mapping
+
+    // construct coarse-level vertex coordinate
+    PetscCall(SAMGCoarseVertexCoordinate(agg, mesh_f, mesh_c));
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (my_rank == index)
+        {
+            printf(">>>> in rank %d, coarse-level vertex coordinate data\n", index);
+            printf("vertex_id\t type\n");
+            for (int index_v = 0; index_v < data_mesh_c->data_vtx.local_nv; ++index_v)
+            {
+                printf("%d\t %d\n", data_mesh_c->data_vtx.idx[index_v],
+                       data_mesh_c->data_vtx.type[index_v]);
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check coarse-level vertex coordinate data
 
     // free memory
     free(cnt_local_gids);

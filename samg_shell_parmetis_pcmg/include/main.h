@@ -261,6 +261,13 @@ typedef struct
 
 // function
 /*
+ * coarse-level vertex coordinate data
+ */
+int SAMGCoarseVertexCoordinate(AggData **agg /*aggregation data*/,
+                               MeshData **mesh_f /*fine-level mesh data*/,
+                               MeshData **mesh_c /*coarse-level mesh data*/);
+
+/*
  * construct partition ghost data mapping
  */
 int SAMGPartitionGhostDataMapping(AggData **agg /*aggregation data*/);
