@@ -1,5 +1,73 @@
 #include "../include/main.h"
 
+static int CheckValueInArray(int *a, int size, int val)
+{
+    for (int index = 0; index < size; ++index)
+    {
+        if (a[index] == val)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int SAMGPartitionGhostDataMapping(AggData **agg /*aggregation data*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    AggData *data_agg = *agg;
+
+    data_agg->data_ghost_agg = (GhostAggData *)malloc(data_agg->np * sizeof(GhostAggData));
+    assert(data_agg->data_ghost_agg);
+
+    for (int index_p = 0; index_p < data_agg->np; ++index_p)
+    {
+        if (data_agg->owner[index_p] != my_rank)
+        {
+            continue;
+        }
+
+        GhostAggData *g = &data_agg->data_ghost_agg[index_p];
+        int nlocal = data_agg->nlocal[index_p];
+        int *local_gids = data_agg->local_gids[index_p];
+        int n_fine = data_agg->n_fine[index_p];
+        int *fine_gids = data_agg->fine_gids[index_p];
+
+        g->n_owned = nlocal;
+        g->n_total = n_fine;
+        g->nghost = g->n_total - g->n_owned;
+
+        g->flid2fgid = (int *)malloc(g->n_total * sizeof(int));
+        g->fgid2flid = (int *)malloc(g->n_total * sizeof(int));
+        assert(g->flid2fgid && g->fgid2flid);
+
+        int lid_local = 0, lid_ghost = g->n_owned;
+        for (int index_i = 0; index_i < n_fine; ++index_i)
+        {
+            int gid = fine_gids[index_i];
+            if (CheckValueInArray(local_gids, nlocal, gid) == 1)
+            {
+                g->flid2fgid[lid_local] = gid;
+                g->fgid2flid[lid_local] = lid_local;
+                ++lid_local;
+            }
+            else
+            {
+                g->flid2fgid[lid_ghost] = gid;
+                g->fgid2flid[lid_ghost] = lid_ghost;
+                ++lid_ghost;
+            }
+        }
+    }
+
+    return 0;
+}
+
 int SAMGPartitionRenumberID(AggData **agg /*aggregation data*/,
                             MeshData **mesh_f /*fine-level mesh data*/,
                             MeshData **mesh_c /*coarse-level mesh data*/)
@@ -596,6 +664,38 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
 #endif // check partition owner vertex data
 
     // construct ghost
+    PetscCall(SAMGPartitionGhostDataMapping(agg));
+#if 1
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, partition ghost mapping data\n", index);
+            printf("partition_id\t vertex_id\n");
+            printf("\t mapping vertex_id\n");
+            for (int index_p = 0; index_p < data_agg->np; ++index_p)
+            {
+                if (data_agg->owner[index_p] == my_rank)
+                {
+                    printf("%d\t ", index_p);
+                    for (int index_v = 0; index_v < data_agg->n_fine[index_p]; ++index_v)
+                    {
+                        printf("%d\t ", data_agg->fine_gids[index_p][index_v]);
+                    }
+                    printf("\n\t ");
+                    for (int index_v = 0; index_v < data_agg->n_fine[index_p]; ++index_v)
+                    {
+                        printf("%d\t ", data_agg->data_ghost_agg[index_p].fgid2flid[index_v]);
+                    }
+                    printf("\n\n");
+                }
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check partition ghost mapping
 
     // free memory
     free(cnt_local_gids);
@@ -875,11 +975,11 @@ int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/)
     int cfg_mg_num_level = samg_ctx->data_cfg.cfg_mg.num_level;
     // int cfg_mg_pre_smooth = samg_ctx->data_cfg.cfg_mg.pre_smooth;
     // int cfg_mg_post_smooth = samg_ctx->data_cfg.cfg_mg.post_smooth;
-    int cfg_mg_num_coarse_vtx = samg_ctx->data_cfg.cfg_mg.num_coarse_vtx;
+    // int cfg_mg_num_coarse_vtx = samg_ctx->data_cfg.cfg_mg.num_coarse_vtx;
     // int cfg_mg_est_size_agg = samg_ctx->data_cfg.cfg_mg.est_size_agg;
-    int cfg_mg_ps_num_steps = samg_ctx->data_cfg.cfg_mg.ps_num_steps;
-    int cfg_mg_ps_type = samg_ctx->data_cfg.cfg_mg.ps_type;
-    double cfg_mg_ps_scale = samg_ctx->data_cfg.cfg_mg.ps_scale;
+    // int cfg_mg_ps_num_steps = samg_ctx->data_cfg.cfg_mg.ps_num_steps;
+    // int cfg_mg_ps_type = samg_ctx->data_cfg.cfg_mg.ps_type;
+    // double cfg_mg_ps_scale = samg_ctx->data_cfg.cfg_mg.ps_scale;
 
     // samg_ctx->levels = (MGLevel *)malloc(cfg_mg_num_level * sizeof(MGLevel));
     // assert(samg_ctx->levels);
