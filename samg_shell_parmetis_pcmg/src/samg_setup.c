@@ -1,5 +1,74 @@
 #include "../include/main.h"
 
+int SAMGFineVertex2PartitionMap(AggData **agg /*aggregation data*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    AggData *data_agg = *agg;
+
+    int *fgid2part = (int *)malloc(data_agg->nv * sizeof(int));
+    data_agg->fgid2part = (int *)malloc(data_agg->nv * sizeof(int));
+    assert(fgid2part && data_agg->fgid2part);
+
+    memset(fgid2part, -1, data_agg->nv * sizeof(int));
+
+    for (int index_p = 0; index_p < data_agg->np; ++index_p)
+    {
+        if (data_agg->owner[index_p] == my_rank)
+        {
+            for (int index_v = 0; index_v < data_agg->n_fine[index_p]; ++index_v)
+            {
+                int fine_vertex = data_agg->fine_gids[index_p][index_v];
+                fgid2part[fine_vertex] = index_p;
+            }
+        }
+    }
+
+    (void)MPI_Allreduce(fgid2part,
+                        data_agg->fgid2part,
+                        data_agg->nv,
+                        MPI_INT,
+                        MPI_MAX,
+                        comm);
+
+    // free memory
+    free(fgid2part);
+
+    return 0;
+}
+
+int SAMGCoarseAdjacentListConstructor(AggData **agg /*aggregation data*/,
+                                      MeshData **mesh_f /*fine-level mesh data*/,
+                                      MeshData **mesh_c /*coarse-level mesh data*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    MeshData *data_mesh_f = *mesh_f;
+    MeshData *data_mesh_c = *mesh_c;
+    AggData *data_agg = *agg;
+
+    data_mesh_c->data_adj.nv = data_mesh_c->nv;
+    data_mesh_c->data_adj.local_nv = data_mesh_c->vtxdist[my_rank + 1] - data_mesh_c->vtxdist[my_rank];
+    data_mesh_c->data_adj.idx = (int *)malloc(data_mesh_c->data_adj.local_nv * sizeof(int));
+    data_mesh_c->data_adj.xadj = (int *)calloc(data_mesh_c->data_adj.local_nv + 1, sizeof(int));
+    assert(data_mesh_c->data_adj.idx && data_mesh_c->data_adj.xadj);
+
+    for (int index = 0; index < data_mesh_c->data_adj.local_nv; ++index)
+    {
+        data_mesh_c->data_adj.idx[index] = index + data_mesh_c->vtxdist[my_rank];
+    }
+
+    return 0;
+}
+
 int SAMGCoarseVertexCoordinate(AggData **agg /*aggregation data*/,
                                MeshData **mesh_f /*fine-level mesh data*/,
                                MeshData **mesh_c /*coarse-level mesh data*/)
@@ -554,6 +623,7 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
     AggData *data_agg = *agg;
 
     data_agg->np = data_mesh_f->np;
+    data_agg->nv = data_mesh_f->nv;
 
     // partition owner rank
     PetscCall(SAMGPartitionOwnerRankConstructor(agg, mesh_f));
@@ -670,7 +740,7 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
     // partition owner vertex data
     PetscCall(SAMGPartitionOwnerVertexData(agg, mesh_f));
     PetscCall(SAMGPartitionRenumberID(agg, mesh_f, mesh_c));
-#if 0
+#if 1
     for (int index = 0; index < nprocs; ++index)
     {
         (void)MPI_Barrier(comm);
@@ -695,6 +765,28 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
         fflush(stdout);
     }
 #endif // check partition owner vertex data
+
+    // mapping from fine-level vertex to partition id
+    PetscCall(SAMGFineVertex2PartitionMap(agg));
+#if 1
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (my_rank == index)
+        {
+            printf(">>>> in rank %d, fine-level vertex to partition id\n", index);
+            printf("fine-level vertex_id\t partition_id\n");
+            int index_fine_vtx_start = data_mesh_f->vtxdist[my_rank];
+            int index_fine_vtx_end = data_mesh_f->vtxdist[my_rank + 1];
+            for (int index_v = index_fine_vtx_start; index_v < index_fine_vtx_end; ++index_v)
+            {
+                printf("%d\t %d\n", index_v, data_agg->fgid2part[index_v]);
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check fine-level vertex mapping to partition id
 
     // construct ghost
     PetscCall(SAMGPartitionGhostDataMapping(agg));
@@ -750,6 +842,9 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
         fflush(stdout);
     }
 #endif // check coarse-level vertex coordinate data
+
+    // construct coarse-level adjacent list
+    PetscCall(SAMGCoarseAdjacentListConstructor(agg, mesh_f, mesh_c));
 
     // free memory
     free(cnt_local_gids);

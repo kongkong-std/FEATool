@@ -228,6 +228,10 @@ typedef struct
     int *n_fine;     // size: np
     int **fine_gids; // full fine vertex list per partition
 
+    /* mapping from fine-level vertex to partition */
+    int nv;         // number of vertices in fine-level
+    int *fgid2part; // size: nv
+
     /* ghost mapping on owner */
     GhostAggData *data_ghost_agg; // size: np
 } AggData;
@@ -260,6 +264,18 @@ typedef struct
 } SAMGCtx;
 
 // function
+/*
+ * mapping from fine-level vertex to partition id
+ */
+int SAMGFineVertex2PartitionMap(AggData **agg /*aggregation data*/);
+
+/*
+ * construct coarse-level adjacent list
+ */
+int SAMGCoarseAdjacentListConstructor(AggData **agg /*aggregation data*/,
+                                      MeshData **mesh_f /*fine-level mesh data*/,
+                                      MeshData **mesh_c /*coarse-level mesh data*/);
+
 /*
  * coarse-level vertex coordinate data
  */
