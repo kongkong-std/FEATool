@@ -1,5 +1,7 @@
 #include "../include/main.h"
 
+#define MAT_COL_MAJOR(r, c, m) ((c) * (m) + (r))
+
 int SAMGFineVertex2PartitionMap(AggData **agg /*aggregation data*/)
 {
     int my_rank, nprocs;
@@ -41,13 +43,12 @@ int SAMGFineVertex2PartitionMap(AggData **agg /*aggregation data*/)
     return 0;
 }
 
-int SAMGCoarseAdjacentListConstructor(AggData **agg /*aggregation data*/,
-                                      MeshData **mesh_f /*fine-level mesh data*/,
-                                      MeshData **mesh_c /*coarse-level mesh data*/)
+int SAMGCoarseAdjacentListConstructor(AggData **agg,
+                                      MeshData **mesh_f,
+                                      MeshData **mesh_c)
 {
     int my_rank, nprocs;
-    MPI_Comm comm;
-    comm = PETSC_COMM_WORLD;
+    MPI_Comm comm = PETSC_COMM_WORLD;
     MPI_Comm_rank(comm, &my_rank);
     MPI_Comm_size(comm, &nprocs);
 
@@ -55,6 +56,7 @@ int SAMGCoarseAdjacentListConstructor(AggData **agg /*aggregation data*/,
     MeshData *data_mesh_c = *mesh_c;
     AggData *data_agg = *agg;
 
+    // Initialize coarse mesh adjacency structure
     data_mesh_c->data_adj.nv = data_mesh_c->nv;
     data_mesh_c->data_adj.local_nv = data_mesh_c->vtxdist[my_rank + 1] - data_mesh_c->vtxdist[my_rank];
     data_mesh_c->data_adj.idx = (int *)malloc(data_mesh_c->data_adj.local_nv * sizeof(int));
@@ -65,6 +67,123 @@ int SAMGCoarseAdjacentListConstructor(AggData **agg /*aggregation data*/,
     {
         data_mesh_c->data_adj.idx[index] = index + data_mesh_c->vtxdist[my_rank];
     }
+
+    int coarse_index_start = data_mesh_c->vtxdist[my_rank];
+    int coarse_index_end = data_mesh_c->vtxdist[my_rank + 1];
+
+    // Allocate marking arrays - one per coarse vertex to track unique adjacencies
+    int **mark = (int **)malloc(data_mesh_c->data_adj.local_nv * sizeof(int *));
+    assert(mark);
+    for (int index = 0; index < data_mesh_c->data_adj.local_nv; ++index)
+    {
+        mark[index] = (int *)calloc(data_agg->np, sizeof(int));
+        assert(mark[index]);
+    }
+
+    // Build adjacency by iterating over fine vertices
+    for (int index_v = 0; index_v < data_mesh_f->data_adj.local_nv; ++index_v)
+    {
+        int fine_v = data_mesh_f->data_adj.idx[index_v];
+        int partition_v = data_agg->fgid2part[fine_v];
+
+        // Skip if this fine vertex doesn't belong to a local coarse vertex
+        if (partition_v < coarse_index_start || partition_v >= coarse_index_end)
+        {
+            continue;
+        }
+
+        int partition_local = partition_v - coarse_index_start;
+
+        // Iterate over neighbors of fine vertex
+        int index_v_start = data_mesh_f->data_adj.xadj[index_v];
+        int index_v_end = data_mesh_f->data_adj.xadj[index_v + 1];
+
+        for (int index_k = index_v_start; index_k < index_v_end; ++index_k)
+        {
+            int fine_u = data_mesh_f->data_adj.adjncy[index_k];
+            int partition_u = data_agg->fgid2part[fine_u];
+
+            // Mark connection to different partition (coarse edge)
+            if (partition_u != partition_v)
+            {
+                mark[partition_local][partition_u] = 1;
+            }
+        }
+    }
+
+    // Count unique adjacencies and build adjacency lists
+    int *cnt_nv_coarse = (int *)calloc(data_mesh_c->data_adj.local_nv, sizeof(int));
+    int **adj_coarse = (int **)malloc(data_mesh_c->data_adj.local_nv * sizeof(int *));
+    assert(cnt_nv_coarse && adj_coarse);
+
+    for (int index = 0; index < data_mesh_c->data_adj.local_nv; ++index)
+    {
+        // Count marked adjacencies
+        int tmp_cnt = 0;
+        for (int index_i = 0; index_i < data_agg->np; ++index_i)
+        {
+            if (mark[index][index_i] == 1)
+            {
+                ++tmp_cnt;
+            }
+        }
+        cnt_nv_coarse[index] = tmp_cnt;
+
+        // Allocate and fill adjacency list
+        if (tmp_cnt > 0)
+        {
+            adj_coarse[index] = (int *)malloc(tmp_cnt * sizeof(int));
+            assert(adj_coarse[index]);
+
+            int pos = 0;
+            for (int index_i = 0; index_i < data_agg->np; ++index_i)
+            {
+                if (mark[index][index_i] == 1)
+                {
+                    adj_coarse[index][pos] = index_i;
+                    ++pos;
+                }
+            }
+        }
+        else
+        {
+            adj_coarse[index] = NULL;
+        }
+    }
+
+    // Build CSR structure
+    for (int index = 0; index < data_mesh_c->data_adj.local_nv; ++index)
+    {
+        data_mesh_c->data_adj.xadj[index + 1] = data_mesh_c->data_adj.xadj[index] + cnt_nv_coarse[index];
+    }
+
+    int adj_nnv = data_mesh_c->data_adj.xadj[data_mesh_c->data_adj.local_nv];
+    data_mesh_c->data_adj.adjncy = (int *)malloc(adj_nnv * sizeof(int));
+    assert(data_mesh_c->data_adj.adjncy);
+
+    for (int index = 0; index < data_mesh_c->data_adj.local_nv; ++index)
+    {
+        if (cnt_nv_coarse[index] > 0)
+        {
+            int index_start = data_mesh_c->data_adj.xadj[index];
+            memcpy(data_mesh_c->data_adj.adjncy + index_start,
+                   adj_coarse[index],
+                   cnt_nv_coarse[index] * sizeof(int));
+        }
+    }
+
+    // Free memory
+    for (int index = 0; index < data_mesh_c->data_adj.local_nv; ++index)
+    {
+        free(mark[index]);
+        if (adj_coarse[index])
+        {
+            free(adj_coarse[index]);
+        }
+    }
+    free(mark);
+    free(cnt_nv_coarse);
+    free(adj_coarse);
 
     return 0;
 }
@@ -740,7 +859,7 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
     // partition owner vertex data
     PetscCall(SAMGPartitionOwnerVertexData(agg, mesh_f));
     PetscCall(SAMGPartitionRenumberID(agg, mesh_f, mesh_c));
-#if 1
+#if 0
     for (int index = 0; index < nprocs; ++index)
     {
         (void)MPI_Barrier(comm);
@@ -768,7 +887,7 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
 
     // mapping from fine-level vertex to partition id
     PetscCall(SAMGFineVertex2PartitionMap(agg));
-#if 1
+#if 0
     for (int index = 0; index < nprocs; ++index)
     {
         (void)MPI_Barrier(comm);
@@ -845,6 +964,30 @@ int SAMGCoarseMeshConstructor(MeshData **mesh_f /*fine-level mesh data*/,
 
     // construct coarse-level adjacent list
     PetscCall(SAMGCoarseAdjacentListConstructor(agg, mesh_f, mesh_c));
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, coarse-level adjacent list data\n", index);
+            printf("local_coarse_vtx\t global_coarse_vtx\t adjacent_vtxs\n");
+            for (int index_v = 0; index_v < data_mesh_c->data_adj.local_nv; ++index_v)
+            {
+                printf("%d\t %d\t ", index_v, data_mesh_c->data_adj.idx[index_v]);
+                int index_v_start = data_mesh_c->data_adj.xadj[index_v];
+                int index_v_end = data_mesh_c->data_adj.xadj[index_v + 1];
+                for (int index_v_adj = index_v_start; index_v_adj < index_v_end; ++index_v_adj)
+                {
+                    printf("%d\t ", data_mesh_c->data_adj.adjncy[index_v_adj]);
+                }
+                printf("\n");
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check coarse-level adjacent list data
 
     // free memory
     free(cnt_local_gids);
@@ -866,8 +1009,61 @@ int SAMGLevel0Mesh(const CfgJson *data_cfg /*config data*/,
 
     FileProcessMeshVtx(data_cfg->cfg_file.file_vtx,
                        &data_f_mesh->data_vtx);
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, level 0 mesh vertex data, total nv = %d\n", index, data_f_mesh->data_vtx.nv);
+            printf("local_vtx_id\t global_vtx_id\t type\t "
+                   "x\t y\t z\t "
+                   "nx\t ny\t nz\n");
+            for (int index_v = 0; index_v < data_f_mesh->data_vtx.local_nv; ++index_v)
+            {
+                printf("%d\t %d\t %d\t "
+                       "%021.16le\t %021.16le\t %021.16le\t "
+                       "%021.16le\t %021.16le\t %021.16le\n",
+                       index_v, data_f_mesh->data_vtx.idx[index_v], data_f_mesh->data_vtx.type[index_v],
+                       data_f_mesh->data_vtx.data_coor[index_v].x,
+                       data_f_mesh->data_vtx.data_coor[index_v].y,
+                       data_f_mesh->data_vtx.data_coor[index_v].z,
+                       data_f_mesh->data_vtx.data_coor[index_v].nx,
+                       data_f_mesh->data_vtx.data_coor[index_v].ny,
+                       data_f_mesh->data_vtx.data_coor[index_v].nz);
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check level 0 mesh vertex data
+
     FileProcessMeshAdj(data_cfg->cfg_file.file_adj,
                        &data_f_mesh->data_adj);
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, level 0 mesh adjacent list data, total nv = %d, local nv = %d\n", index, data_f_mesh->data_adj.nv, data_f_mesh->data_adj.local_nv);
+            printf("local_vtx_id\t global_vtx_id\t adj_vtxs\n");
+            for (int index_v = 0; index_v < data_f_mesh->data_adj.local_nv; ++index_v)
+            {
+                printf("%d\t %d\t ", index_v, data_f_mesh->data_adj.idx[index_v]);
+                int index_v_start = data_f_mesh->data_adj.xadj[index_v];
+                int index_v_end = data_f_mesh->data_adj.xadj[index_v + 1];
+                for (int index_v_adj = index_v_start; index_v_adj < index_v_end; ++index_v_adj)
+                {
+                    printf("%d\t ", data_f_mesh->data_adj.adjncy[index_v_adj]);
+                }
+                printf("\n");
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check level 0 mesh adjacent list data
 
     data_f_mesh->nv = data_f_mesh->data_vtx.nv;
 
@@ -1119,6 +1315,146 @@ int SAMGApplyProlongationSmoother(int n /*column size of prolongation operator*/
     return 0;
 }
 
+int SAMGLevel0NearNullSpace(MeshData *data_f_mesh /*fine level 0 mesh data*/,
+                            NearNullSpaceLevel0 *data_nullspace_level0 /*level 0 near null space*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    data_nullspace_level0->size_global = data_f_mesh->nv;
+    data_nullspace_level0->size_local = data_f_mesh->vtxdist[my_rank + 1] - data_f_mesh->vtxdist[my_rank];
+
+    int size_local = data_nullspace_level0->size_local;
+    assert(size_local == data_f_mesh->data_vtx.local_nv);
+
+    data_nullspace_level0->data_nullspace = (NearNullSpaceDataVertexLevel0 *)malloc(size_local * sizeof(NearNullSpaceDataVertexLevel0));
+    assert(data_nullspace_level0);
+
+    for (int index = 0; index < size_local; ++index)
+    {
+        data_nullspace_level0->data_nullspace[index].idx = data_f_mesh->data_vtx.idx[index];
+        data_nullspace_level0->data_nullspace[index].type = data_f_mesh->data_vtx.type[index];
+        int type = data_nullspace_level0->data_nullspace[index].type;
+        CoorData tmp_coor_data = data_f_mesh->data_vtx.data_coor[index];
+        if (type == 0)
+        {
+            // shell type
+            data_nullspace_level0->data_nullspace[index].nrow = 6;
+            data_nullspace_level0->data_nullspace[index].ncol = 6;
+            data_nullspace_level0->data_nullspace[index].val = (double *)calloc(6 * 6, sizeof(double));
+            double *val = data_nullspace_level0->data_nullspace[index].val;
+            assert(val);
+
+            // 6c + r, c是列号, r是行号
+            // MAT_COL_MAJOR(r, c, m) ((c) * (m) + (r))
+            /*    0  1  2  3     4     5
+             * 0 [1  0  0  0     z     -y  ]
+             * 1 [0  1  0  -z    0     x   ]
+             * 2 [0  0  1  y     -x    0   ]
+             * 3 [0  0  0  0     n_z   -n_y]
+             * 4 [0  0  0  -n_z  0     n_x ]
+             * 5 [0  0  0  n_y   -n_x  0   ]
+             */
+            val[MAT_COL_MAJOR(0, 0, 6)] = 1.;
+            val[MAT_COL_MAJOR(0, 4, 6)] = tmp_coor_data.z;
+            val[MAT_COL_MAJOR(0, 5, 6)] = -tmp_coor_data.y;
+
+            val[MAT_COL_MAJOR(1, 1, 6)] = 1.;
+            val[MAT_COL_MAJOR(1, 3, 6)] = -tmp_coor_data.z;
+            val[MAT_COL_MAJOR(1, 5, 6)] = tmp_coor_data.x;
+
+            val[MAT_COL_MAJOR(2, 2, 6)] = 1.;
+            val[MAT_COL_MAJOR(2, 3, 6)] = tmp_coor_data.y;
+            val[MAT_COL_MAJOR(2, 4, 6)] = -tmp_coor_data.x;
+
+            val[MAT_COL_MAJOR(3, 4, 6)] = tmp_coor_data.nz;
+            val[MAT_COL_MAJOR(3, 5, 6)] = -tmp_coor_data.ny;
+
+            val[MAT_COL_MAJOR(4, 3, 6)] = -tmp_coor_data.nz;
+            val[MAT_COL_MAJOR(4, 5, 6)] = tmp_coor_data.nx;
+
+            val[MAT_COL_MAJOR(5, 3, 6)] = tmp_coor_data.ny;
+            val[MAT_COL_MAJOR(5, 4, 6)] = -tmp_coor_data.nx;
+        }
+        else if (type == 1)
+        {
+            // solid type
+            data_nullspace_level0->data_nullspace[index].nrow = 3;
+            data_nullspace_level0->data_nullspace[index].ncol = 6;
+            data_nullspace_level0->data_nullspace[index].val = (double *)calloc(3 * 6, sizeof(double));
+            double *val = data_nullspace_level0->data_nullspace[index].val;
+            assert(val);
+
+            // 6c + r, c是列号, r是行号
+            // MAT_COL_MAJOR(r, c, m) ((c) * (m) + (r))
+            /*    0  1  2  3     4     5
+             * 0 [1  0  0  0     z     -y  ]
+             * 1 [0  1  0  -z    0     x   ]
+             * 2 [0  0  1  y     -x    0   ]
+             */
+            val[MAT_COL_MAJOR(0, 0, 6)] = 1.;
+            val[MAT_COL_MAJOR(0, 4, 6)] = tmp_coor_data.z;
+            val[MAT_COL_MAJOR(0, 5, 6)] = -tmp_coor_data.y;
+
+            val[MAT_COL_MAJOR(1, 1, 6)] = 1.;
+            val[MAT_COL_MAJOR(1, 3, 6)] = -tmp_coor_data.z;
+            val[MAT_COL_MAJOR(1, 5, 6)] = tmp_coor_data.x;
+
+            val[MAT_COL_MAJOR(2, 2, 6)] = 1.;
+            val[MAT_COL_MAJOR(2, 3, 6)] = tmp_coor_data.y;
+            val[MAT_COL_MAJOR(2, 4, 6)] = -tmp_coor_data.x;
+        }
+    }
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, level 0 near null space data, global size = %d, local size = %d\n", index,
+                   data_nullspace_level0->size_global,
+                   data_nullspace_level0->size_local);
+            printf("local_vtx_id\t global_vtx_id\t type\t near_null_space\n");
+            for (int index_v = 0; index_v < size_local; ++index_v)
+            {
+                printf("%d\t %d\t %d\t ", index_v,
+                       data_nullspace_level0->data_nullspace[index_v].idx,
+                       data_nullspace_level0->data_nullspace[index_v].type);
+                for (int index_ns_r = 0; index_ns_r < data_nullspace_level0->data_nullspace[index_v].nrow; ++index_ns_r)
+                {
+                    printf(" \t \t \t ");
+                    for (int index_ns_c = 0; index_ns_c < data_nullspace_level0->data_nullspace[index_v].ncol; ++index_ns_c)
+                    {
+                        printf("%021.16le\t ", data_nullspace_level0->data_nullspace[index_v].val[MAT_COL_MAJOR(index_ns_r, index_ns_c, 6)]);
+                    }
+                    printf("\n");
+                }
+                printf("\n");
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+
+#endif // check level 0 near null space data
+
+    return 0;
+}
+
+int SAMGLevelNearNullSpace(SAMGCtx **samg_ctx /*samg context data*/)
+{
+    SAMGCtx *data_samg_ctx = *samg_ctx;
+
+    int cnt_level = 0;
+    PetscCall(SAMGLevel0NearNullSpace(&data_samg_ctx->levels[cnt_level].data_f_mesh,
+                                      &data_samg_ctx->data_nullspace_level0));
+
+    return 0;
+}
+
 int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/)
 {
     int cfg_mg_num_level = samg_ctx->data_cfg.cfg_mg.num_level;
@@ -1133,7 +1469,8 @@ int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/)
     // samg_ctx->levels = (MGLevel *)malloc(cfg_mg_num_level * sizeof(MGLevel));
     // assert(samg_ctx->levels);
 
-    PetscCall(SAMGLevelMesh(cfg_mg_num_level, &samg_ctx));
+    PetscCall(SAMGLevelMesh(cfg_mg_num_level, &samg_ctx)); // multilevel hierarchy
+    PetscCall(SAMGLevelNearNullSpace(&samg_ctx));          // multilevel near null space
 
     int cnt_level = 0;
     PetscCall(MatDuplicate(samg_ctx->mysolver.solver_a, MAT_COPY_VALUES, &samg_ctx->levels[cnt_level].op_f));

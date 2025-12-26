@@ -28,6 +28,7 @@ int FileProcessMeshAdj(const char *path_file /*path to mesh adjacent list file*/
     int local_nv = 0;
     fscanf(fp, " %d ", &local_nv);
 
+    data_adj->local_nv = local_nv;
     data_adj->idx = (int *)malloc(local_nv * sizeof(int));
     data_adj->xadj = (int *)malloc((local_nv + 1) * sizeof(int));
     assert(data_adj->idx && data_adj->xadj);

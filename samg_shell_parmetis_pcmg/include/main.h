@@ -148,13 +148,15 @@ typedef struct
 
 /*
  * near null space data of each vertex in level 0
+ * LAPACK_COL_MAJOR remember!!!
  */
 typedef struct
 {
     /* data */
-    int idx;     // vertex id
-    int type;    // vertex type, 0: shell, 1: solid
-    double *val; // size: for shell, 6 \times 6; for solid, 3 \times 6
+    int idx;        // vertex id
+    int type;       // vertex type, 0: shell, 1: solid
+    int nrow, ncol; // for shell, nrow = ncol = 6; for solid, nrow = 3, ncol = 6
+    double *val;    // size: for shell, 6 \times 6; for solid, 3 \times 6
 } NearNullSpaceDataVertexLevel0;
 
 /*
@@ -243,7 +245,6 @@ typedef struct
 {
     MeshData data_f_mesh, data_c_mesh;         // fine-/coarse- level mesh data
     AggData data_agg;                          // aggregation data
-    NearNullSpaceLevel0 data_nullspace_level0; // level 0 near null space data, only in level 0
     NearNullSpaceLevelK data_nullspace_levelk; // level k near null space data, in level k except level 0
     Mat op_f, op_c;                            // fine-/coarse- level operators
     Mat op_ua_p;                               // unsmoothed aggregation prolongation operator
@@ -257,13 +258,25 @@ typedef struct
 typedef struct
 {
     /* data */
-    CfgJson data_cfg;  // config data
-    int num_level;     // true number of levels
-    MySolver mysolver; // setup phase, mysolver data
-    MGLevel *levels;   // level hierarchy information
+    CfgJson data_cfg;                          // config data
+    int num_level;                             // true number of levels
+    MySolver mysolver;                         // setup phase, mysolver data
+    NearNullSpaceLevel0 data_nullspace_level0; // level 0 near null space data, only in level 0
+    MGLevel *levels;                           // level hierarchy information
 } SAMGCtx;
 
 // function
+/*
+ * level 0 near null space depends on level 0 fine mesh
+ */
+int SAMGLevel0NearNullSpace(MeshData *data_f_mesh /*fine level 0 mesh data*/,
+                            NearNullSpaceLevel0 *data_nullspace_level0 /*level 0 near null space*/);
+
+/*
+ * construct multilevel near null space
+ */
+int SAMGLevelNearNullSpace(SAMGCtx **samg_ctx /*samg context data*/);
+
 /*
  * mapping from fine-level vertex to partition id
  */
