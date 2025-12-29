@@ -264,25 +264,26 @@ int SAMGPartitionGhostDataMapping(AggData **agg /*aggregation data*/)
         g->nghost = g->n_total - g->n_owned;
 
         g->flid2fgid = (int *)malloc(g->n_total * sizeof(int));
-        g->fgid2flid = (int *)malloc(g->n_total * sizeof(int));
+        // g->fgid2flid = (int *)malloc(g->n_total * sizeof(int));
         assert(g->flid2fgid && g->fgid2flid);
 
         int lid_local = 0, lid_ghost = g->n_owned;
         for (int index_i = 0; index_i < n_fine; ++index_i)
         {
             int gid = fine_gids[index_i];
-            if (CheckValueInArray(local_gids, nlocal, gid) == 1)
+            g->flid2fgid[index_i] = gid;
+#if 0
+            if (index_i < nlocal)
             {
-                g->flid2fgid[lid_local] = gid;
                 g->fgid2flid[lid_local] = lid_local;
                 ++lid_local;
             }
             else
             {
-                g->flid2fgid[lid_ghost] = gid;
                 g->fgid2flid[lid_ghost] = lid_ghost;
                 ++lid_ghost;
             }
+#endif
         }
     }
 
@@ -600,6 +601,14 @@ int SAMGPartitionOwnerVertexData(AggData **agg /*aggregation data*/,
         {
             data_agg->fine_gids[index] = (int *)malloc(data_agg->n_fine[index] * sizeof(int));
             assert(data_agg->fine_gids[index]);
+
+            memcpy(data_agg->fine_gids[index],
+                   data_agg->local_gids[index],
+                   data_agg->nlocal[index] * sizeof(int));
+        }
+        else
+        {
+            data_agg->fine_gids[index] = NULL;
         }
     }
 
@@ -613,77 +622,119 @@ int SAMGPartitionOwnerVertexData(AggData **agg /*aggregation data*/,
                         MPI_INT,
                         comm);
 
-    int *offset = (int *)calloc(data_agg->np, sizeof(int));
-    assert(offset);
+    // all2all
+    int *send_counts = (int *)calloc(nprocs, sizeof(int));
+    int *recv_counts = (int *)calloc(nprocs, sizeof(int));
+    int *sdispls = (int *)malloc(nprocs * sizeof(int));
+    int *rdispls = (int *)malloc(nprocs * sizeof(int));
+    assert(send_counts && recv_counts && sdispls && rdispls);
 
-    for (int index = 0; index < data_agg->np; ++index)
+    // sending counts
+    for (int index_p = 0; index_p < data_agg->np; ++index_p)
     {
-        if (data_agg->owner[index] == my_rank)
+        int target = data_agg->owner[index_p];
+        if (target != my_rank &&
+            data_agg->nlocal[index_p] > 0)
         {
-            offset[index] = 0;
-
-            if (data_agg->nlocal[index] > 0)
-            {
-                memcpy(data_agg->fine_gids[index],
-                       data_agg->local_gids[index],
-                       data_agg->nlocal[index] * sizeof(int));
-                offset[index] += data_agg->nlocal[index];
-            }
+            send_counts[target] += data_agg->nlocal[index_p];
         }
     }
 
-    // sending non-owner data
-    for (int index = 0; index < data_agg->np; ++index)
+    // receving counts
+    for (int index_r = 0; index_r < nprocs; ++index_r)
     {
-        if (data_agg->nlocal[index] > 0 &&
-            data_agg->owner[index] != my_rank)
-        {
-            (void)MPI_Send(data_agg->local_gids[index],
-                           data_agg->nlocal[index],
-                           MPI_INT,
-                           data_agg->owner[index],
-                           1000 + index, // tag, partition_id + 1000
-                           comm);
-        }
-    }
-
-    // receiving non-owner data in owner rank
-    MPI_Status status;
-    for (int index = 0; index < data_agg->np; ++index)
-    {
-        if (data_agg->owner[index] != my_rank)
+        if (index_r == my_rank)
         {
             continue;
         }
 
-        for (int index_r = 0; index_r < nprocs; ++index_r)
+        for (int index_p = 0; index_p < data_agg->np; ++index_p)
         {
-            if (index_r == my_rank)
+            if (data_agg->owner[index_p] == my_rank)
             {
-                continue;
+                recv_counts[index_r] += nlocal_all[index_r * data_agg->np + index_p];
             }
+        }
+    }
 
-            int tmp_cnt = nlocal_all[index_r * data_agg->np + index];
-            if (tmp_cnt <= 0)
+    // sending displacements
+    sdispls[0] = 0;
+    rdispls[0] = 0;
+    for (int index_r = 1; index_r < nprocs; ++index_r)
+    {
+        sdispls[index_r] = sdispls[index_r - 1] + send_counts[index_r - 1];
+        rdispls[index_r] = rdispls[index_r - 1] + recv_counts[index_r - 1];
+    }
+
+    // data packaging
+    int total_send = sdispls[nprocs - 1] + send_counts[nprocs - 1];
+    int *send_buf = (int *)malloc((total_send > 0 ? total_send : 1) * sizeof(int));
+    int *tmp_offset = (int *)calloc(nprocs, sizeof(int));
+    assert(send_buf && tmp_offset);
+
+    for (int index_p = 0; index_p < data_agg->np; ++index_p)
+    {
+        int target = data_agg->owner[index_p];
+        if (target != my_rank &&
+            data_agg->nlocal[index_p] > 0)
+        {
+            memcpy(send_buf + sdispls[target] + tmp_offset[target],
+                   data_agg->local_gids[index_p],
+                   data_agg->nlocal[index_p] * sizeof(int));
+            tmp_offset[target] += data_agg->nlocal[index_p];
+        }
+    }
+
+    // mpi_all2allv
+    int total_recv = rdispls[nprocs - 1] + recv_counts[nprocs - 1];
+    int *recv_buf = (int *)malloc((total_recv > 0 ? total_recv : 1) * sizeof(int));
+    assert(recv_buf);
+
+    (void)MPI_Alltoallv(send_buf, send_counts, sdispls, MPI_INT,
+                        recv_buf, recv_counts, rdispls, MPI_INT, comm);
+
+    // data unpackaging, vertices order [local, remote]
+    int *part_fill_offset = (int *)malloc(data_agg->np * sizeof(int));
+    assert(part_fill_offset);
+    for (int index_p = 0; index_p < data_agg->np; ++index_p)
+    {
+        part_fill_offset[index_p] = (data_agg->owner[index_p] == my_rank) ? data_agg->nlocal[index_p] : 0;
+    }
+
+    memset(tmp_offset, 0, nprocs * sizeof(int));
+
+    for (int index_r = 0; index_r < nprocs; ++index_r)
+    {
+        if (index_r == my_rank)
+        {
+            continue;
+        }
+
+        for (int index_p = 0; index_p < data_agg->np; ++index_p)
+        {
+            int cnt = nlocal_all[index_r * data_agg->np + index_p];
+            if (cnt > 0 &&
+                data_agg->owner[index_p] == my_rank)
             {
-                continue;
+                memcpy(data_agg->fine_gids[index_p] + part_fill_offset[index_p],
+                       recv_buf + rdispls[index_r] + tmp_offset[index_r],
+                       cnt * sizeof(int));
+                part_fill_offset[index_p] += cnt;
+                tmp_offset[index_r] += cnt;
             }
-
-            MPI_Recv(data_agg->fine_gids[index] + offset[index],
-                     tmp_cnt,
-                     MPI_INT,
-                     index_r,
-                     1000 + index, // tag, partition_id + 1000
-                     comm,
-                     &status);
-
-            offset[index] += tmp_cnt;
         }
     }
 
     // free memory
+    free(part_fill_offset);
+    free(recv_buf);
+    free(send_buf);
+    free(tmp_offset);
+    free(send_counts);
+    free(recv_counts);
+    free(sdispls);
+    free(rdispls);
     free(nlocal_all);
-    free(offset);
 
     return 0;
 }
@@ -1315,8 +1366,8 @@ int SAMGApplyProlongationSmoother(int n /*column size of prolongation operator*/
     return 0;
 }
 
-int SAMGLevel0NearNullSpace(MeshData *data_f_mesh /*fine level 0 mesh data*/,
-                            NearNullSpaceLevel0 *data_nullspace_level0 /*level 0 near null space*/)
+int SAMGInitialNearNullSpace(MeshData *data_f_mesh /*fine level 0 mesh data*/,
+                             NearNullSpaceLevel0 *data_nullspace_level0 /*level 0 near null space*/)
 {
     int my_rank, nprocs;
     MPI_Comm comm;
@@ -1444,13 +1495,130 @@ int SAMGLevel0NearNullSpace(MeshData *data_f_mesh /*fine level 0 mesh data*/,
     return 0;
 }
 
+int SAMGLevel0NearNullSpace(NearNullSpaceLevel0 *data_nullspace_level0 /*initial near null space*/,
+                            NearNullSpaceLevelK *data_nullspace_levelk /*level 0 near null space*/)
+{
+    data_nullspace_levelk->size_global = data_nullspace_level0->size_global;
+    data_nullspace_levelk->size_local = data_nullspace_level0->size_local;
+
+    int size_local = data_nullspace_levelk->size_local;
+    data_nullspace_levelk->data_nullspace = (NearNullSpaceDataVertexLevelK *)malloc(size_local * sizeof(NearNullSpaceDataVertexLevelK));
+    assert(data_nullspace_levelk);
+
+    for (int index = 0; index < size_local; ++index)
+    {
+        data_nullspace_levelk->data_nullspace[index].idx = data_nullspace_level0->data_nullspace[index].idx;
+        data_nullspace_levelk->data_nullspace[index].nrow = data_nullspace_level0->data_nullspace[index].nrow;
+        data_nullspace_levelk->data_nullspace[index].ncol = data_nullspace_level0->data_nullspace[index].ncol;
+        data_nullspace_levelk->data_nullspace[index].val = (double *)malloc(data_nullspace_levelk->data_nullspace[index].nrow *
+                                                                            data_nullspace_levelk->data_nullspace[index].ncol *
+                                                                            sizeof(double));
+        memcpy(data_nullspace_levelk->data_nullspace[index].val,
+               data_nullspace_level0->data_nullspace[index].val,
+               data_nullspace_level0->data_nullspace[index].nrow *
+                   data_nullspace_level0->data_nullspace[index].ncol *
+                   sizeof(double));
+    }
+
+    return 0;
+}
+
+int SAMGLevelKNearNullSpace(MeshData *data_mesh_f /*fine-level mesh data*/,
+                            MeshData *data_mesh_c /*coarse-level mesh data*/,
+                            NearNullSpaceLevelK *data_nullspace_f /*fine-level near null space*/,
+                            AggData *data_agg /*aggregation data*/,
+                            NearNullSpaceLevelK *data_nullspace_c /*coarse-level near null space*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    int *vtxdist_f = data_mesh_f->vtxdist;
+    int *vtxdist_c = data_mesh_c->vtxdist;
+
+    data_nullspace_c->size_global = data_agg->np;
+    data_nullspace_c->size_local = vtxdist_c[my_rank + 1] - vtxdist_c[my_rank];
+    int size_local_c = data_nullspace_c->size_local;
+
+    for (int index_p = 0; index_p < data_agg->np; ++index_p)
+    {
+        if (data_agg->owner[index_p] == my_rank)
+        {
+            data_agg->data_ghost_agg[index_p].ncol = 6;
+            int tmp_nrow = 0;
+            data_agg->data_ghost_agg[index_p].nrow = tmp_nrow;
+        }
+    }
+
+    data_nullspace_c->data_nullspace = (NearNullSpaceDataVertexLevelK *)malloc(size_local_c * sizeof(NearNullSpaceDataVertexLevelK));
+    assert(data_nullspace_c->data_nullspace);
+
+    for (int index = 0; index < size_local_c; ++index)
+    {
+        data_nullspace_c->data_nullspace[index].idx = data_mesh_c->data_vtx.idx[index];
+        data_nullspace_c->data_nullspace[index].nrow = 6;
+        data_nullspace_c->data_nullspace[index].ncol = 6;
+
+        // copying R from QR factorization of mat_t
+    }
+
+    return 0;
+}
+
 int SAMGLevelNearNullSpace(SAMGCtx **samg_ctx /*samg context data*/)
 {
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
     SAMGCtx *data_samg_ctx = *samg_ctx;
 
     int cnt_level = 0;
-    PetscCall(SAMGLevel0NearNullSpace(&data_samg_ctx->levels[cnt_level].data_f_mesh,
-                                      &data_samg_ctx->data_nullspace_level0));
+    PetscCall(SAMGLevel0NearNullSpace(&data_samg_ctx->data_nullspace_level0,
+                                      &data_samg_ctx->levels[cnt_level].data_nullspace_levelk));
+#if 0
+    for (int index = 0; index < nprocs; ++index)
+    {
+        (void)MPI_Barrier(comm);
+        if (index == my_rank)
+        {
+            printf(">>>> in rank %d, level 0 fine near null space data, global nv = %d, local nv = %d\n", index,
+                   data_samg_ctx->levels[cnt_level].data_nullspace_levelk.size_global,
+                   data_samg_ctx->levels[cnt_level].data_nullspace_levelk.size_local);
+            printf("local_vtx_id\t global_vtx_id\t near_null_space\n");
+            for (int index_v = 0; index_v < data_samg_ctx->levels[cnt_level].data_nullspace_levelk.size_local; ++index_v)
+            {
+                printf("%d\t %d\t ", index_v,
+                       data_samg_ctx->levels[cnt_level].data_nullspace_levelk.data_nullspace[index_v].idx);
+                for (int index_ns_r = 0; index_ns_r < data_samg_ctx->levels[cnt_level].data_nullspace_levelk.data_nullspace[index_v].nrow; ++index_ns_r)
+                {
+                    printf(" \t \t ");
+                    for (int index_ns_c = 0; index_ns_c < data_samg_ctx->levels[cnt_level].data_nullspace_levelk.data_nullspace[index_v].ncol; ++index_ns_c)
+                    {
+                        printf("%021.16le\t ", data_samg_ctx->levels[cnt_level].data_nullspace_levelk.data_nullspace[index_v].val[MAT_COL_MAJOR(index_ns_r, index_ns_c, 6)]);
+                    }
+                    printf("\n");
+                }
+                printf("\n");
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check level 0 fine near null space data
+
+    for (cnt_level = 0; cnt_level < data_samg_ctx->num_level; ++cnt_level)
+    {
+        PetscCall(SAMGLevelKNearNullSpace(&data_samg_ctx->levels[cnt_level].data_f_mesh,
+                                          &data_samg_ctx->levels[cnt_level].data_c_mesh,
+                                          &data_samg_ctx->levels[cnt_level].data_nullspace_levelk,
+                                          &data_samg_ctx->levels[cnt_level].data_agg,
+                                          &data_samg_ctx->levels[cnt_level + 1].data_nullspace_levelk));
+    }
 
     return 0;
 }
@@ -1469,10 +1637,13 @@ int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/)
     // samg_ctx->levels = (MGLevel *)malloc(cfg_mg_num_level * sizeof(MGLevel));
     // assert(samg_ctx->levels);
 
-    PetscCall(SAMGLevelMesh(cfg_mg_num_level, &samg_ctx)); // multilevel hierarchy
-    PetscCall(SAMGLevelNearNullSpace(&samg_ctx));          // multilevel near null space
-
     int cnt_level = 0;
+
+    PetscCall(SAMGLevelMesh(cfg_mg_num_level, &samg_ctx)); // multilevel hierarchy
+    PetscCall(SAMGInitialNearNullSpace(&samg_ctx->levels[cnt_level].data_f_mesh,
+                                       &samg_ctx->data_nullspace_level0)); // level 0 near null space
+    PetscCall(SAMGLevelNearNullSpace(&samg_ctx));                          // multilevel near null space
+
     PetscCall(MatDuplicate(samg_ctx->mysolver.solver_a, MAT_COPY_VALUES, &samg_ctx->levels[cnt_level].op_f));
 
     // while (cnt_level < cfg_mg_num_level &&

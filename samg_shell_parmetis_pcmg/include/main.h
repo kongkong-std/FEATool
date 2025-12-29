@@ -166,7 +166,8 @@ typedef struct
 {
     /* data */
     int idx;
-    double *val; // size: 6 \times 6
+    int nrow, ncol; // in level k (except level 0), nrow = ncol = 6
+    double *val;    // size: 6 \times 6
 } NearNullSpaceDataVertexLevelK;
 
 /*
@@ -196,10 +197,10 @@ typedef struct
 typedef struct
 {
     int *flid2fgid; // owner-local fine-id mapping to global fine-id
-    int *fgid2flid; // global fine-id mapping to owner-local fine-id
-    int n_owned;    // number of owned fine vertices in this partition
-    int nghost;     // number of ghost fine vertices in this partition
-    int n_total;    // = n_owned + nghost
+    // int *fgid2flid; // global fine-id mapping to owner-local fine-id
+    int n_owned; // number of owned fine vertices in this partition
+    int nghost;  // number of ghost fine vertices in this partition
+    int n_total; // = n_owned + nghost
 
     /*
      * mat_t = mat_q * mat_r
@@ -210,8 +211,9 @@ typedef struct
      *     LAPACKE_dgeqrf() implement QR factorization and mat_r in upper triangular part of mat_t
      *     LAPACKE_dorgqr() store mat_q explicitly in mat_t
      */
-    double *mat_t; // after calling OpenBLAS
-    double *mat_r;
+    int nrow, ncol; // size(mat_t) = nrow x ncol
+    double *mat_t;  // after calling OpenBLAS
+    double *mat_r;  // size: ncol x ncol
 } GhostAggData;
 
 /*
@@ -267,10 +269,25 @@ typedef struct
 
 // function
 /*
- * level 0 near null space depends on level 0 fine mesh
+ * level k near null space
  */
-int SAMGLevel0NearNullSpace(MeshData *data_f_mesh /*fine level 0 mesh data*/,
-                            NearNullSpaceLevel0 *data_nullspace_level0 /*level 0 near null space*/);
+int SAMGLevelKNearNullSpace(MeshData *data_mesh_f /*fine-level mesh data*/,
+                            MeshData *data_mesh_c /*coarse-level mesh data*/,
+                            NearNullSpaceLevelK *data_nullspace_f /*fine-level near null space*/,
+                            AggData *data_agg /*aggregation data*/,
+                            NearNullSpaceLevelK *data_nullspace_c /*coarse-level near null space*/);
+
+/*
+ * level 0 near null space
+ */
+int SAMGLevel0NearNullSpace(NearNullSpaceLevel0 *data_nullspace_level0 /*initial near null space*/,
+                            NearNullSpaceLevelK *data_nullspace_levelk /*level 0 near null space*/);
+
+/*
+ * initial near null space depends on level 0 fine mesh
+ */
+int SAMGInitialNearNullSpace(MeshData *data_f_mesh /*fine level 0 mesh data*/,
+                             NearNullSpaceLevel0 *data_nullspace_level0 /*level 0 near null space*/);
 
 /*
  * construct multilevel near null space
