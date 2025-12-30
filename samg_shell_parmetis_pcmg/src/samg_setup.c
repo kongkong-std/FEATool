@@ -221,6 +221,7 @@ int SAMGCoarseVertexCoordinate(AggData **agg /*aggregation data*/,
     return 0;
 }
 
+#if 0
 static int CheckValueInArray(int *a, int size, int val)
 {
     for (int index = 0; index < size; ++index)
@@ -232,6 +233,7 @@ static int CheckValueInArray(int *a, int size, int val)
     }
     return 0;
 }
+#endif
 
 int SAMGPartitionGhostDataMapping(AggData **agg /*aggregation data*/)
 {
@@ -265,7 +267,8 @@ int SAMGPartitionGhostDataMapping(AggData **agg /*aggregation data*/)
 
         g->flid2fgid = (int *)malloc(g->n_total * sizeof(int));
         // g->fgid2flid = (int *)malloc(g->n_total * sizeof(int));
-        assert(g->flid2fgid && g->fgid2flid);
+        assert(g->flid2fgid);
+        // assert(g->flid2fgid && g->fgid2flid);
 
         int lid_local = 0, lid_ghost = g->n_owned;
         for (int index_i = 0; index_i < n_fine; ++index_i)
@@ -1237,7 +1240,7 @@ int SAMGLevelMesh(int cfg_mg_num_level /*config number of levels*/,
         ++cnt_level;
     }
 
-    data_samg_ctx->num_level = cnt_level;
+    data_samg_ctx->num_level = cnt_level + 1;
 
     return 0;
 }
@@ -1395,9 +1398,12 @@ int SAMGInitialNearNullSpace(MeshData *data_f_mesh /*fine level 0 mesh data*/,
             // shell type
             data_nullspace_level0->data_nullspace[index].nrow = 6;
             data_nullspace_level0->data_nullspace[index].ncol = 6;
-            data_nullspace_level0->data_nullspace[index].val = (double *)calloc(6 * 6, sizeof(double));
+
+            for (int index_tmp = 0; index_tmp < 36; ++index_tmp)
+            {
+                data_nullspace_level0->data_nullspace[index].val[index_tmp] = 0.;
+            }
             double *val = data_nullspace_level0->data_nullspace[index].val;
-            assert(val);
 
             // 6c + r, c是列号, r是行号
             // MAT_COL_MAJOR(r, c, m) ((c) * (m) + (r))
@@ -1435,9 +1441,12 @@ int SAMGInitialNearNullSpace(MeshData *data_f_mesh /*fine level 0 mesh data*/,
             // solid type
             data_nullspace_level0->data_nullspace[index].nrow = 3;
             data_nullspace_level0->data_nullspace[index].ncol = 6;
-            data_nullspace_level0->data_nullspace[index].val = (double *)calloc(3 * 6, sizeof(double));
+
+            for (int index_tmp = 0; index_tmp < 36; ++index_tmp)
+            {
+                data_nullspace_level0->data_nullspace[index].val[index_tmp] = 0.;
+            }
             double *val = data_nullspace_level0->data_nullspace[index].val;
-            assert(val);
 
             // 6c + r, c是列号, r是行号
             // MAT_COL_MAJOR(r, c, m) ((c) * (m) + (r))
@@ -1510,15 +1519,173 @@ int SAMGLevel0NearNullSpace(NearNullSpaceLevel0 *data_nullspace_level0 /*initial
         data_nullspace_levelk->data_nullspace[index].idx = data_nullspace_level0->data_nullspace[index].idx;
         data_nullspace_levelk->data_nullspace[index].nrow = data_nullspace_level0->data_nullspace[index].nrow;
         data_nullspace_levelk->data_nullspace[index].ncol = data_nullspace_level0->data_nullspace[index].ncol;
-        data_nullspace_levelk->data_nullspace[index].val = (double *)malloc(data_nullspace_levelk->data_nullspace[index].nrow *
-                                                                            data_nullspace_levelk->data_nullspace[index].ncol *
-                                                                            sizeof(double));
+
         memcpy(data_nullspace_levelk->data_nullspace[index].val,
                data_nullspace_level0->data_nullspace[index].val,
-               data_nullspace_level0->data_nullspace[index].nrow *
-                   data_nullspace_level0->data_nullspace[index].ncol *
-                   sizeof(double));
+               6 * 6 * sizeof(double));
     }
+
+    return 0;
+}
+
+int SAMGLevelKGhostDataNearNullSpace(const int *vtxdist_f /*fine-lelve mesh vtxdist array*/,
+                                     NearNullSpaceLevelK *data_nullspace_f /*fine-level near null space*/,
+                                     AggData *data_agg /*aggregation data*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    int vtx_start_f = vtxdist_f[my_rank];
+    size_t unit_size = sizeof(NearNullSpaceDataVertexLevelK);
+
+    data_agg->fine_global_nullspace = (NearNullSpaceDataVertexLevelK **)malloc(data_agg->np * sizeof(NearNullSpaceDataVertexLevelK *));
+    assert(data_agg->fine_global_nullspace);
+
+    int *part_fill_offset = (int *)calloc(data_agg->np, sizeof(int));
+
+    // local near null space data
+    for (int index = 0; index < data_agg->np; ++index)
+    {
+        if (data_agg->owner[index] == my_rank)
+        {
+            data_agg->fine_global_nullspace[index] = (NearNullSpaceDataVertexLevelK *)malloc(data_agg->n_fine[index] * sizeof(NearNullSpaceDataVertexLevelK));
+            assert(data_agg->fine_global_nullspace[index]);
+
+            for (int index_v = 0; index_v < data_agg->nlocal[index]; ++index_v)
+            {
+                int gid = data_agg->local_gids[index][index_v];
+                assert(gid == data_agg->data_ghost_agg[index].flid2fgid[index_v]);
+                NearNullSpaceDataVertexLevelK *src = &(data_nullspace_f->data_nullspace[gid - vtx_start_f]);
+                NearNullSpaceDataVertexLevelK *dest = &(data_agg->fine_global_nullspace[index][index_v]);
+
+                memcpy(dest, src, unit_size);
+            }
+
+            part_fill_offset[index] = data_agg->nlocal[index];
+        }
+        else
+        {
+            data_agg->fine_global_nullspace[index] = NULL;
+            part_fill_offset[index] = 0;
+        }
+    }
+
+    // redo nlocal_all in fine_gids constructor
+    int *nlocal_all = (int *)malloc(nprocs * data_agg->np * sizeof(int));
+    assert(nlocal_all);
+    (void)MPI_Allgather(data_agg->nlocal, data_agg->np, MPI_INT,
+                        nlocal_all, data_agg->np, MPI_INT, comm);
+
+    int *send_counts = (int *)calloc(nprocs, sizeof(int));
+    int *recv_counts = (int *)calloc(nprocs, sizeof(int));
+    int *sdispls = (int *)malloc(nprocs * sizeof(int));
+    int *rdispls = (int *)malloc(nprocs * sizeof(int));
+    assert(send_counts && recv_counts && sdispls && rdispls);
+
+    // sending counts
+    for (int index_p = 0; index_p < data_agg->np; ++index_p)
+    {
+        int target = data_agg->owner[index_p];
+        if (target != my_rank && data_agg->nlocal[index_p] > 0)
+        {
+            send_counts[target] += data_agg->nlocal[index_p] * unit_size;
+        }
+    }
+
+    // receving counts
+    for (int index_r = 0; index_r < nprocs; ++index_r)
+    {
+        if (index_r == my_rank)
+        {
+            continue;
+        }
+        for (int index_p = 0; index_p < data_agg->np; ++index_p)
+        {
+            if (data_agg->owner[index_p] == my_rank)
+            {
+                recv_counts[index_r] += nlocal_all[index_r * data_agg->np + index_p] * unit_size;
+            }
+        }
+    }
+
+    sdispls[0] = 0;
+    rdispls[0] = 0;
+    for (int index = 1; index < nprocs; ++index)
+    {
+        sdispls[index] = sdispls[index - 1] + send_counts[index - 1];
+        rdispls[index] = rdispls[index - 1] + recv_counts[index - 1];
+    }
+
+    // data packaging
+    long long total_send_bytes = sdispls[nprocs - 1] + send_counts[nprocs - 1];
+    char *send_buf = (char *)malloc((total_send_bytes > 0 ? total_send_bytes : 1));
+    int *tmp_offset = (int *)calloc(nprocs, sizeof(int));
+    assert(send_buf && tmp_offset);
+
+    for (int index_p = 0; index_p < data_agg->np; ++index_p)
+    {
+        int target = data_agg->owner[index_p];
+        if (target != my_rank && data_agg->nlocal[index_p] > 0)
+        {
+            for (int index_v = 0; index_v < data_agg->nlocal[index_p]; ++index_v)
+            {
+                int gid = data_agg->local_gids[index_p][index_v];
+                NearNullSpaceDataVertexLevelK *src = &(data_nullspace_f->data_nullspace[gid - vtx_start_f]);
+
+                memcpy(send_buf + sdispls[target] + tmp_offset[target],
+                       src,
+                       unit_size);
+
+                tmp_offset[target] += unit_size;
+            }
+        }
+    }
+
+    // mpi-all2allv
+    long long total_recv_bytes = rdispls[nprocs - 1] + recv_counts[nprocs - 1];
+    char *recv_buf = (char *)malloc((total_recv_bytes > 0 ? total_recv_bytes : 1));
+    assert(recv_buf);
+
+    (void)MPI_Alltoallv(send_buf, send_counts, sdispls, MPI_BYTE,
+                        recv_buf, recv_counts, rdispls, MPI_BYTE, comm);
+
+    // data unpackaging
+    memset(tmp_offset, 0, nprocs * sizeof(int));
+    for (int index_r = 0; index_r < nprocs; ++index_r)
+    {
+        if (index_r == my_rank)
+            continue;
+
+        for (int index_p = 0; index_p < data_agg->np; ++index_p)
+        {
+            int cnt = nlocal_all[index_r * data_agg->np + index_p];
+            if (cnt > 0 && data_agg->owner[index_p] == my_rank)
+            {
+                char *src_ptr = recv_buf + rdispls[index_r] + tmp_offset[index_r];
+
+                NearNullSpaceDataVertexLevelK *dest_ptr = &(data_agg->fine_global_nullspace[index_p][part_fill_offset[index_p]]);
+
+                memcpy(dest_ptr, src_ptr, cnt * unit_size);
+
+                tmp_offset[index_r] += cnt * unit_size;
+                part_fill_offset[index_p] += cnt;
+            }
+        }
+    }
+
+    // free memory
+    free(recv_buf);
+    free(send_buf);
+    free(tmp_offset);
+    free(send_counts);
+    free(recv_counts);
+    free(sdispls);
+    free(rdispls);
+    free(nlocal_all);
+    free(part_fill_offset);
 
     return 0;
 }
@@ -1541,6 +1708,43 @@ int SAMGLevelKNearNullSpace(MeshData *data_mesh_f /*fine-level mesh data*/,
     data_nullspace_c->size_global = data_agg->np;
     data_nullspace_c->size_local = vtxdist_c[my_rank + 1] - vtxdist_c[my_rank];
     int size_local_c = data_nullspace_c->size_local;
+
+    PetscCall(SAMGLevelKGhostDataNearNullSpace(vtxdist_f, data_nullspace_f, data_agg));
+#if 1
+    for (int index_r = 0; index_r < nprocs; ++index_r)
+    {
+        (void)MPI_Barrier(comm);
+        if (index_r == my_rank)
+        {
+            printf(">>>> in rank %d, near null space of ghost data\n", index_r);
+            printf("local_vtx_id\t global_vtx_id\t near_null_space\n");
+            for (int index_p = 0; index_p < data_agg->np; ++index_p)
+            {
+                if (data_agg->owner[index_p] == my_rank)
+                {
+                    for (int index_v = 0; index_v < data_agg->n_fine[index_p]; ++index_v)
+                    {
+                        printf("%d\t %d\t ", index_v, data_agg->fine_global_nullspace[index_p][index_v].idx);
+                        int nrow = data_agg->fine_global_nullspace[index_p][index_v].nrow;
+                        int ncol = data_agg->fine_global_nullspace[index_p][index_v].ncol;
+                        for (int index_ns_r = 0; index_ns_r < nrow; ++index_ns_r)
+                        {
+                            printf(" \t \t ");
+                            for (int index_ns_c = 0; index_ns_c < ncol; ++index_ns_c)
+                            {
+                                printf("%021.16le\t ", data_agg->fine_global_nullspace[index_p][index_v].val[MAT_COL_MAJOR(index_ns_r, index_ns_c, 6)]);
+                            }
+                            printf("\n");
+                        }
+                    }
+                }
+            }
+
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check ghost data near null space
 
     for (int index_p = 0; index_p < data_agg->np; ++index_p)
     {

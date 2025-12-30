@@ -156,7 +156,7 @@ typedef struct
     int idx;        // vertex id
     int type;       // vertex type, 0: shell, 1: solid
     int nrow, ncol; // for shell, nrow = ncol = 6; for solid, nrow = 3, ncol = 6
-    double *val;    // size: for shell, 6 \times 6; for solid, 3 \times 6
+    double val[36];    // size: for shell, 6 \times 6; for solid, 3 \times 6
 } NearNullSpaceDataVertexLevel0;
 
 /*
@@ -167,7 +167,7 @@ typedef struct
     /* data */
     int idx;
     int nrow, ncol; // in level k (except level 0), nrow = ncol = 6
-    double *val;    // size: 6 \times 6
+    double val[36];    // size: nrow x ncol 
 } NearNullSpaceDataVertexLevelK;
 
 /*
@@ -229,8 +229,9 @@ typedef struct
     int **local_gids; // local fine global vertex IDs per partition
 
     /* owner-only */
-    int *n_fine;     // size: np
-    int **fine_gids; // full fine vertex list per partition
+    int *n_fine;                                           // size: np
+    int **fine_gids;                                       // full fine vertex list per partition
+    NearNullSpaceDataVertexLevelK **fine_global_nullspace; // global near null space, global fine null space per partition
 
     /* mapping from fine-level vertex to partition */
     int nv;         // number of vertices in fine-level
@@ -268,6 +269,13 @@ typedef struct
 } SAMGCtx;
 
 // function
+/*
+ * near null space ghost data of aggregation data
+ */
+int SAMGLevelKGhostDataNearNullSpace(const int *vtxdist_f /*fine-lelve mesh vtxdist array*/,
+                                     NearNullSpaceLevelK *data_nullspace_f /*fine-level near null space*/,
+                                     AggData *data_agg /*aggregation data*/);
+
 /*
  * level k near null space
  */
