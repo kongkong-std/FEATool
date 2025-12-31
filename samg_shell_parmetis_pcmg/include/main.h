@@ -12,6 +12,7 @@
 #include <parmetis.h>
 #include <metis.h>
 #include <limits.h>
+#include <lapacke.h>
 
 #define MAX_SIZE PETSC_MAX_PATH_LEN
 #define BUF_MAX_SIZE PETSC_MAX_PATH_LEN
@@ -156,7 +157,7 @@ typedef struct
     int idx;        // vertex id
     int type;       // vertex type, 0: shell, 1: solid
     int nrow, ncol; // for shell, nrow = ncol = 6; for solid, nrow = 3, ncol = 6
-    double val[36];    // size: for shell, 6 \times 6; for solid, 3 \times 6
+    double val[36]; // size: for shell, 6 \times 6; for solid, 3 \times 6
 } NearNullSpaceDataVertexLevel0;
 
 /*
@@ -167,7 +168,7 @@ typedef struct
     /* data */
     int idx;
     int nrow, ncol; // in level k (except level 0), nrow = ncol = 6
-    double val[36];    // size: nrow x ncol 
+    double val[36]; // size: nrow x ncol
 } NearNullSpaceDataVertexLevelK;
 
 /*
@@ -212,7 +213,8 @@ typedef struct
      *     LAPACKE_dorgqr() store mat_q explicitly in mat_t
      */
     int nrow, ncol; // size(mat_t) = nrow x ncol
-    double *mat_t;  // after calling OpenBLAS
+    double *mat_t;  // copying mat_t to mat_q
+    double *mat_q;  // after calling OpenBLAS, size: nrow x ncol
     double *mat_r;  // size: ncol x ncol
 } GhostAggData;
 

@@ -1455,17 +1455,17 @@ int SAMGInitialNearNullSpace(MeshData *data_f_mesh /*fine level 0 mesh data*/,
              * 1 [0  1  0  -z    0     x   ]
              * 2 [0  0  1  y     -x    0   ]
              */
-            val[MAT_COL_MAJOR(0, 0, 6)] = 1.;
-            val[MAT_COL_MAJOR(0, 4, 6)] = tmp_coor_data.z;
-            val[MAT_COL_MAJOR(0, 5, 6)] = -tmp_coor_data.y;
+            val[MAT_COL_MAJOR(0, 0, 3)] = 1.;
+            val[MAT_COL_MAJOR(0, 4, 3)] = tmp_coor_data.z;
+            val[MAT_COL_MAJOR(0, 5, 3)] = -tmp_coor_data.y;
 
-            val[MAT_COL_MAJOR(1, 1, 6)] = 1.;
-            val[MAT_COL_MAJOR(1, 3, 6)] = -tmp_coor_data.z;
-            val[MAT_COL_MAJOR(1, 5, 6)] = tmp_coor_data.x;
+            val[MAT_COL_MAJOR(1, 1, 3)] = 1.;
+            val[MAT_COL_MAJOR(1, 3, 3)] = -tmp_coor_data.z;
+            val[MAT_COL_MAJOR(1, 5, 3)] = tmp_coor_data.x;
 
-            val[MAT_COL_MAJOR(2, 2, 6)] = 1.;
-            val[MAT_COL_MAJOR(2, 3, 6)] = tmp_coor_data.y;
-            val[MAT_COL_MAJOR(2, 4, 6)] = -tmp_coor_data.x;
+            val[MAT_COL_MAJOR(2, 2, 3)] = 1.;
+            val[MAT_COL_MAJOR(2, 3, 3)] = tmp_coor_data.y;
+            val[MAT_COL_MAJOR(2, 4, 3)] = -tmp_coor_data.x;
         }
     }
 #if 0
@@ -1488,7 +1488,7 @@ int SAMGInitialNearNullSpace(MeshData *data_f_mesh /*fine level 0 mesh data*/,
                     printf(" \t \t \t ");
                     for (int index_ns_c = 0; index_ns_c < data_nullspace_level0->data_nullspace[index_v].ncol; ++index_ns_c)
                     {
-                        printf("%021.16le\t ", data_nullspace_level0->data_nullspace[index_v].val[MAT_COL_MAJOR(index_ns_r, index_ns_c, 6)]);
+                        printf("%021.16le\t ", data_nullspace_level0->data_nullspace[index_v].val[MAT_COL_MAJOR(index_ns_r, index_ns_c, data_nullspace_level0->data_nullspace[index_v].nrow)]);
                     }
                     printf("\n");
                 }
@@ -1690,6 +1690,32 @@ int SAMGLevelKGhostDataNearNullSpace(const int *vtxdist_f /*fine-lelve mesh vtxd
     return 0;
 }
 
+static void QRFactorizationOpenBLAS(int m /*nrow*/, int n /*ncol*/,
+                                    double *Q /*m x n*/, double *R /*n x n*/)
+{
+    double *tau = (double *)malloc(n * sizeof(double));
+    assert(tau);
+
+    int info = LAPACKE_dgeqrf(LAPACK_COL_MAJOR, m, n, Q, m, tau);
+    assert(info == 0);
+
+    // store R, upper triangular part of Q
+    for (int index_j = 0; index_j < n; ++index_j)
+    {
+        for (int index_i = 0; index_i <= index_j; ++index_i)
+        {
+            R[MAT_COL_MAJOR(index_i, index_j, n)] = Q[MAT_COL_MAJOR(index_i, index_j, m)];
+        }
+    }
+
+    // store Q
+    info = LAPACKE_dorgqr(LAPACK_COL_MAJOR, m, n, n, Q, m, tau);
+    assert(info == 0);
+
+    // free memory
+    free(tau);
+}
+
 int SAMGLevelKNearNullSpace(MeshData *data_mesh_f /*fine-level mesh data*/,
                             MeshData *data_mesh_c /*coarse-level mesh data*/,
                             NearNullSpaceLevelK *data_nullspace_f /*fine-level near null space*/,
@@ -1710,7 +1736,7 @@ int SAMGLevelKNearNullSpace(MeshData *data_mesh_f /*fine-level mesh data*/,
     int size_local_c = data_nullspace_c->size_local;
 
     PetscCall(SAMGLevelKGhostDataNearNullSpace(vtxdist_f, data_nullspace_f, data_agg));
-#if 1
+#if 0
     for (int index_r = 0; index_r < nprocs; ++index_r)
     {
         (void)MPI_Barrier(comm);
@@ -1732,7 +1758,7 @@ int SAMGLevelKNearNullSpace(MeshData *data_mesh_f /*fine-level mesh data*/,
                             printf(" \t \t ");
                             for (int index_ns_c = 0; index_ns_c < ncol; ++index_ns_c)
                             {
-                                printf("%021.16le\t ", data_agg->fine_global_nullspace[index_p][index_v].val[MAT_COL_MAJOR(index_ns_r, index_ns_c, 6)]);
+                                printf("%021.16le\t ", data_agg->fine_global_nullspace[index_p][index_v].val[MAT_COL_MAJOR(index_ns_r, index_ns_c, nrow)]);
                             }
                             printf("\n");
                         }
@@ -1746,15 +1772,83 @@ int SAMGLevelKNearNullSpace(MeshData *data_mesh_f /*fine-level mesh data*/,
     }
 #endif // check ghost data near null space
 
+    // QR factorization for each partition
     for (int index_p = 0; index_p < data_agg->np; ++index_p)
     {
         if (data_agg->owner[index_p] == my_rank)
         {
-            data_agg->data_ghost_agg[index_p].ncol = 6;
+            NearNullSpaceDataVertexLevelK *fine_global_nullspace = data_agg->fine_global_nullspace[index_p];
+            int tmp_ncol = fine_global_nullspace[0].ncol;
             int tmp_nrow = 0;
+            for (int index_v = 0; index_v < data_agg->n_fine[index_p]; ++index_v)
+            {
+                tmp_nrow += fine_global_nullspace[index_v].nrow;
+            }
             data_agg->data_ghost_agg[index_p].nrow = tmp_nrow;
+            data_agg->data_ghost_agg[index_p].ncol = tmp_ncol;
+
+            data_agg->data_ghost_agg[index_p].mat_t = (double *)calloc(tmp_nrow * tmp_ncol, sizeof(double));
+            assert(data_agg->data_ghost_agg[index_p].mat_t);
+            double *mat_t = data_agg->data_ghost_agg[index_p].mat_t;
+            int cnt_row = 0;
+            for (int index_v = 0; index_v < data_agg->n_fine[index_p]; ++index_v)
+            {
+                int ns_nrow = fine_global_nullspace[index_v].nrow;
+                int ns_ncol = fine_global_nullspace[index_v].ncol;
+                for (int index_ns_r = 0; index_ns_r < ns_nrow; ++index_ns_r)
+                {
+                    for (int index_ns_c = 0; index_ns_c < ns_ncol; ++index_ns_c)
+                    {
+                        mat_t[MAT_COL_MAJOR(cnt_row, index_ns_c, tmp_nrow)] = fine_global_nullspace[index_v].val[MAT_COL_MAJOR(index_ns_r, index_ns_c, ns_nrow)];
+                    }
+                    ++cnt_row;
+                }
+            }
+            assert(cnt_row == tmp_nrow);
+
+            data_agg->data_ghost_agg[index_p].mat_q = (double *)malloc(tmp_nrow * tmp_ncol * sizeof(double));
+            data_agg->data_ghost_agg[index_p].mat_r = (double *)calloc(tmp_ncol * tmp_ncol, sizeof(double));
+            assert(data_agg->data_ghost_agg[index_p].mat_q && data_agg->data_ghost_agg[index_p].mat_r);
+            double *mat_q = data_agg->data_ghost_agg[index_p].mat_q;
+            double *mat_r = data_agg->data_ghost_agg[index_p].mat_r;
+
+            memcpy(mat_q, mat_t, tmp_nrow * tmp_ncol * sizeof(double));
+            QRFactorizationOpenBLAS(tmp_nrow, tmp_ncol, mat_q, mat_r);
         }
     }
+#if 0
+    for (int index_r = 0; index_r < nprocs; ++index_r)
+    {
+        (void)MPI_Barrier(comm);
+        if (index_r == my_rank)
+        {
+            printf(">>>> in rank %d, block near null space matrix\n", index_r);
+            printf("local_vtx_id\t global_vtx_id\t block_mat\n");
+            int coarse_vtx_start = vtxdist_c[my_rank];
+            for (int index_p = 0; index_p < data_agg->np; ++index_p)
+            {
+                if (data_agg->owner[index_p] == my_rank)
+                {
+                    printf("%d\t %d\t ", index_p - coarse_vtx_start, index_p);
+                    int block_mat_nrow = data_agg->data_ghost_agg[index_p].nrow;
+                    int block_mat_ncol = data_agg->data_ghost_agg[index_p].ncol;
+                    // printf("%d\t %d\n", block_mat_nrow, block_mat_ncol);
+                    for (int index_block_mat_r = 0; index_block_mat_r < block_mat_nrow; ++index_block_mat_r)
+                    {
+                        printf(" \t \t ");
+                        for (int index_block_mat_c = 0; index_block_mat_c < block_mat_ncol; ++index_block_mat_c)
+                        {
+                            printf("%021.16le\t ", data_agg->data_ghost_agg[index_p].mat_t[MAT_COL_MAJOR(index_block_mat_r, index_block_mat_c, block_mat_nrow)]);
+                        }
+                        printf("\n");
+                    }
+                }
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check partition near null space block matrix
 
     data_nullspace_c->data_nullspace = (NearNullSpaceDataVertexLevelK *)malloc(size_local_c * sizeof(NearNullSpaceDataVertexLevelK));
     assert(data_nullspace_c->data_nullspace);
@@ -1766,7 +1860,40 @@ int SAMGLevelKNearNullSpace(MeshData *data_mesh_f /*fine-level mesh data*/,
         data_nullspace_c->data_nullspace[index].ncol = 6;
 
         // copying R from QR factorization of mat_t
+        int coarse_vtx_start = vtxdist_c[my_rank];
+        memcpy(data_nullspace_c->data_nullspace[index].val,
+               data_agg->data_ghost_agg[index + coarse_vtx_start].mat_r,
+               36 * sizeof(double));
     }
+#if 1
+    for (int index_r = 0; index_r < nprocs; ++index_r)
+    {
+        (void)MPI_Barrier(comm);
+        if (index_r == my_rank)
+        {
+            printf(">>>> in rank %d, coarse level near null space\n", index_r);
+            printf("local_vtx_id\t global_vtx_id\t near_null_space\n");
+            for (int index_v = 0; index_v < size_local_c; ++index_v)
+            {
+                int coarse_vtx_start = vtxdist_c[my_rank];
+                printf("%d\t %d\t ", index_v, index_v + coarse_vtx_start);
+                int ns_nrow = data_nullspace_c->data_nullspace[index_v].nrow;
+                int ns_ncol = data_nullspace_c->data_nullspace[index_v].ncol;
+                for (int index_ns_r = 0; index_ns_r < ns_nrow; ++index_ns_r)
+                {
+                    printf(" \t \t ");
+                    for (int index_ns_c = 0; index_ns_c < ns_ncol; ++index_ns_c)
+                    {
+                        printf("%021.16le\t ", data_nullspace_c->data_nullspace[index_v].val[MAT_COL_MAJOR(index_ns_r, index_ns_c, ns_nrow)]);
+                    }
+                    printf("\n");
+                }
+            }
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // coarse level near null space data
 
     return 0;
 }
@@ -1803,7 +1930,7 @@ int SAMGLevelNearNullSpace(SAMGCtx **samg_ctx /*samg context data*/)
                     printf(" \t \t ");
                     for (int index_ns_c = 0; index_ns_c < data_samg_ctx->levels[cnt_level].data_nullspace_levelk.data_nullspace[index_v].ncol; ++index_ns_c)
                     {
-                        printf("%021.16le\t ", data_samg_ctx->levels[cnt_level].data_nullspace_levelk.data_nullspace[index_v].val[MAT_COL_MAJOR(index_ns_r, index_ns_c, 6)]);
+                        printf("%021.16le\t ", data_samg_ctx->levels[cnt_level].data_nullspace_levelk.data_nullspace[index_v].val[MAT_COL_MAJOR(index_ns_r, index_ns_c, data_samg_ctx->levels[cnt_level].data_nullspace_levelk.data_nullspace[index_v].nrow)]);
                     }
                     printf("\n");
                 }
