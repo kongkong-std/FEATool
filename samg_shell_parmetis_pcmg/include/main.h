@@ -172,6 +172,17 @@ typedef struct
 } NearNullSpaceDataVertexLevelK;
 
 /*
+ * Q matrix data of each vertex in level k
+ */
+typedef struct
+{
+    /* data */
+    int idx;
+    int nrow, ncol; // same with near null space data
+    double val[36]; // size: nrow x ncol
+} QDataVertexLevelK;
+
+/*
  * near null space of level 0
  */
 typedef struct
@@ -191,6 +202,18 @@ typedef struct
     int size_local;                                // local number of vertices in fine-level mesh
     NearNullSpaceDataVertexLevelK *data_nullspace; // size: local number of vertices in fine-level mesh
 } NearNullSpaceLevelK;
+
+/*
+ * Q matrix from near null space data
+ * corresponding to dof order or vertex id
+ */
+typedef struct
+{
+    /* data */
+    int size_global;           // global number of vertices in fine-level mesh
+    int size_local;            // local number of vertices in fine-level mesh
+    QDataVertexLevelK *data_q; // size: local number of vertices in fine-level mesh
+} QLevelK;
 
 /*
  * ghost mapping on owner rank
@@ -251,6 +274,7 @@ typedef struct
     MeshData data_f_mesh, data_c_mesh;         // fine-/coarse- level mesh data
     AggData data_agg;                          // aggregation data
     NearNullSpaceLevelK data_nullspace_levelk; // level k near null space data, in level k except level 0
+    QLevelK data_q_levelk;                     // Q matrix data from near null space data, size same with near null space data
     Mat op_f, op_c;                            // fine-/coarse- level operators
     Mat op_ua_p;                               // unsmoothed aggregation prolongation operator
     Mat op_sa_p;                               // smoothed aggregation prolongation operator
@@ -271,6 +295,17 @@ typedef struct
 } SAMGCtx;
 
 // function
+/*
+ * level k tentative prolongation operator constructor
+ */
+int SAMGLevelKTentativeProlongationOperator(int level /*current level*/,
+                                            MGLevel *data_level /*level data*/);
+
+/*
+ * tentative prolongation operator constructor
+ */
+int SAMGTentativeProlongationOperator(SAMGCtx **samg_ctx /*samg context data*/);
+
 /*
  * near null space ghost data of aggregation data
  */
@@ -400,7 +435,8 @@ int SAMGApplyProlongationSmoother(int n /*column size of prolongation operator*/
 /*
  * samg setup phase
  */
-int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/);
+int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/,
+                   int sa_flag /*flag of sa*/);
 
 /*
  * deep copy

@@ -25,6 +25,23 @@ int main(int argc, char **argv)
         PetscCall(PetscPrintf(comm, "Config file: %s\n", path_config));
     }
 
+    /*
+     * SA flag: 1 represents using SA, 0 represents using UA
+     *     SA: smoothed aggregation, UA: unsmoothed aggregation
+     * default is 1
+     */
+    int sa_flag = 1;
+    PetscCall(PetscOptionsGetInt(NULL, NULL, "-sa_flag", &sa_flag, &path_flag));
+    if (path_flag)
+    {
+        // parameter sa_flag
+        /*
+         * sa_flag = 1, SA
+         * sa_flag = 0, UA
+         */
+        PetscCall(PetscPrintf(comm, "sa_flag = %d\n", sa_flag));
+    }
+
     SAMGCtx samg_ctx;
 
     int status_config_json = ParseConfig(comm, path_config, &(samg_ctx.data_cfg));
@@ -72,7 +89,7 @@ int main(int argc, char **argv)
 
     PetscLogDouble time1, time2;
     PetscCall(PetscTime(&time1));
-    PetscCall(SAMGSetupPhase(&samg_ctx));
+    PetscCall(SAMGSetupPhase(&samg_ctx, sa_flag));
     PetscCall(PetscTime(&time2));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> samg setup time: %g (s)\n", time2 - time1));
 

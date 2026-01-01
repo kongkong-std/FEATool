@@ -1865,7 +1865,7 @@ int SAMGLevelKNearNullSpace(MeshData *data_mesh_f /*fine-level mesh data*/,
                data_agg->data_ghost_agg[index + coarse_vtx_start].mat_r,
                36 * sizeof(double));
     }
-#if 1
+#if 0
     for (int index_r = 0; index_r < nprocs; ++index_r)
     {
         (void)MPI_Barrier(comm);
@@ -1954,8 +1954,88 @@ int SAMGLevelNearNullSpace(SAMGCtx **samg_ctx /*samg context data*/)
     return 0;
 }
 
-int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/)
+int SAMGLevelKTentativeProlongationOperator(int level /*current level*/,
+                                            MGLevel *data_level /*level data*/)
 {
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    // size of op_f
+    int nrow_op_f = 0, ncol_op_f = 0;
+    int local_row_op_f = 0, local_col_op_f = 0;
+    PetscCall(MatGetSize(data_level->op_f, &nrow_op_f, &ncol_op_f));
+    PetscCall(MatGetLocalSize(data_level->op_f, &local_row_op_f, &local_col_op_f));
+#if 1
+    PetscCall(PetscPrintf(comm, "in level %d, size of op_f: (%d, %d)\n", level, nrow_op_f, ncol_op_f));
+    for (int index_r = 0; index_r < nprocs; ++index_r)
+    {
+        (void)MPI_Barrier(comm);
+        if (index_r == my_rank)
+        {
+            printf(">>>> in rank %d, local size of op_f: (%d, %d)\n", index_r, local_row_op_f, local_col_op_f);
+            puts("\n");
+        }
+        fflush(stdout);
+    }
+#endif // check size
+
+    int *vtxdist_c = data_level->data_c_mesh.vtxdist;
+    int local_nv_c = vtxdist_c[my_rank + 1] - vtxdist_c[my_rank];
+    int global_nv_c = data_level->data_c_mesh.nv;
+    int nrow_op_ua_p = nrow_op_f, ncol_op_ua_p = global_nv_c * 6;
+    int local_row_op_ua_p = local_row_op_f, local_col_op_ua_p = local_nv_c * 6;
+    PetscCall(MatCreate(comm, &data_level->op_ua_p));
+    PetscCall(MatSetSizes(data_level->op_ua_p,
+                          local_row_op_ua_p,
+                          local_col_op_ua_p,
+                          nrow_op_ua_p,
+                          ncol_op_ua_p));
+    PetscCall(MatSetType(data_level->op_ua_p, MATAIJ));
+    PetscCall(MatSetUp(data_level->op_ua_p));
+
+    // set value for tentative prolongation operator
+    for(int index_p = 0; index_p < data_level->data_agg.np; ++index_p)
+    {
+        if(data_level->data_agg.owner[index_p] == my_rank)
+        {}
+    }
+
+    return 0;
+}
+
+int SAMGTentativeProlongationOperator(SAMGCtx **samg_ctx /*samg context data*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    SAMGCtx *data_samg_ctx = *samg_ctx;
+
+    int cnt_level = 0;
+    int num_level = data_samg_ctx->num_level;
+
+    for (cnt_level = 0; cnt_level < num_level; ++cnt_level)
+    {
+        PetscCall(SAMGLevelKTentativeProlongationOperator(cnt_level, &data_samg_ctx->levels[cnt_level]));
+    }
+
+    return 0;
+}
+
+int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/,
+                   int sa_flag /*flag of sa*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
     int cfg_mg_num_level = samg_ctx->data_cfg.cfg_mg.num_level;
     // int cfg_mg_pre_smooth = samg_ctx->data_cfg.cfg_mg.pre_smooth;
     // int cfg_mg_post_smooth = samg_ctx->data_cfg.cfg_mg.post_smooth;
@@ -1971,11 +2051,24 @@ int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/)
     int cnt_level = 0;
 
     PetscCall(SAMGLevelMesh(cfg_mg_num_level, &samg_ctx)); // multilevel hierarchy
+    PetscCall(MatDuplicate(samg_ctx->mysolver.solver_a, MAT_COPY_VALUES, &samg_ctx->levels[cnt_level].op_f));
+
     PetscCall(SAMGInitialNearNullSpace(&samg_ctx->levels[cnt_level].data_f_mesh,
                                        &samg_ctx->data_nullspace_level0)); // level 0 near null space
     PetscCall(SAMGLevelNearNullSpace(&samg_ctx));                          // multilevel near null space
 
-    PetscCall(MatDuplicate(samg_ctx->mysolver.solver_a, MAT_COPY_VALUES, &samg_ctx->levels[cnt_level].op_f));
+    PetscCall(SAMGTentativeProlongationOperator(&samg_ctx)); // tentative prolongation operator constructor
+
+    if (sa_flag == 1)
+    {
+        // SA
+        PetscCall(PetscPrintf(comm, "==== Smoothed Aggregation-based Multigrid\n"));
+    }
+    else if (sa_flag == 0)
+    {
+        // UA
+        PetscCall(PetscPrintf(comm, "==== Unsmoothed Aggregation-based Multigrid\n"));
+    }
 
     // while (cnt_level < cfg_mg_num_level &&
     //        samg_ctx->levels[cnt_level].data_f_mesh.np > cfg_mg_num_coarse_vtx)
