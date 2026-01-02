@@ -253,6 +253,9 @@ typedef struct
     int *nlocal;      // size: np
     int **local_gids; // local fine global vertex IDs per partition
 
+    int *nlocal_all; // size: nprocs * np. Stores vertex counts contributed by each rank to each partition.
+    // char padding[1024];
+
     /* owner-only */
     int *n_fine;                                           // size: np
     int **fine_gids;                                       // full fine vertex list per partition
@@ -295,6 +298,20 @@ typedef struct
 } SAMGCtx;
 
 // function
+/*
+ * level k Q matrix
+ */
+int SAMGLevelKQMatrix(MeshData *data_mesh_f /*fine-level mesh data*/,
+                      NearNullSpaceLevelK *data_nullspace_levelk /*fine-level near null space data*/,
+                      AggData *data_agg /*aggregation data*/,
+                      QLevelK *data_q_levelk /*level k Q matrix*/);
+
+/*
+ * Q matrix
+ * size and parallel distribution same with near null space of fine-level
+ */
+int SAMGLevelQMatrix(SAMGCtx **samg_ctx /*samg context data*/);
+
 /*
  * level k tentative prolongation operator constructor
  */
