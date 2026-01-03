@@ -133,5 +133,6 @@ int main(int argc, char **argv)
 // usage
 /*
  * mpirun -np <nprocs> ./app_petsc_exe \
- *     -config </path/to/config/file>
+ *     -config </path/to/config/file> \
+ *     -sa_flag <0/1>
  */

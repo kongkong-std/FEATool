@@ -299,6 +299,16 @@ typedef struct
 
 // function
 /*
+ * smoothed aggregation coarse operator constructor
+ */
+int SAMGSACoarseOperator(SAMGCtx **samg_ctx /*samg context data*/);
+
+/*
+ * unsmoothed aggregation coarse operator constructor
+ */
+int SAMGUACoarseOperator(SAMGCtx **samg_ctx /*samg context data*/);
+
+/*
  * level k Q matrix
  */
 int SAMGLevelKQMatrix(MeshData *data_mesh_f /*fine-level mesh data*/,
