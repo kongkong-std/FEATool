@@ -1992,7 +1992,7 @@ int SAMGLevelKTentativeProlongationOperator(int level /*current level*/,
     int local_row_op_f = 0, local_col_op_f = 0;
     PetscCall(MatGetSize(data_level->op_f, &nrow_op_f, &ncol_op_f));
     PetscCall(MatGetLocalSize(data_level->op_f, &local_row_op_f, &local_col_op_f));
-#if 1
+#if 0
     PetscCall(PetscPrintf(comm, "in level %d, size of op_f: (%d, %d)\n", level, nrow_op_f, ncol_op_f));
     for (int index_r = 0; index_r < nprocs; ++index_r)
     {
@@ -2067,7 +2067,7 @@ int SAMGLevelKTentativeProlongationOperator(int level /*current level*/,
     }
     PetscCall(MatAssemblyBegin(data_level->op_ua_p, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(data_level->op_ua_p, MAT_FINAL_ASSEMBLY));
-#if 1
+#if 0
     int tmp_nrow_op_ua_p = 0, tmp_ncol_op_ua_p = 0;
     int tmp_local_row_op_ua_p = 0, tmp_local_col_op_ua_p = 0;
     PetscCall(MatGetSize(data_level->op_ua_p, &tmp_nrow_op_ua_p, &tmp_ncol_op_ua_p));
