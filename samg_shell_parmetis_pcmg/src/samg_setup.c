@@ -2355,7 +2355,7 @@ int SAMGSACoarseOperator(SAMGCtx **samg_ctx /*samg context data*/)
         data_samg_ctx->levels[cnt_level].op_s.smoother_scale = ps_scale;
 
         // smoothing op_ua_p to op_sa_p
-        PetcsCall(SAMGSmoothedProlongation(data_samg_ctx->levels + cnt_level));
+        PetscCall(SAMGSmoothedProlongation(data_samg_ctx->levels + cnt_level));
 
         // PtAP
         PetscCall(MatPtAP(data_samg_ctx->levels[cnt_level].op_f,
