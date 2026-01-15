@@ -299,6 +299,12 @@ typedef struct
 
 // function
 /*
+ * calling QR factorization from OpenBLAS
+ */
+void QRFactorizationOpenBLAS(int m /*nrow*/, int n /*ncol*/,
+                             double *Q /*m x n*/, double *R /*n x n*/);
+
+/*
  * smoothed aggregation coarse operator constructor
  */
 int SAMGSACoarseOperator(SAMGCtx **samg_ctx /*samg context data*/);
