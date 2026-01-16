@@ -299,6 +299,20 @@ typedef struct
 
 // function
 /*
+* level k mesh data generator
+*/
+int SAMGLevelKMesh(const CfgJson *data_cfg /*config data*/,
+                   MeshData *data_f_mesh /*fine-level mesh data*/,
+                   MeshData *data_c_mesh /*coarse-level mesh data*/,
+                   AggData *data_agg /*aggregation data*/); 
+
+/*
+ * copying coarse-level mesh data to next level fine-level mesh data
+ */
+int CoarseMesh2FineMesh(const MeshData *data_c_mesh /*coarse-level mesh*/,
+                        MeshData *data_f_mesh /*next fine-level mesh*/);
+
+/*
  * calling QR factorization from OpenBLAS
  */
 void QRFactorizationOpenBLAS(int m /*nrow*/, int n /*ncol*/,

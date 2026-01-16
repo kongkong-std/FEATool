@@ -21,10 +21,116 @@ int SAMGLevelMesh(int cfg_mg_num_level /*config number of levels*/,
     while (cnt_level < cfg_mg_num_level &&
            data_samg_ctx->levels[cnt_level].data_c_mesh.nv > cfg_mg_num_coarse_vtx)
     {
+        // data_f_mesh[cnt_level + 1] = data_c_mesh[cnt_level]
+        PetscCall(CoarseMesh2FineMesh(data_samg_ctx->levels[cnt_level].data_c_mesh,
+                                      data_samg_ctx->levels[cnt_level + 1].data_f_mesh));
+
+        // cnt_level + 1 level mesh
+        PetscCall(SAMGLevelKMesh(&data_samg_ctx->data_cfg,
+                                 &data_samg_ctx->levels[cnt_level + 1].data_f_mesh,
+                                 &data_samg_ctx->levels[cnt_level + 1].data_c_mesh,
+                                 &data_samg_ctx->levels[cnt_level + 1].data_agg));
+
         ++cnt_level;
     }
 
     data_samg_ctx->num_level = cnt_level + 1;
+
+    return 0;
+}
+
+int SAMGLevelKMesh(const CfgJson *data_cfg /*config data*/,
+                   MeshData *data_f_mesh /*fine-level mesh data*/,
+                   MeshData *data_c_mesh /*coarse-level mesh data*/,
+                   AggData *data_agg /*aggregation data*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    int cfg_mg_est_size_agg = data_cfg->cfg_mg.est_size_agg;
+
+    data_c_mesh->nv = data_f_mesh->np;
+    data_c_mesh->np = data_c_mesh->nv / cfg_mg_est_size_agg;
+    data_c_mesh->data_vtx.nv = data_c_mesh->nv;
+    data_c_mesh->data_adj.nv = data_c_mesh->nv;
+
+    data_f_mesh->parts = (int *)malloc(data_f_mesh->data_vtx.local_nv * sizeof(int));
+    assert(data_f_mesh->parts);
+
+    // calling ParMetis
+    int wgtflag = 0, numflag = 0, ncon = 1;
+    int nparts = data_f_mesh->np;
+    real_t *tpwgts = NULL, ubvec = 1.05; // double
+    idx_t options[METIS_NOPTIONS];
+    METIS_SetDefaultOptions(options);
+    options[METIS_OPTION_SEED] = 42; // for any integer
+    idx_t edgecut = 0;
+
+    tpwgts = (real_t *)malloc(ncon * nparts * sizeof(real_t));
+    assert(tpwgts);
+    for (int index = 0; index < ncon * nparts; ++index)
+    {
+        tpwgts[index] = 1. / ncon / nparts;
+    }
+
+    int metis_status = ParMETIS_V3_PartKway(data_f_mesh->vtxdist,
+                                            data_f_mesh->data_adj.xadj,
+                                            data_f_mesh->data_adj.adjncy,
+                                            NULL, NULL,
+                                            &wgtflag, &numflag, &ncon, &nparts,
+                                            tpwgts, &ubvec, options,
+                                            &edgecut, data_f_mesh->parts, &comm);
+
+    // coarse-level mesh data construction
+    PetscCall(SAMGCoarseMeshConstructor(&data_f_mesh, &data_c_mesh, &data_agg));
+
+    // free memory
+    free(tpwgts);
+    free(nv_rank);
+
+    return 0;
+}
+
+int CoarseMesh2FineMesh(const MeshData *data_c_mesh /*coarse-level mesh*/,
+                        MeshData *data_f_mesh /*next fine-level mesh*/)
+{
+    int my_rank, nprocs;
+    MPI_Comm comm;
+    comm = PETSC_COMM_WORLD;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &nprocs);
+
+    data_f_mesh->nv = data_c_mesh->nv;
+    data_f_mesh->np = data_c_mesh->np;
+
+    data_f_mesh->vtxdist = (int *)malloc((nprocs + 1) * sizeof(int));
+    assert(data_f_mesh->vtxdist);
+    memcpy(data_f_mesh->vtxdist, data_c_mesh->vtxdist, (nprocs + 1) * sizeof(int));
+
+    data_f_mesh->data_vtx.nv = data_c_mesh->data_vtx.nv;
+    data_f_mesh->data_vtx.local_nv = data_c_mesh->data_vtx.local_nv;
+    data_f_mesh->data_adj.nv = data_c_mesh->data_adj.nv;
+    data_f_mesh->data_adj.local_nv = data_c_mesh->data_adj.local_nv;
+
+    data_f_mesh->data_vtx.idx = (int *)malloc(data_f_mesh->data_vtx.local_nv * sizeof(int));
+    data_f_mesh->data_vtx.type = (int *)malloc(data_f_mesh->data_vtx.local_nv * sizeof(int));
+    assert(data_f_mesh->data_vtx.idx && data_f_mesh->data_vtx.type);
+    memcpy(data_f_mesh->data_vtx.idx, data_c_mesh->data_vtx.idx, data_f_mesh->data_vtx.local_nv * sizeof(int));
+    memcpy(data_f_mesh->data_vtx.type, data_c_mesh->data_vtx.type, data_f_mesh->data_vtx.local_nv * sizeof(int));
+
+    data_f_mesh->data_adj.idx = (int *)malloc(data_f_mesh->data_adj.local_nv * sizeof(int));
+    data_f_mesh->data_adj.xadj = (int *)malloc((data_f_mesh->data_adj.local_nv + 1) * sizeof(int));
+    assert(data_f_mesh->data_adj.idx && data_f_mesh->data_adj.xadj);
+    memcpy(data_f_mesh->data_adj.idx, data_c_mesh->data_adj.idx, data_f_mesh->data_adj.local_nv * sizeof(int));
+    memcpy(data_f_mesh->data_adj.xadj, data_c_mesh->data_adj.xadj, (data_f_mesh->data_adj.local_nv + 1) * sizeof(int));
+
+    int adj_nnv = data_f_mesh->data_adj.xadj[data_f_mesh->data_adj.local_nv];
+    data_f_mesh->data_adj.adjncy = (int *)malloc(adj_nnv * sizeof(int));
+    assert(data_f_mesh->data_adj.adjncy);
+    memcpy(data_f_mesh->data_adj.adjncy, data_c_mesh->data_adj.adjncy, adj_nnv * sizeof(int));
 
     return 0;
 }
