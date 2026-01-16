@@ -61,37 +61,6 @@ int SAMGSACoarseOperator(SAMGCtx **samg_ctx /*samg context data*/)
     return 0;
 }
 
-int SAMGUACoarseOperator(SAMGCtx **samg_ctx /*samg context data*/)
-{
-    // int my_rank, nprocs;
-    // MPI_Comm comm;
-    // comm = PETSC_COMM_WORLD;
-    // MPI_Comm_rank(comm, &my_rank);
-    // MPI_Comm_size(comm, &nprocs);
-
-    SAMGCtx *data_samg_ctx = *samg_ctx;
-
-    int num_level = data_samg_ctx->num_level;
-    int cnt_level = 0;
-
-    for (cnt_level = 0; cnt_level < num_level; ++cnt_level)
-    {
-        // PtAP
-        PetscCall(MatPtAP(data_samg_ctx->levels[cnt_level].op_f,
-                          data_samg_ctx->levels[cnt_level].op_ua_p,
-                          MAT_INITIAL_MATRIX,
-                          PETSC_DETERMINE,
-                          &(data_samg_ctx->levels[cnt_level].op_c)));
-
-        // next level
-        PetscCall(MatDuplicate(data_samg_ctx->levels[cnt_level].op_c,
-                               MAT_COPY_VALUES,
-                               &(data_samg_ctx->levels[cnt_level + 1].op_f)));
-    }
-
-    return 0;
-}
-
 int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/,
                    int sa_flag /*flag of sa*/)
 {
@@ -124,19 +93,18 @@ int SAMGSetupPhase(SAMGCtx *samg_ctx /*samg context data*/,
 
     PetscCall(SAMGLevelQMatrix(&samg_ctx)); // Q matrix, size and distribution same with near null space of fine-level
 
-    PetscCall(SAMGTentativeProlongationOperator(&samg_ctx)); // tentative prolongation operator constructor
-
     if (sa_flag == 1)
     {
         // SA
         PetscCall(PetscPrintf(comm, "==== Smoothed Aggregation-based Multigrid\n"));
+        PetscCall(SAMGTentativeProlongationOperator(&samg_ctx)); // tentative prolongation operator constructor
         PetscCall(SAMGSACoarseOperator(&samg_ctx));
     }
     else if (sa_flag == 0)
     {
         // UA
         PetscCall(PetscPrintf(comm, "==== Unsmoothed Aggregation-based Multigrid\n"));
-        PetscCall(SAMGUACoarseOperator(&samg_ctx));
+        PetscCall(SAMGTentativeProlongationOperator(&samg_ctx)); // tentative prolongation operator constructor
     }
 
     // while (cnt_level < cfg_mg_num_level &&

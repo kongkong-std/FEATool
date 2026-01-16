@@ -257,6 +257,18 @@ int SAMGTentativeProlongationOperator(SAMGCtx **samg_ctx /*samg context data*/)
     for (cnt_level = 0; cnt_level < num_level; ++cnt_level)
     {
         PetscCall(SAMGLevelKTentativeProlongationOperator(cnt_level, &data_samg_ctx->levels[cnt_level]));
+
+        // calling PtAP
+        PetscCall(MatPtAP(data_samg_ctx->levels[cnt_level].op_f,
+                          data_samg_ctx->levels[cnt_level].op_ua_p,
+                          MAT_INITIAL_MATRIX,
+                          PETSC_DETERMINE,
+                          &(data_samg_ctx->levels[cnt_level].op_c)));
+
+        // next level
+        PetscCall(MatDuplicate(data_samg_ctx->levels[cnt_level].op_c,
+                               MAT_COPY_VALUES,
+                               &(data_samg_ctx->levels[cnt_level + 1].op_f)));
     }
 
     return 0;
