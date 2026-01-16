@@ -299,12 +299,19 @@ typedef struct
 
 // function
 /*
-* level k mesh data generator
-*/
+ * PCMG setup from SAMG
+ */
+int PCMGSetupFromSAMG(int sa_flag /*flag of sa*/,
+                      SAMGCtx *samg_ctx /*samg context data*/,
+                      MySolver *mysolver /*solver data*/);
+
+/*
+ * level k mesh data generator
+ */
 int SAMGLevelKMesh(const CfgJson *data_cfg /*config data*/,
                    MeshData *data_f_mesh /*fine-level mesh data*/,
                    MeshData *data_c_mesh /*coarse-level mesh data*/,
-                   AggData *data_agg /*aggregation data*/); 
+                   AggData *data_agg /*aggregation data*/);
 
 /*
  * copying coarse-level mesh data to next level fine-level mesh data
@@ -326,7 +333,7 @@ int SAMGSACoarseOperator(SAMGCtx **samg_ctx /*samg context data*/);
 /*
  * unsmoothed aggregation coarse operator constructor
  */
-int SAMGUACoarseOperator(SAMGCtx **samg_ctx /*samg context data*/);
+// int SAMGUACoarseOperator(SAMGCtx **samg_ctx /*samg context data*/);
 
 /*
  * level k Q matrix

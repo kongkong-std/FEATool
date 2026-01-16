@@ -95,6 +95,21 @@ int main(int argc, char **argv)
 
     PetscCall(KSPSetOperators(mysolver.ksp, mysolver.solver_a, mysolver.solver_a));
     PetscCall(KSPGetPC(mysolver.ksp, &(mysolver.pc)));
+
+    // pcmg framework
+    /*
+     * PCSetType() -> pcmg
+     * PCMGSetLevels() -> mla_ctx.num_level
+     * PCMGSetType() -> PC_MG_MULTIPLICATIVE
+     * PCMGSetCycleType() -> PC_MG_CYCLE_V
+     * PCMGSetInterpolation() -> mla_ctx.metis_mla[level].prolongation
+     * PCMGGetSmoother() and KSPGetPC() and PCSetType() -> set smoother
+     * PCMGSetNumberSmooth() -> mla_ctx.config.mla_config.pre_smooth_v
+     * PCMGSetOperators() -> mla_ctx.metis_mla[level].operator_fine
+     */
+    PetscCall(PCMGSetupFromSAMG(sa_flag, &samg_ctx, &mysolver));
+    PetscCall(KSPSetFromOptions(mysolver.ksp));
+
     PetscCall(PetscTime(&time1));
     PetscCall(KSPSolve(mysolver.ksp, mysolver.solver_b, mysolver.solver_x));
     PetscCall(PetscTime(&time2));
