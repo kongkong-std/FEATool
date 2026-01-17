@@ -1,5 +1,20 @@
 #include "../include/main.h"
 
+int DeepCopyMySolverData(MySolver *dst /*destinated mysolver data*/,
+                         MySolver *src /*source mysolver data*/)
+{
+    PetscCall(VecDuplicate(src->solver_b, &(dst->solver_b)));
+    PetscCall(VecCopy(src->solver_b, dst->solver_b));
+    PetscCall(VecDuplicate(src->solver_x, &(dst->solver_x)));
+    PetscCall(VecCopy(src->solver_x, dst->solver_x));
+    PetscCall(VecDuplicate(src->solver_r, &(dst->solver_r)));
+    PetscCall(VecCopy(src->solver_r, dst->solver_r));
+
+    PetscCall(MatDuplicate(src->solver_a, MAT_COPY_VALUES, &(dst->solver_a)));
+
+    return 0;
+}
+
 int SolverPetscResidualCheck(MySolver *mysolver)
 {
     PetscReal b_norm_2 = 0.;

@@ -29,6 +29,12 @@ def parse_args():
                         help="Number of coarse-level vertices")
     parser.add_argument("--est_size_agg", type=int, default=4,
                         help="Estimation size of each aggregate")
+    parser.add_argument("--ps_num_steps", type=int, default=1,
+                        help="Number of prolongation operator smoothed steps")
+    parser.add_argument("--ps_type", type=int, default=0,
+                        help="Prolongation operator smoother type")
+    parser.add_argument("--ps_scale", type=float, default=0.67,
+                        help="Scaling prolongation smoother")
 
     # -------- output json path --------
     parser.add_argument("--output_json", type=str, required=True,
@@ -50,7 +56,10 @@ def generate_json(args):
             "post_smooth": args.post_smooth,
             "num_level": args.num_level,
             "num_coarse_vtx": args.num_coarse_vtx,
-            "est_size_agg": args.est_size_agg
+            "est_size_agg": args.est_size_agg,
+            "ps_num_steps": args.ps_num_steps,
+            "ps_type": args.ps_type,
+            "ps_scale": args.ps_scale
         }
     }
 

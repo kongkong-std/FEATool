@@ -14,6 +14,9 @@ POST_SMOOTH=2
 NUM_LEVEL=10
 NUM_COARSE_VTX=100
 EST_SIZE_AGG=4
+PS_NUM_STEPS=1
+PS_TYPE=0
+PS_SCALE=0.67
 
 # 模型名数组
 MODELS=("flat-shell" "inclined-shell" "spherical-shell")
@@ -49,7 +52,10 @@ for model in "${MODELS[@]}"; do
         --post_smooth $POST_SMOOTH \
         --num_level $NUM_LEVEL \
         --num_coarse_vtx $NUM_COARSE_VTX \
-        --est_size_agg $EST_SIZE_AGG
+        --est_size_agg $EST_SIZE_AGG \
+        --ps_num_steps $PS_NUM_STEPS \
+        --ps_type $PS_TYPE \
+        --ps_scale $PS_SCALE
 
     echo ""
 done

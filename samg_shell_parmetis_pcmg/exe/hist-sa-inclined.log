@@ -1,0 +1,77 @@
+Config file: ../input/config/comsol-model/inclined-shell/dof-300.json
+sa_flag = 1
+==== basic information of linear system ====
+matrix Row = 300, matrix Column = 300
+matrix nz_allocated = 4752, matrix nz_used = 4752, matrix nz_unneeded = 0
+vector Row = 300
+initial     || b ||_2 = 1.9809858502126654e+03
+==== Initial L2 norm of residual
+            || b ||_2 = 1.9809858502126654e+03
+|| r ||_2 / || b ||_2 = 1.0000000000000000e+00
+Partitioning a graph of size 50 serially
+      Setup: Max:   0.000, Sum:   0.002, Balance:   1.000
+      Remap: Max:   0.000, Sum:   0.000, Balance:   1.333
+      Total: Max:   0.003, Sum:   0.011, Balance:   1.000
+       Aux1: Max:   0.000, Sum:   0.000, Balance:   1.159
+Final  12-way Cut:     61 	Balance: 1.200 
+==== Smoothed Aggregation-based Multigrid
+>>>> samg setup time: 0.0196862 (s)
+KSP Object: (mg_coarse_) 4 MPI processes
+  type: preonly
+  maximum iterations=10000, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using DEFAULT norm type for convergence test
+PC Object: (mg_coarse_) 4 MPI processes
+  type: redundant
+  PC has not been set up so information may be incomplete
+    Not yet setup
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=72, cols=72
+    total: nonzeros=5184, allocated nonzeros=5184
+    total number of mallocs used during MatSetValues calls=0
+      using nonscalable MatPtAP() implementation
+      using I-node (on process 0) routines: found 5 nodes, limit used is 5
+KSP Object: (mg_levels_1_) 4 MPI processes
+  type: chebyshev
+    Chebyshev polynomial of first kind
+    eigenvalue targets used: min 0., max 0.
+  maximum iterations=2, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using NONE norm type for convergence test
+PC Object: (mg_levels_1_) 4 MPI processes
+  type: sor
+  PC has not been set up so information may be incomplete
+    type = local_symmetric, iterations = 1, local iterations = 1, omega = 1.
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=300, cols=300
+    total: nonzeros=4752, allocated nonzeros=4752
+    total number of mallocs used during MatSetValues calls=0
+      not using I-node (on process 0) routines
+KSP Object: (mg_coarse_) 4 MPI processes
+  type: preonly
+  maximum iterations=10000, initial guess is zero
+  tolerances: relative=1e-05, absolute=1e-50, divergence=10000.
+  left preconditioning
+  using DEFAULT norm type for convergence test
+PC Object: (mg_coarse_) 4 MPI processes
+  type: lu
+  PC has not been set up so information may be incomplete
+    out-of-place factorization
+    tolerance for zero pivot 2.22045e-14
+  linear system matrix = precond matrix:
+  Mat Object: 4 MPI processes
+    type: mpiaij
+    rows=72, cols=72
+    total: nonzeros=5184, allocated nonzeros=5184
+    total number of mallocs used during MatSetValues calls=0
+      using nonscalable MatPtAP() implementation
+      using I-node (on process 0) routines: found 5 nodes, limit used is 5
+>>>> ksp solve time: 0.0325782 (s)
+            || b ||_2 = 1.9809858502126654e+03
+|| r ||_2 / || b ||_2 =                  -nan

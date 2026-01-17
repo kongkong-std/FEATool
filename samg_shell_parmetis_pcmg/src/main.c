@@ -25,9 +25,26 @@ int main(int argc, char **argv)
         PetscCall(PetscPrintf(comm, "Config file: %s\n", path_config));
     }
 
-    SAMGCtx mla_ctx;
+    /*
+     * SA flag: 1 represents using SA, 0 represents using UA
+     *     SA: smoothed aggregation, UA: unsmoothed aggregation
+     * default is 1
+     */
+    int sa_flag = 1;
+    PetscCall(PetscOptionsGetInt(NULL, NULL, "-sa_flag", &sa_flag, &path_flag));
+    if (path_flag)
+    {
+        // parameter sa_flag
+        /*
+         * sa_flag = 1, SA
+         * sa_flag = 0, UA
+         */
+        PetscCall(PetscPrintf(comm, "sa_flag = %d\n", sa_flag));
+    }
 
-    int status_config_json = ParseConfig(comm, path_config, &(mla_ctx.data_cfg));
+    SAMGCtx samg_ctx;
+
+    int status_config_json = ParseConfig(comm, path_config, &(samg_ctx.data_cfg));
     if (status_config_json != 0)
     {
         exit(EXIT_FAILURE);
@@ -38,15 +55,15 @@ int main(int argc, char **argv)
         if (index == my_rank)
         {
             printf("in rank %d =====\n", my_rank);
-            printf("file_mat: %s\n", mla_ctx.data_cfg.cfg_file.file_mat);
-            printf("file_rhs: %s\n", mla_ctx.data_cfg.cfg_file.file_rhs);
-            printf("file_vtx: %s\n", mla_ctx.data_cfg.cfg_file.file_vtx);
-            printf("file_adj: %s\n", mla_ctx.data_cfg.cfg_file.file_adj);
-            printf("pre_smooth: %d\n", mla_ctx.data_cfg.cfg_mg.pre_smooth);
-            printf("post_smooth: %d\n", mla_ctx.data_cfg.cfg_mg.post_smooth);
-            printf("num_level: %d\n", mla_ctx.data_cfg.cfg_mg.num_level);
-            printf("num_coarse_vtx: %d\n", mla_ctx.data_cfg.cfg_mg.num_coarse_vtx);
-            printf("est_size_agg: %d\n", mla_ctx.data_cfg.cfg_mg.est_size_agg);
+            printf("file_mat: %s\n", samg_ctx.data_cfg.cfg_file.file_mat);
+            printf("file_rhs: %s\n", samg_ctx.data_cfg.cfg_file.file_rhs);
+            printf("file_vtx: %s\n", samg_ctx.data_cfg.cfg_file.file_vtx);
+            printf("file_adj: %s\n", samg_ctx.data_cfg.cfg_file.file_adj);
+            printf("pre_smooth: %d\n", samg_ctx.data_cfg.cfg_mg.pre_smooth);
+            printf("post_smooth: %d\n", samg_ctx.data_cfg.cfg_mg.post_smooth);
+            printf("num_level: %d\n", samg_ctx.data_cfg.cfg_mg.num_level);
+            printf("num_coarse_vtx: %d\n", samg_ctx.data_cfg.cfg_mg.num_coarse_vtx);
+            printf("est_size_agg: %d\n", samg_ctx.data_cfg.cfg_mg.est_size_agg);
             puts("\n");
         }
     }
@@ -54,11 +71,74 @@ int main(int argc, char **argv)
 
     // linear system file process
     MySolver mysolver;
-    PetscCall(SolverInitializeWithFile(mla_ctx.data_cfg.cfg_file.file_mat,
-                                       mla_ctx.data_cfg.cfg_file.file_rhs,
+    PetscCall(SolverInitializeWithFile(samg_ctx.data_cfg.cfg_file.file_mat,
+                                       samg_ctx.data_cfg.cfg_file.file_rhs,
                                        &mysolver));
     PetscCall(PetscPrintf(comm, "==== Initial L2 norm of residual\n"));
-    SolverPetscResidualCheck(&mysolver);
+    PetscCall(SolverPetscResidualCheck(&mysolver));
+
+    // linear system copy to mg context
+    PetscCall(DeepCopyMySolverData(&samg_ctx.mysolver, &mysolver));
+#if 0
+    PetscCall(PetscPrintf(comm, ">>>> SAMG context mysolver data:\n"));
+    PetscCall(SolverPetscResidualCheck(&samg_ctx.mysolver));
+#endif // check samg context mysolver data
+
+    // setup + solve
+    PetscCall(KSPSetFromOptions(mysolver.ksp));
+
+    PetscLogDouble time1, time2;
+    PetscCall(PetscTime(&time1));
+    PetscCall(SAMGSetupPhase(&samg_ctx, sa_flag));
+    PetscCall(PetscTime(&time2));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> samg setup time: %g (s)\n", time2 - time1));
+
+    PetscCall(KSPSetOperators(mysolver.ksp, mysolver.solver_a, mysolver.solver_a));
+    PetscCall(KSPGetPC(mysolver.ksp, &(mysolver.pc)));
+
+    // pcmg framework
+    /*
+     * PCSetType() -> pcmg
+     * PCMGSetLevels() -> mla_ctx.num_level
+     * PCMGSetType() -> PC_MG_MULTIPLICATIVE
+     * PCMGSetCycleType() -> PC_MG_CYCLE_V
+     * PCMGSetInterpolation() -> mla_ctx.metis_mla[level].prolongation
+     * PCMGGetSmoother() and KSPGetPC() and PCSetType() -> set smoother
+     * PCMGSetNumberSmooth() -> mla_ctx.config.mla_config.pre_smooth_v
+     * PCMGSetOperators() -> mla_ctx.metis_mla[level].operator_fine
+     */
+    PetscCall(PCMGSetupFromSAMG(sa_flag, &samg_ctx, &mysolver));
+    PetscCall(KSPSetFromOptions(mysolver.ksp));
+
+    PetscCall(PetscTime(&time1));
+    PetscCall(KSPSolve(mysolver.ksp, mysolver.solver_b, mysolver.solver_x));
+    PetscCall(PetscTime(&time2));
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> ksp solve time: %g (s)\n", time2 - time1));
+
+    PetscCall(SolverPetscResidualCheck(&mysolver));
+
+    // free memory
+    for (int index = 0; index < samg_ctx.num_level; ++index)
+    {
+        free(samg_ctx.levels[index].data_f_mesh.data_vtx.idx);
+        free(samg_ctx.levels[index].data_f_mesh.data_vtx.type);
+        free(samg_ctx.levels[index].data_f_mesh.data_vtx.data_coor);
+        free(samg_ctx.levels[index].data_f_mesh.data_adj.idx);
+        free(samg_ctx.levels[index].data_f_mesh.data_adj.xadj);
+        free(samg_ctx.levels[index].data_f_mesh.data_adj.adjncy);
+        free(samg_ctx.levels[index].data_f_mesh.vtxdist);
+        free(samg_ctx.levels[index].data_f_mesh.parts);
+    }
+    free(samg_ctx.levels);
+    PetscCall(MatDestroy(&mysolver.solver_a));
+    PetscCall(MatDestroy(&samg_ctx.mysolver.solver_a));
+    PetscCall(VecDestroy(&mysolver.solver_b));
+    PetscCall(VecDestroy(&mysolver.solver_x));
+    PetscCall(VecDestroy(&mysolver.solver_r));
+    PetscCall(VecDestroy(&samg_ctx.mysolver.solver_b));
+    PetscCall(VecDestroy(&samg_ctx.mysolver.solver_x));
+    PetscCall(VecDestroy(&samg_ctx.mysolver.solver_r));
+    PetscCall(KSPDestroy(&mysolver.ksp));
 
     PetscCall(PetscFinalize());
     // MPI_Finalize();
@@ -68,5 +148,6 @@ int main(int argc, char **argv)
 // usage
 /*
  * mpirun -np <nprocs> ./app_petsc_exe \
- *     -config </path/to/config/file>
+ *     -config </path/to/config/file> \
+ *     -sa_flag <0/1>
  */

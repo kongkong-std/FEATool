@@ -94,7 +94,7 @@ def adjacent_list_process_dist(vtxdist, file_path):
 
     return np.array(vtx_ptr_dist, dtype=object), np.array(adj_vtx_idx_dist, dtype=object)
 
-def write_adjacent_list_process_dist(file_path, vtx_ptr_dist, adj_vtx_idx_dist):
+def write_adjacent_list_process_dist(file_path, vtxdist, vtx_ptr_dist, adj_vtx_idx_dist):
     num_proc = len(vtx_ptr_dist)
 
     base_path = Path(file_path)
@@ -106,6 +106,8 @@ def write_adjacent_list_process_dist(file_path, vtx_ptr_dist, adj_vtx_idx_dist):
         with open(local_file, 'w') as f:
             local_nv = len(vtx_ptr_dist[index]) - 1
             f.write(f"{local_nv}\n")
+            for val in list(range(vtxdist[index], vtxdist[index + 1])):
+                f.write(f"{val}\n")
             for val in vtx_ptr_dist[index]:
                 f.write(f"{val}\n") 
             for val in adj_vtx_idx_dist[index]:
@@ -369,7 +371,7 @@ if __name__ == "__main__":
     vtx_ptr_dist, adj_vtx_idx_dist = adjacent_list_process_dist(vtxdist, args.adjacent_list)
 
     # output distributed adjacent list data
-    write_adjacent_list_process_dist(args.output_adjacent_list, vtx_ptr_dist, adj_vtx_idx_dist)
+    write_adjacent_list_process_dist(args.output_adjacent_list, vtxdist, vtx_ptr_dist, adj_vtx_idx_dist)
 
     # distributed matrix data
     mat_row_idx_dist, mat_row_ptr_dist, mat_col_idx_dist, mat_val_dist = matrix_process_dist(vertex_coor_dist, args.mat_file)
