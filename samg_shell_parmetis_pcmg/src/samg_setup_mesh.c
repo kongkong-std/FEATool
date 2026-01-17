@@ -22,8 +22,8 @@ int SAMGLevelMesh(int cfg_mg_num_level /*config number of levels*/,
            data_samg_ctx->levels[cnt_level].data_c_mesh.nv > cfg_mg_num_coarse_vtx)
     {
         // data_f_mesh[cnt_level + 1] = data_c_mesh[cnt_level]
-        PetscCall(CoarseMesh2FineMesh(data_samg_ctx->levels[cnt_level].data_c_mesh,
-                                      data_samg_ctx->levels[cnt_level + 1].data_f_mesh));
+        PetscCall(CoarseMesh2FineMesh(&(data_samg_ctx->levels[cnt_level].data_c_mesh),
+                                      &(data_samg_ctx->levels[cnt_level + 1].data_f_mesh)));
 
         // cnt_level + 1 level mesh
         PetscCall(SAMGLevelKMesh(&data_samg_ctx->data_cfg,
@@ -89,7 +89,6 @@ int SAMGLevelKMesh(const CfgJson *data_cfg /*config data*/,
 
     // free memory
     free(tpwgts);
-    free(nv_rank);
 
     return 0;
 }
