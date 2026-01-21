@@ -12,6 +12,9 @@ int SAMGLevelMesh(int cfg_mg_num_level /*config number of levels*/,
     data_samg_ctx->levels = (MGLevel *)malloc(cfg_mg_num_level * sizeof(MGLevel));
     assert(data_samg_ctx->levels);
 
+    memset(data_samg_ctx->levels, 0,
+           cfg_mg_num_level * sizeof(MGLevel));
+
     int cnt_level = 0;
     PetscCall(SAMGLevel0Mesh(&data_samg_ctx->data_cfg,
                              &data_samg_ctx->levels[cnt_level].data_f_mesh,

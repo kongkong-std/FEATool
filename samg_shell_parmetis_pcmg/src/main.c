@@ -93,6 +93,24 @@ int main(int argc, char **argv)
     PetscCall(PetscTime(&time2));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, ">>>> samg setup time: %g (s)\n", time2 - time1));
 
+    // free setup data, only preserve prolongation operator and level operator
+    PetscCall(FreeNearNullSpaceLevel0(&(samg_ctx.data_nullspace_level0)));
+    for (int index = 0; index < samg_ctx.num_level - 1; ++index)
+    {
+        // mesh data
+        PetscCall(FreeMeshData(&(samg_ctx.levels[index].data_f_mesh)));
+        PetscCall(FreeMeshData(&(samg_ctx.levels[index].data_c_mesh)));
+
+        // near null space data
+        PetscCall(FreeNearNullSpaceLevelK(&(samg_ctx.levels[index].data_nullspace_levelk)));
+
+        // aggregation data
+        PetscCall(FreeAggData(&(samg_ctx.levels[index].data_agg), my_rank));
+
+        // Q matrix data
+        PetscCall(FreeQLevelK(&(samg_ctx.levels[index].data_q_levelk)));
+    }
+
     PetscCall(KSPSetOperators(mysolver.ksp, mysolver.solver_a, mysolver.solver_a));
     PetscCall(KSPGetPC(mysolver.ksp, &(mysolver.pc)));
 
@@ -120,14 +138,7 @@ int main(int argc, char **argv)
     // free memory
     for (int index = 0; index < samg_ctx.num_level; ++index)
     {
-        free(samg_ctx.levels[index].data_f_mesh.data_vtx.idx);
-        free(samg_ctx.levels[index].data_f_mesh.data_vtx.type);
-        free(samg_ctx.levels[index].data_f_mesh.data_vtx.data_coor);
-        free(samg_ctx.levels[index].data_f_mesh.data_adj.idx);
-        free(samg_ctx.levels[index].data_f_mesh.data_adj.xadj);
-        free(samg_ctx.levels[index].data_f_mesh.data_adj.adjncy);
-        free(samg_ctx.levels[index].data_f_mesh.vtxdist);
-        free(samg_ctx.levels[index].data_f_mesh.parts);
+        PetscCall(FreeSAMGMatData(samg_ctx.levels + index));
     }
     free(samg_ctx.levels);
     PetscCall(MatDestroy(&mysolver.solver_a));

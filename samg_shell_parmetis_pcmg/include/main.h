@@ -299,6 +299,41 @@ typedef struct
 
 // function
 /*
+ * free memory of samg level operator data
+ */
+int FreeSAMGMatData(MGLevel *level /*samg level data*/);
+
+/*
+ * free memory of Q matrix data
+ */
+int FreeQLevelK(QLevelK *q /*Q matrix data*/);
+
+/*
+ * free memory of aggregation data
+ *     1. ghost data
+ *     2. aggregation data
+ */
+int FreeGhostAggData(GhostAggData *g /*ghost data of aggregation data*/);
+int FreeAggData(AggData *agg /*aggregation data*/, int my_rank /*current rank*/);
+
+/*
+ * free memory of near null space data
+ *     1. level 0 near null space data
+ *     2. level k near null space data
+ */
+int FreeNearNullSpaceLevel0(NearNullSpaceLevel0 *ns /*near null space level 0*/);
+int FreeNearNullSpaceLevelK(NearNullSpaceLevelK *ns /*near null space level k*/);
+
+/*
+ * free memory of mesh data
+ *     1. mesh adjacency data
+ *     2. mesh vertex data
+ */
+int FreeMeshAdj(MeshAdj *data_adj /*mesh adjacency data*/);
+int FreeMeshVtx(MeshVtx *data_vtx /*mesh vertex data*/);
+int FreeMeshData(MeshData *mesh /*mesh data*/);
+
+/*
  * PCMG setup from SAMG
  */
 int PCMGSetupFromSAMG(int sa_flag /*flag of sa*/,
