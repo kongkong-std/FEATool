@@ -9,7 +9,7 @@
         "pre_smooth": 2,
         "post_smooth": 2,
         "num_level": 10,
-        "num_coarse_vtx": 100,
+        "num_coarse_vtx": 10,
         "est_size_agg": 4,
         "ps_num_steps": 1,
         "ps_type": 0,

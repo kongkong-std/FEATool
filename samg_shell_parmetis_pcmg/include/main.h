@@ -314,7 +314,7 @@ int FreeQLevelK(QLevelK *q /*Q matrix data*/);
  *     2. aggregation data
  */
 int FreeGhostAggData(GhostAggData *g /*ghost data of aggregation data*/);
-int FreeAggData(AggData *agg /*aggregation data*/);
+int FreeAggData(AggData *agg /*aggregation data*/, int my_rank /*current rank*/);
 
 /*
  * free memory of near null space data

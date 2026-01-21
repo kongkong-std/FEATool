@@ -1,4 +1,4 @@
-#include "../main.h"
+#include "../include/main.h"
 
 int FreeSAMGMatData(MGLevel *level /*samg level data*/)
 {
@@ -33,7 +33,7 @@ int FreeQLevelK(QLevelK *q /*Q matrix data*/)
     return 0;
 }
 
-int FreeAggData(AggData *agg /*aggregation data*/)
+int FreeAggData(AggData *agg /*aggregation data*/, int my_rank /*current rank*/)
 {
     if (!agg)
     {
@@ -42,87 +42,78 @@ int FreeAggData(AggData *agg /*aggregation data*/)
 
     int np = agg->np;
 
-    /* owner */
-    if (agg->owner)
+    for (int index = 0; index < np; ++index)
     {
-        free(agg->owner);
-    }
-
-    /* nlocal */
-    if (agg->nlocal)
-    {
-        free(agg->nlocal);
-    }
-
-    /* local_gids */
-    if (agg->local_gids)
-    {
-        for (int i = 0; i < np; ++i)
+        if (agg->owner[index] == my_rank && agg->data_ghost_agg + index)
         {
-            if (agg->local_gids[i])
-            {
-                free(agg->local_gids[i]);
-            }
+            FreeGhostAggData(agg->data_ghost_agg + index);
         }
-        free(agg->local_gids);
     }
-
-    /* nlocal_all */
-    if (agg->nlocal_all)
+    if (agg->data_ghost_agg)
     {
-        free(agg->nlocal_all);
+        free(agg->data_ghost_agg);
     }
 
-    /* n_fine */
-    if (agg->n_fine)
-    {
-        free(agg->n_fine);
-    }
-
-    /* fine_gids */
-    if (agg->fine_gids)
-    {
-        for (int i = 0; i < np; ++i)
-        {
-            if (agg->fine_gids[i])
-            {
-                free(agg->fine_gids[i]);
-            }
-        }
-        free(agg->fine_gids);
-    }
-
-    /* fine_global_nullspace */
-    if (agg->fine_global_nullspace)
-    {
-        for (int i = 0; i < np; ++i)
-        {
-            if (agg->fine_global_nullspace[i])
-            {
-                free(agg->fine_global_nullspace[i]);
-            }
-        }
-        free(agg->fine_global_nullspace);
-    }
-
-    /* fgid2part */
     if (agg->fgid2part)
     {
         free(agg->fgid2part);
     }
 
-    /* data_ghost_agg */
-    if (agg->data_ghost_agg)
+    for (int index = 0; index < np; ++index)
     {
-        for (int i = 0; i < np; ++i)
+        if (agg->owner[index] == my_rank && agg->fine_global_nullspace[index])
         {
-            FreeGhostAggData(&agg->data_ghost_agg[i]);
+            free(agg->fine_global_nullspace[index]);
         }
-        free(agg->data_ghost_agg);
+    }
+    if (agg->fine_global_nullspace)
+    {
+        free(agg->fine_global_nullspace);
     }
 
-    agg->np = 0;
-    agg->nv = 0;
+    for (int index = 0; index < np; ++index)
+    {
+        if (agg->owner[index] == my_rank && agg->fine_gids[index])
+        {
+            free(agg->fine_gids[index]);
+        }
+    }
+    if (agg->fine_gids)
+    {
+        free(agg->fine_gids);
+    }
+
+    if (agg->n_fine)
+    {
+        free(agg->n_fine);
+    }
+
+    if (agg->nlocal_all)
+    {
+        free(agg->nlocal_all);
+    }
+
+    for (int index = 0; index < np; ++index)
+    {
+        if (agg->local_gids[index] && agg->nlocal[index] > 0)
+        {
+            free(agg->local_gids[index]);
+        }
+    }
+    if (agg->local_gids)
+    {
+        free(agg->local_gids);
+    }
+
+    if (agg->nlocal)
+    {
+        free(agg->nlocal);
+    }
+
+    if (agg->owner)
+    {
+        free(agg->owner);
+    }
 
     return 0;
 }

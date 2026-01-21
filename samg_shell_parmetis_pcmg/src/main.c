@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 
     // free setup data, only preserve prolongation operator and level operator
     PetscCall(FreeNearNullSpaceLevel0(&(samg_ctx.data_nullspace_level0)));
-    for (int index = 0; index < samg_ctx.num_level; ++index)
+    for (int index = 0; index < samg_ctx.num_level - 1; ++index)
     {
         // mesh data
         PetscCall(FreeMeshData(&(samg_ctx.levels[index].data_f_mesh)));
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
         PetscCall(FreeNearNullSpaceLevelK(&(samg_ctx.levels[index].data_nullspace_levelk)));
 
         // aggregation data
-        PetscCall(FreeAggData(&(samg_ctx.levels[index].data_agg)));
+        PetscCall(FreeAggData(&(samg_ctx.levels[index].data_agg), my_rank));
 
         // Q matrix data
         PetscCall(FreeQLevelK(&(samg_ctx.levels[index].data_q_levelk)));
